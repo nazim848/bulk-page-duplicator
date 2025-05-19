@@ -362,14 +362,67 @@ class Bulk_Page_Generator {
 			}
 
 			foreach ($values as $value) {
-				// Replace in SEO fields if option is selected
+				// Handle serialized data for SEO fields
 				if ($is_seo_field && in_array('seo', $replace_options)) {
-					$value = str_replace($placeholder, $replacement, $value);
+					// For serialized data
+					if (is_serialized($value)) {
+						$unserialized = maybe_unserialize($value);
+						$this->replace_in_array_recursive($unserialized, $placeholder, $replacement);
+						$value = maybe_serialize($unserialized);
+					}
+					// For JSON data (common in newer SEO plugins)
+					else if ($this->is_json($value)) {
+						$decoded = json_decode($value, true);
+						if (is_array($decoded)) {
+							$this->replace_in_array_recursive($decoded, $placeholder, $replacement);
+							$value = json_encode($decoded);
+						}
+					}
+					// For simple string values
+					else {
+						$value = str_replace($placeholder, $replacement, $value);
+					}
 				}
 
 				update_post_meta($to_id, $key, maybe_unserialize($value));
 			}
 		}
+	}
+
+	/**
+	 * Helper function to replace text in a nested array
+	 *
+	 * @param array  &$array  The array to process
+	 * @param string $search  The search string
+	 * @param string $replace The replacement string
+	 */
+	private function replace_in_array_recursive(&$array, $search, $replace) {
+		if (!is_array($array)) {
+			return;
+		}
+
+		foreach ($array as $key => &$value) {
+			if (is_array($value)) {
+				$this->replace_in_array_recursive($value, $search, $replace);
+			} else if (is_string($value)) {
+				$array[$key] = str_replace($search, $replace, $value);
+			}
+		}
+	}
+
+	/**
+	 * Check if a string is a JSON string
+	 *
+	 * @param mixed $string The string to check
+	 * @return bool Whether the string is valid JSON
+	 */
+	private function is_json($string) {
+		if (!is_string($string)) {
+			return false;
+		}
+
+		json_decode($string);
+		return (json_last_error() == JSON_ERROR_NONE);
 	}
 
 	private function detect_seo_plugins() {
