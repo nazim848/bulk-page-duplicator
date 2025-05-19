@@ -72,7 +72,7 @@ class Bulk_Page_Generator {
 
 					<h2>Text to Replace</h2>
 					<p>Enter the placeholder text in your template that should be replaced with each value:</p>
-					<input type="text" id="placeholder-text" class="widefat" placeholder="e.g., London">
+					<input type="text" id="placeholder-text" class="widefat" placeholder="London">
 
 					<h2>Replacement Values</h2>
 					<p>Enter one value per line. Each value will create a new page:</p>
@@ -121,12 +121,11 @@ class Bulk_Page_Generator {
 						<li>Choose where the text should be replaced.</li>
 						<li>Click "Start Duplication" to begin the process.</li>
 					</ol>
-					<p style="color: #c00; font-weight: bold;">Note: Placeholder replacement is <u>case-sensitive</u>. The text you enter must match exactly (including spaces and capitalization) as it appears in your template page.</p>
+
 
 					<h3>Tips</h3>
 					<ul>
 						<li>Make sure your template page contains the placeholder text in all areas you want to replace.</li>
-						<li>Placeholder replacement is <u>case-sensitive</u>. Double-check for exact matches, including spaces and capitalization.</li>
 						<li>Large numbers of pages will be processed in batches to avoid timeout issues.</li>
 						<li>Processing will continue in the background - don't close the browser tab.</li>
 					</ul>
@@ -182,41 +181,19 @@ class Bulk_Page_Generator {
 				// Create title
 				$title = $template_page->post_title;
 				if (in_array('title', $replace_options)) {
-					$title = str_replace($placeholder, $value, $title);
+					$title = $this->smart_replace($title, $placeholder, $value);
 				}
-
-				// $slug = $template_page->post_name;
-				// if (in_array('slug', $replace_options)) {
-				// 	$slug = sanitize_title(str_replace($placeholder, $value, $slug));
-				// 	// Ensure uniqueness by appending value if not already uniques
-				// 	if ($slug === $template_page->post_name) {
-				// 		$slug .= '-' . sanitize_title($value);
-				// 	}
-				// }
-
-				// $slug = $template_page->post_name;
-				// if (in_array('slug', $replace_options)) {
-				// 	$new_slug = str_replace($placeholder, $value, $slug);
-				// 	$slug = sanitize_title($new_slug);
-				// }
 
 				$slug = $template_page->post_name;
 				if (in_array('slug', $replace_options)) {
-					if (strpos($slug, strtolower($placeholder)) === false) {
-						$results[] = [
-							'value' => $value,
-							'status' => 'skipped',
-							'message' => 'Placeholder not found in slug for value "' . $value . '"'
-						];
-						continue;
-					}
-					$slug = sanitize_title(str_replace(strtolower($placeholder), strtolower($value), $slug));
+					$new_slug = $this->smart_replace($slug, $placeholder, $value);
+					$slug = sanitize_title($new_slug);
 				}
 
 				// Create content
 				$content = $template_page->post_content;
 				if (in_array('content', $replace_options)) {
-					$content = str_replace($placeholder, $value, $content);
+					$content = $this->smart_replace($content, $placeholder, $value);
 				}
 
 				// Check if page with this slug already exists
@@ -255,14 +232,6 @@ class Bulk_Page_Generator {
 				$this->copy_post_meta($template_id, $page_id, $placeholder, $value, $replace_options);
 
 				// Apply Elementor data if exists and option selected
-				// if (!empty($elementor_data) && in_array('elementor', $replace_options)) {
-				// 	$new_elementor_data = str_replace($placeholder, $value, $elementor_data);
-				// 	update_post_meta($page_id, '_elementor_data', $new_elementor_data);
-				// 	update_post_meta($page_id, '_elementor_edit_mode', 'builder');
-				// }
-
-				// Apply Elementor data if exists and option selected
-				// Apply Elementor data if exists and option selected
 				if (in_array('elementor', $replace_options)) {
 					// First, ensure this is an Elementor page
 					$is_elementor_page = get_post_meta($template_id, '_elementor_edit_mode', true) === 'builder';
@@ -271,7 +240,7 @@ class Bulk_Page_Generator {
 						// 1. Copy _elementor_data with placeholders replaced
 						$elementor_data = get_post_meta($template_id, '_elementor_data', true);
 						if (!empty($elementor_data)) {
-							$new_elementor_data = str_replace($placeholder, $value, $elementor_data);
+							$new_elementor_data = $this->smart_replace($elementor_data, $placeholder, $value);
 							update_post_meta($page_id, '_elementor_data', wp_slash($new_elementor_data)); // Important: wp_slash for JSON
 						}
 
@@ -380,7 +349,7 @@ class Bulk_Page_Generator {
 					}
 					// For simple string values
 					else {
-						$value = str_replace($placeholder, $replacement, $value);
+						$value = $this->smart_replace($value, $placeholder, $replacement);
 					}
 				}
 
@@ -405,9 +374,47 @@ class Bulk_Page_Generator {
 			if (is_array($value)) {
 				$this->replace_in_array_recursive($value, $search, $replace);
 			} else if (is_string($value)) {
-				$array[$key] = str_replace($search, $replace, $value);
+				$value = $this->smart_replace($value, $search, $replace);
 			}
 		}
+	}
+
+	/**
+	 * Replaces text while preserving the case format
+	 *
+	 * @param string $text The text to process
+	 * @param string $search The search string
+	 * @param string $replace The replacement string
+	 * @return string The processed text
+	 */
+	private function smart_replace($text, $search, $replace) {
+		// Skip empty values
+		if (empty($text) || empty($search) || empty($replace)) {
+			return $text;
+		}
+
+		// 1. Prepare patterns and replacements for each case
+		$patterns = [];
+		$replacements = [];
+
+		// Case 1: All uppercase
+		$patterns[] = '/' . preg_quote(strtoupper($search), '/') . '/';
+		$replacements[] = strtoupper($replace);
+
+		// Case 2: Title case (first letter uppercase)
+		$patterns[] = '/' . preg_quote(ucfirst(strtolower($search)), '/') . '/';
+		$replacements[] = ucfirst(strtolower($replace));
+
+		// Case 3: Exact match (as provided)
+		$patterns[] = '/' . preg_quote($search, '/') . '/';
+		$replacements[] = $replace;
+
+		// Case 4: Lowercase match (must be last to avoid overriding other cases)
+		$patterns[] = '/' . preg_quote(strtolower($search), '/') . '/i';
+		$replacements[] = strtolower($replace);
+
+		// 2. Apply all replacements
+		return preg_replace($patterns, $replacements, $text);
 	}
 
 	/**
