@@ -12,10 +12,10 @@ License URI: https://www.gnu.org/licenses/gpl-3.0.html
 Create multiple pages by duplicating an existing page and replacing specific text with different values. Supports Elementor and major SEO plugins.
 
 == Description ==
-Bulk Page Duplicator allows you to quickly create multiple pages by duplicating a template page and replacing a placeholder with a list of values. Supports Elementor and major SEO plugins (Yoast, Rank Math, AIOSEO, SEOPress).
+Bulk Page Duplicator allows you to quickly create multiple pages by duplicating a template page and replacing a placeholder with a list of values. Supports Elementor Page builder and major SEO plugins (Yoast, Rank Math, AIOSEO, SEOPress).
 
 == Installation ==
-1. Upload the plugin files to the `/wp-content/plugins/bulk-page-duplicator` directory, or install the plugin through the WordPress plugins screen directly.
+1. Install plugin either via the WordPress.org plugin repository or by uploading to the website.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
 3. Go to Tools > Bulk Page Duplicator to use the plugin.
 
@@ -26,9 +26,9 @@ Yes, Elementor data is duplicated and placeholder text is replaced if selected.
 = Does this work with SEO plugins? =
 Yes, supports Yoast, Rank Math, AIOSEO, and SEOPress meta fields.
 
-== Screenshots ==
-1. Bulk duplication interface
-2. Progress and results log
+= Is Bulk Page Duplicator translation-ready? =
+Yes, it is fully internationalized and ready for translation. The plugin includes a POT file in the languages directory that you can use as a template for translations. We welcome contributions of new translations!
+
 
 == Changelog ==
 = 1.0.0 =
@@ -39,4 +39,4 @@ Yes, supports Yoast, Rank Math, AIOSEO, and SEOPress meta fields.
 First release.
 
 == License ==
-This plugin is free software, released under the GPLv2 or later. 
+This plugin is free software, released under the GPLv2 or later.
