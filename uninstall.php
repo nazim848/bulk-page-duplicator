@@ -3,4 +3,3 @@
 if (!defined('WP_UNINSTALL_PLUGIN')) {
 	exit;
 }
-// No options to clean up yet. Add cleanup code here if needed in future. 

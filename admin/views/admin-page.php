@@ -1,0 +1,93 @@
+<?php
+
+/**
+ * Admin page view for Bulk Page Duplicator
+ *
+ * @package BulkPageDuplicator
+ */
+if (!defined('ABSPATH')) exit;
+
+// Get all pages for the dropdown
+$pages = get_pages(array(
+	'sort_column' => 'post_title',
+	'sort_order' => 'ASC',
+));
+// SEO plugins detection
+if (!class_exists('Bulk_Page_Duplicator_Core')) {
+	require_once dirname(dirname(__FILE__)) . '/../includes/class-bulk-page-duplicator.php';
+}
+$core = new Bulk_Page_Duplicator_Core();
+$seo_plugins = $core->detect_seo_plugins();
+?>
+<div class="wrap">
+	<h1><?php _e('Bulk Page Duplicator', 'bulk-page-duplicator'); ?></h1>
+	<div class="bulk-page-dup-container">
+		<div class="bulk-page-dup-panel">
+			<h2><?php _e('Select Template Page', 'bulk-page-duplicator'); ?></h2>
+			<p><?php _e('Choose the page you want to use as a template for duplication:', 'bulk-page-duplicator'); ?></p>
+			<select id="template-page" class="widefat">
+				<option value=""><?php _e('Select a page', 'bulk-page-duplicator'); ?></option>
+				<?php foreach ($pages as $page) : ?>
+					<option value="<?php echo esc_attr($page->ID); ?>">
+						<?php echo esc_html($page->post_title); ?> (ID: <?php echo esc_html($page->ID); ?>)
+					</option>
+				<?php endforeach; ?>
+			</select>
+			<h2><?php _e('Text to Replace', 'bulk-page-duplicator'); ?></h2>
+			<p><?php _e('Enter the placeholder text in your template that should be replaced with each value:', 'bulk-page-duplicator'); ?></p>
+			<input type="text" id="placeholder-text" class="widefat" placeholder="London">
+			<h2><?php _e('Replacement Values', 'bulk-page-duplicator'); ?></h2>
+			<p><?php _e('Enter one value per line. Each value will create a new page:', 'bulk-page-duplicator'); ?></p>
+			<textarea id="replacement-values" class="widefat" rows="10" placeholder="New York&#10;Los Angeles&#10;Chicago"></textarea>
+			<h2><?php _e('Status', 'bulk-page-duplicator'); ?></h2>
+			<p><?php _e('Select status for the created pages:', 'bulk-page-duplicator'); ?></p>
+			<select id="page-status" class="widefat">
+				<option value="publish"><?php _e('Published', 'bulk-page-duplicator'); ?></option>
+				<option value="draft"><?php _e('Draft', 'bulk-page-duplicator'); ?></option>
+			</select>
+			<h2><?php _e('Where to Replace Text', 'bulk-page-duplicator'); ?></h2>
+			<p><?php _e('Select where the text should be replaced:', 'bulk-page-duplicator'); ?></p>
+			<div class="bulk-page-dup-checkbox-group">
+				<label><input type="checkbox" id="replace-title" checked> <?php _e('Page Title', 'bulk-page-duplicator'); ?></label>
+				<label><input type="checkbox" id="replace-slug" checked> <?php _e('Page Slug', 'bulk-page-duplicator'); ?></label>
+				<label><input type="checkbox" id="replace-content" checked> <?php _e('Page Content', 'bulk-page-duplicator'); ?></label>
+				<label><input type="checkbox" id="replace-elementor" checked> <?php _e('Elementor Data (if exists)', 'bulk-page-duplicator'); ?></label>
+				<?php if (!empty($seo_plugins)) : ?>
+					<label><input type="checkbox" id="replace-seo" checked> <?php _e('SEO Meta Data', 'bulk-page-duplicator'); ?></label>
+				<?php endif; ?>
+			</div>
+			<div class="bulk-page-dup-progress-container" style="display: none;">
+				<h3><?php _e('Progress', 'bulk-page-duplicator'); ?></h3>
+				<div class="bulk-page-dup-progress-bar">
+					<div class="bulk-page-dup-progress-bar-inner"></div>
+				</div>
+				<p class="bulk-page-dup-progress-text">0%</p>
+				<p class="bulk-page-dup-status-text"></p>
+			</div>
+			<p class="submit">
+				<button id="start-duplication" class="button button-primary button-large"><?php _e('Start Duplication', 'bulk-page-duplicator'); ?></button>
+				<button id="cancel-duplication" class="button button-secondary button-large" style="display: none;"><?php _e('Cancel', 'bulk-page-duplicator'); ?></button>
+			</p>
+		</div>
+		<div class="bulk-page-dup-panel">
+			<h2><?php _e('Instructions', 'bulk-page-duplicator'); ?></h2>
+			<ol>
+				<li><?php _e('Select the page you want to duplicate.', 'bulk-page-duplicator'); ?></li>
+				<li><?php _e('Enter the placeholder text that exists in your template page.', 'bulk-page-duplicator'); ?></li>
+				<li><?php _e('Enter all the values you want to replace the placeholder with (one per line).', 'bulk-page-duplicator'); ?></li>
+				<li><?php _e('Choose where the text should be replaced.', 'bulk-page-duplicator'); ?></li>
+				<li><?php _e('Click "Start Duplication" to begin the process.', 'bulk-page-duplicator'); ?></li>
+			</ol>
+			<h3><?php _e('Tips', 'bulk-page-duplicator'); ?></h3>
+			<ul>
+				<li><?php _e('Make sure your template page contains the placeholder text in all areas you want to replace.', 'bulk-page-duplicator'); ?></li>
+				<li><?php _e('Large numbers of pages will be processed in batches to avoid timeout issues.', 'bulk-page-duplicator'); ?></li>
+				<li><?php _e('Processing will continue in the background - don\'t close the browser tab.', 'bulk-page-duplicator'); ?></li>
+			</ul>
+			<div class="bulk-page-dup-log-container" style="display: none;">
+				<h3><?php _e('Results Log', 'bulk-page-duplicator'); ?></h3>
+				<div class="bulk-page-dup-log"></div>
+			</div>
+		</div>
+	</div>
+</div>
