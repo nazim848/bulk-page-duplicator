@@ -1,18 +1,36 @@
 <?php
+/*
+Plugin Name: Bulk Page Duplicator
+Description: Create multiple pages by duplicating an existing page and replacing specific text with different values.
+Version: 1.0.0
+Author: Nazim Husain
+Author URI: https://nazimansari.com
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: bulk-page-duplicator
+Domain Path: /languages
+Requires at least: 5.0
+Tested up to: 6.8
+Requires PHP: 7.2
 
-/**
- * Plugin Name: Bulk Page Duplicator
- * Description: Create multiple pages by duplicating an existing page and replacing specific text with different values.
- * Version: 1.0.0
- * Author: Nazim Husain
- * License: GPLv2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: bulk-page-duplicator
- *
- * @package BulkPageDuplicator
- */
+Bulk Page Duplicator is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
 
-if (!defined('ABSPATH')) exit;
+Bulk Page Duplicator is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Bulk Page Duplicator. If not, see https://www.gnu.org/licenses/gpl-2.0.html.
+*/
+
+// If this file is called directly, abort.
+if (!defined('WPINC')) {
+	die;
+}
 
 define('BULK_PAGE_DUPLICATOR_VERSION', '1.0.0');
 

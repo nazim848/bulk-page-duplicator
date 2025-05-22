@@ -1,11 +1,13 @@
 === Bulk Page Duplicator ===
 Contributors: nazim848
+Donate link: https://buymeacoffee.com/nazim848
 Tags: duplicate, bulk, page, clone, bulk page
 Requires at least: 5.0
-Tested up to: 6.5
+Tested up to: 6.8
 Stable tag: 1.0.0
+Requires PHP: 7.2
 License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Create multiple pages by duplicating an existing page and replacing specific text with different values. Supports Elementor and major SEO plugins.
 

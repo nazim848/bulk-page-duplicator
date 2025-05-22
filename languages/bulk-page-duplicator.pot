@@ -1,0 +1,186 @@
+# Copyright (C) 2025 Nazim Husain
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Bulk Page Duplicator 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/bulk-page-duplicator\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-05-22T10:07:41+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.11.0\n"
+"X-Domain: bulk-page-duplicator\n"
+
+#. Plugin Name of the plugin
+#: bulk-page-duplicator.php
+#: admin/class-bulk-page-duplicator-admin.php:26
+#: admin/class-bulk-page-duplicator-admin.php:27
+#: admin/views/admin-page.php:23
+msgid "Bulk Page Duplicator"
+msgstr ""
+
+#. Description of the plugin
+#: bulk-page-duplicator.php
+msgid "Create multiple pages by duplicating an existing page and replacing specific text with different values."
+msgstr ""
+
+#. Author of the plugin
+#: bulk-page-duplicator.php
+msgid "Nazim Husain"
+msgstr ""
+
+#. Author URI of the plugin
+#: bulk-page-duplicator.php
+msgid "https://nazimansari.com"
+msgstr ""
+
+#: admin/views/admin-page.php:26
+msgid "Select Template Page"
+msgstr ""
+
+#: admin/views/admin-page.php:27
+msgid "Choose the page you want to use as a template for duplication:"
+msgstr ""
+
+#: admin/views/admin-page.php:29
+msgid "Select a page"
+msgstr ""
+
+#: admin/views/admin-page.php:36
+msgid "Text to Replace"
+msgstr ""
+
+#: admin/views/admin-page.php:37
+msgid "Enter the placeholder text in your template that should be replaced with each value:"
+msgstr ""
+
+#: admin/views/admin-page.php:39
+msgid "Replacement Values"
+msgstr ""
+
+#: admin/views/admin-page.php:40
+msgid "Enter one value per line. Each value will create a new page:"
+msgstr ""
+
+#: admin/views/admin-page.php:42
+msgid "Status"
+msgstr ""
+
+#: admin/views/admin-page.php:43
+msgid "Select status for the created pages:"
+msgstr ""
+
+#: admin/views/admin-page.php:45
+msgid "Published"
+msgstr ""
+
+#: admin/views/admin-page.php:46
+msgid "Draft"
+msgstr ""
+
+#: admin/views/admin-page.php:48
+msgid "Where to Replace Text"
+msgstr ""
+
+#: admin/views/admin-page.php:49
+msgid "Select where the text should be replaced:"
+msgstr ""
+
+#: admin/views/admin-page.php:51
+msgid "Page Title"
+msgstr ""
+
+#: admin/views/admin-page.php:52
+msgid "Page Slug"
+msgstr ""
+
+#: admin/views/admin-page.php:53
+msgid "Page Content"
+msgstr ""
+
+#: admin/views/admin-page.php:54
+msgid "Elementor Data (if exists)"
+msgstr ""
+
+#: admin/views/admin-page.php:56
+msgid "SEO Meta Data"
+msgstr ""
+
+#: admin/views/admin-page.php:60
+msgid "Progress"
+msgstr ""
+
+#: admin/views/admin-page.php:68
+msgid "Start Duplication"
+msgstr ""
+
+#: admin/views/admin-page.php:69
+msgid "Cancel"
+msgstr ""
+
+#: admin/views/admin-page.php:73
+msgid "Instructions"
+msgstr ""
+
+#: admin/views/admin-page.php:75
+msgid "Select the page you want to duplicate."
+msgstr ""
+
+#: admin/views/admin-page.php:76
+msgid "Enter the placeholder text that exists in your template page."
+msgstr ""
+
+#: admin/views/admin-page.php:77
+msgid "Enter all the values you want to replace the placeholder with (one per line)."
+msgstr ""
+
+#: admin/views/admin-page.php:78
+msgid "Choose where the text should be replaced."
+msgstr ""
+
+#: admin/views/admin-page.php:79
+msgid "Click \"Start Duplication\" to begin the process."
+msgstr ""
+
+#: admin/views/admin-page.php:81
+msgid "Tips"
+msgstr ""
+
+#: admin/views/admin-page.php:83
+msgid "Make sure your template page contains the placeholder text in all areas you want to replace."
+msgstr ""
+
+#: admin/views/admin-page.php:84
+msgid "Large numbers of pages will be processed in batches to avoid timeout issues."
+msgstr ""
+
+#: admin/views/admin-page.php:85
+msgid "Processing will continue in the background - don't close the browser tab."
+msgstr ""
+
+#: admin/views/admin-page.php:88
+msgid "Results Log"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:18
+msgid "Security check failed"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:23
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:38
+msgid "Template page not found"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:82
+msgid "Page with slug \"%s\" already exists"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:170
+msgid "Created page: \"%s\""
+msgstr ""
