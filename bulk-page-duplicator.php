@@ -5,6 +5,8 @@
  * Description: Create multiple pages by duplicating an existing page and replacing specific text with different values.
  * Version: 1.0.0
  * Author: Nazim Husain
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: bulk-page-duplicator
  */
 
@@ -147,6 +149,11 @@ class Bulk_Page_Duplicator {
 		// Verify nonce
 		if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bulk_page_duplication')) {
 			wp_send_json_error('Security check failed');
+		}
+
+		// Add capability check
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
 		}
 
 		// Get data from AJAX request
