@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-05-22T10:07:41+00:00\n"
+"POT-Creation-Date: 2025-05-22T10:51:39+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: bulk-page-duplicator\n"
@@ -165,22 +165,24 @@ msgstr ""
 msgid "Results Log"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:18
+#: includes/class-bulk-page-duplicator.php:19
 msgid "Security check failed"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:23
+#: includes/class-bulk-page-duplicator.php:24
 msgid "You do not have permission to perform this action."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:38
+#: includes/class-bulk-page-duplicator.php:39
 msgid "Template page not found"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:82
+#. translators: %s: The page slug that already exists.
+#: includes/class-bulk-page-duplicator.php:84
 msgid "Page with slug \"%s\" already exists"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:170
+#. translators: %s: The title of the newly created page.
+#: includes/class-bulk-page-duplicator.php:173
 msgid "Created page: \"%s\""
 msgstr ""
