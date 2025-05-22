@@ -79,6 +79,7 @@ class Bulk_Page_Duplicator_Core {
 					$results[] = [
 						'value' => $value,
 						'status' => 'skipped',
+						// translators: %s: The page slug that already exists.
 						'message' => sprintf(__('Page with slug "%s" already exists', 'bulk-page-duplicator'), $slug)
 					];
 					continue;
@@ -167,6 +168,7 @@ class Bulk_Page_Duplicator_Core {
 				$results[] = [
 					'value' => $value,
 					'status' => 'success',
+					// translators: %s: The title of the newly created page.
 					'message' => sprintf(__('Created page: "%s"', 'bulk-page-duplicator'), $title),
 					'id' => $page_id,
 					'edit_url' => get_edit_post_link($page_id, '')
