@@ -1,17 +1,20 @@
 <?php
 
 /**
- * Plugin Name: Bulk Page Generator
+ * Plugin Name: Bulk Page Duplicator
  * Description: Create multiple pages by duplicating an existing page and replacing specific text with different values.
  * Version: 1.0.0
  * Author: Nazim Husain
- * Text Domain: bulk-page-generator
+ * Text Domain: bulk-page-duplicator
  */
 
 // Exit if accessed directly
 if (!defined('ABSPATH')) exit;
 
-class Bulk_Page_Generator {
+// Plugin version
+define('BULK_PAGE_DUPLICATOR_VERSION', '1.0.0');
+
+class Bulk_Page_Duplicator {
 
 	public function __construct() {
 		add_action('admin_menu', array($this, 'add_admin_menu'));
@@ -21,22 +24,22 @@ class Bulk_Page_Generator {
 
 	public function add_admin_menu() {
 		add_management_page(
-			'Bulk Page Generator',
-			'Bulk Page Generator',
+			'Bulk Page Duplicator',
+			'Bulk Page Duplicator',
 			'manage_options',
-			'bulk-page-generator',
+			'bulk-page-duplicator',
 			array($this, 'admin_page')
 		);
 	}
 
 	public function enqueue_admin_scripts($hook) {
-		if ('tools_page_bulk-page-generator' !== $hook) {
+		if ('tools_page_bulk-page-duplicator' !== $hook) {
 			return;
 		}
 
-		wp_enqueue_style('bulk-generator-css', plugin_dir_url(__FILE__) . 'assets/css/bulk-page-generator.css', array(), '1.0.0');
-		wp_enqueue_script('bulk-generator-js', plugin_dir_url(__FILE__) . 'assets/js/bulk-page-generator.js', array('jquery'), '1.0.0', true);
-		wp_localize_script('bulk-generator-js', 'bpg_ajax', array(
+		wp_enqueue_style('bulk-page-duplicator-css', plugin_dir_url(__FILE__) . 'assets/css/bulk-page-duplicator.css', array(), BULK_PAGE_DUPLICATOR_VERSION);
+		wp_enqueue_script('bulk-page-duplicator-js', plugin_dir_url(__FILE__) . 'assets/js/bulk-page-duplicator.js', array('jquery'), BULK_PAGE_DUPLICATOR_VERSION, true);
+		wp_localize_script('bulk-duplicator-js', 'bulk_page_dup_ajax', array(
 			'ajax_url' => admin_url('admin-ajax.php'),
 			'nonce' => wp_create_nonce('bulk_page_duplication')
 		));
@@ -54,10 +57,10 @@ class Bulk_Page_Generator {
 
 ?>
 		<div class="wrap">
-			<h1>Bulk Page Generator</h1>
+			<h1>Bulk Page Duplicator</h1>
 
-			<div class="bpg-container">
-				<div class="bpg-panel">
+			<div class="bulk-page-dup-container">
+				<div class="bulk-page-dup-panel">
 					<h2>Select Template Page</h2>
 					<p>Choose the page you want to use as a template for duplication:</p>
 
@@ -87,7 +90,7 @@ class Bulk_Page_Generator {
 
 					<h2>Where to Replace Text</h2>
 					<p>Select where the text should be replaced:</p>
-					<div class="bpg-checkbox-group">
+					<div class="bulk-page-dup-checkbox-group">
 						<label><input type="checkbox" id="replace-title" checked> Page Title</label>
 						<label><input type="checkbox" id="replace-slug" checked> Page Slug</label>
 						<label><input type="checkbox" id="replace-content" checked> Page Content</label>
@@ -97,13 +100,13 @@ class Bulk_Page_Generator {
 						<?php endif; ?>
 					</div>
 
-					<div class="bpg-progress-container" style="display: none;">
+					<div class="bulk-page-dup-progress-container" style="display: none;">
 						<h3>Progress</h3>
-						<div class="bpg-progress-bar">
-							<div class="bpg-progress-bar-inner"></div>
+						<div class="bulk-page-dup-progress-bar">
+							<div class="bulk-page-dup-progress-bar-inner"></div>
 						</div>
-						<p class="bpg-progress-text">0%</p>
-						<p class="bpg-status-text"></p>
+						<p class="bulk-page-dup-progress-text">0%</p>
+						<p class="bulk-page-dup-status-text"></p>
 					</div>
 
 					<p class="submit">
@@ -112,7 +115,7 @@ class Bulk_Page_Generator {
 					</p>
 				</div>
 
-				<div class="bpg-panel">
+				<div class="bulk-page-dup-panel">
 					<h2>Instructions</h2>
 					<ol>
 						<li>Select the page you want to duplicate.</li>
@@ -130,9 +133,9 @@ class Bulk_Page_Generator {
 						<li>Processing will continue in the background - don't close the browser tab.</li>
 					</ul>
 
-					<div class="bpg-log-container" style="display: none;">
+					<div class="bulk-page-dup-log-container" style="display: none;">
 						<h3>Results Log</h3>
-						<div class="bpg-log"></div>
+						<div class="bulk-page-dup-log"></div>
 					</div>
 				</div>
 			</div>
@@ -472,26 +475,4 @@ class Bulk_Page_Generator {
 }
 
 // Initialize the plugin
-new Bulk_Page_Generator();
-
-// Create the necessary directories on plugin activation
-//register_activation_hook(__FILE__, 'bpg_create_directories');
-
-// function bpg_create_directories() {
-// 	// Create the assets directory and subdirectories if they don't exist
-// 	$base_dir = plugin_dir_path(__FILE__) . 'assets';
-// 	$css_dir = $base_dir . '/css';
-// 	$js_dir = $base_dir . '/js';
-
-// 	if (!file_exists($base_dir)) {
-// 		mkdir($base_dir, 0755);
-// 	}
-
-// 	if (!file_exists($css_dir)) {
-// 		mkdir($css_dir, 0755);
-// 	}
-
-// 	if (!file_exists($js_dir)) {
-// 		mkdir($js_dir, 0755);
-// 	}
-// }
+new Bulk_Page_Duplicator();

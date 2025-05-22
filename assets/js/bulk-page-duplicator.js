@@ -50,9 +50,9 @@ jQuery(document).ready(function ($) {
 		// Initialize UI for processing
 		isProcessing = true;
 		cancelRequested = false;
-		$(".bpg-progress-container").show();
-		$(".bpg-log-container").show();
-		$(".bpg-log").empty();
+		$(".bulk-page-dup-progress-container").show();
+		$(".bulk-page-dup-log-container").show();
+		$(".bulk-page-dup-log").empty();
 		$("#start-duplication").hide();
 		$("#cancel-duplication").show();
 
@@ -71,7 +71,7 @@ jQuery(document).ready(function ($) {
 		e.preventDefault();
 		cancelRequested = true;
 		$(this).text("Cancelling...");
-		$(".bpg-status-text").text("Cancelling the operation...");
+		$(".bulk-page-dup-status-text").text("Cancelling the operation...");
 	});
 
 	function processBatch(
@@ -93,11 +93,11 @@ jQuery(document).ready(function ($) {
 		const progress = Math.round((processedValues / totalValues) * 100);
 
 		// Update progress UI
-		$(".bpg-progress-bar-inner").css("width", progress + "%");
-		$(".bpg-progress-text").text(
+		$(".bulk-page-dup-progress-bar-inner").css("width", progress + "%");
+		$(".bulk-page-dup-progress-text").text(
 			progress + "% (" + processedValues + " of " + totalValues + ")"
 		);
-		$(".bpg-status-text").text("Processing pages...");
+		$(".bulk-page-dup-status-text").text("Processing pages...");
 
 		// Get current batch of values
 		const batchSize = 10;
@@ -113,11 +113,11 @@ jQuery(document).ready(function ($) {
 
 		// Send AJAX request to process current batch
 		$.ajax({
-			url: bpg_ajax.ajax_url,
+			url: bulk_page_dup_ajax.ajax_url,
 			type: "POST",
 			data: {
 				action: "process_bulk_duplication",
-				nonce: bpg_ajax.nonce,
+				nonce: bulk_page_dup_ajax.nonce,
 				template_id: templateId,
 				placeholder: placeholder,
 				values: currentBatch,
@@ -130,7 +130,7 @@ jQuery(document).ready(function ($) {
 					// Log results
 					if (response.data.results && response.data.results.length > 0) {
 						response.data.results.forEach(function (result) {
-							let logClass = "bpg-log-" + result.status;
+							let logClass = "bulk-page-dup-log-" + result.status;
 							let message = result.value + ": " + result.message;
 
 							if (result.edit_url) {
@@ -140,8 +140,8 @@ jQuery(document).ready(function ($) {
 									'" target="_blank">Edit</a>)';
 							}
 
-							$(".bpg-log").prepend(
-								'<div class="bpg-log-entry ' +
+							$(".bulk-page-dup-log").prepend(
+								'<div class="bulk-page-dup-log-entry ' +
 									logClass +
 									'">' +
 									message +
@@ -168,8 +168,8 @@ jQuery(document).ready(function ($) {
 					}
 				} else {
 					// Handle error
-					$(".bpg-log").prepend(
-						'<div class="bpg-log-entry bpg-log-error">Error: ' +
+					$(".bulk-page-dup-log").prepend(
+						'<div class="bulk-page-dup-log-entry bulk-page-dup-log-error">Error: ' +
 							response.data +
 							"</div>"
 					);
@@ -177,8 +177,8 @@ jQuery(document).ready(function ($) {
 				}
 			},
 			error: function (xhr, status, error) {
-				$(".bpg-log").prepend(
-					'<div class="bpg-log-entry bpg-log-error">AJAX Error: ' +
+				$(".bulk-page-dup-log").prepend(
+					'<div class="bulk-page-dup-log-entry bulk-page-dup-log-error">AJAX Error: ' +
 						error +
 						"</div>"
 				);
@@ -189,7 +189,7 @@ jQuery(document).ready(function ($) {
 
 	function finishProcessing(message) {
 		isProcessing = false;
-		$(".bpg-status-text").text(message);
+		$(".bulk-page-dup-status-text").text(message);
 		$("#cancel-duplication").hide();
 		$("#start-duplication").show();
 
