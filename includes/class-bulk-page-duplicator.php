@@ -13,8 +13,9 @@ class Bulk_Page_Duplicator_Core {
 	 * Handle AJAX duplication request
 	 */
 	public function process_bulk_duplication() {
-		// Verify nonce
-		if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bulk_page_duplication')) {
+		// Verify nonce (unslash and sanitize)
+		$nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+		if (empty($nonce) || !wp_verify_nonce($nonce, 'bulk_page_duplication')) {
 			wp_send_json_error(__('Security check failed', 'bulk-page-duplicator'));
 		}
 
@@ -23,13 +24,13 @@ class Bulk_Page_Duplicator_Core {
 			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
 		}
 
-		// Get data from AJAX request
-		$template_id = intval($_POST['template_id']);
-		$placeholder = sanitize_text_field($_POST['placeholder']);
-		$batch_values = array_map('sanitize_text_field', $_POST['values']);
-		$page_status = sanitize_text_field($_POST['status']);
-		$replace_options = $_POST['replace_options'];
-		$batch_index = intval($_POST['batch_index']);
+		// Get data from AJAX request (validate, unslash, sanitize)
+		$template_id = isset($_POST['template_id']) ? intval(wp_unslash($_POST['template_id'])) : 0;
+		$placeholder = isset($_POST['placeholder']) ? sanitize_text_field(wp_unslash($_POST['placeholder'])) : '';
+		$batch_values = isset($_POST['values']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['values'])) : [];
+		$page_status = isset($_POST['status']) ? sanitize_text_field(wp_unslash($_POST['status'])) : 'draft';
+		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['replace_options'])) : [];
+		$batch_index = isset($_POST['batch_index']) ? intval(wp_unslash($_POST['batch_index'])) : 0;
 		$batch_size = 10; // Process 10 pages at a time
 
 		// Validate template page exists
