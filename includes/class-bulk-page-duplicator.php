@@ -285,7 +285,11 @@ class Bulk_Page_Duplicator_Core {
 
 		// Case 2: Title case (first letter uppercase)
 		$patterns[] = '/' . preg_quote(ucfirst(strtolower($search)), '/') . '/';
-		$replacements[] = ucfirst(strtolower($replace));
+		if (function_exists('mb_convert_case')) {
+			$replacements[] = mb_convert_case($replace, MB_CASE_TITLE, 'UTF-8');
+		} else {
+			$replacements[] = ucwords(strtolower($replace), " \t\r\n\f\v-");
+		}
 
 		// Case 3: Exact match (as provided)
 		$patterns[] = '/' . preg_quote($search, '/') . '/';
