@@ -65,6 +65,16 @@ class Bulk_Page_Duplicator_Core {
 				$slug = $template_page->post_name;
 				if (in_array('slug', $replace_options)) {
 					$new_slug = $this->smart_replace($slug, $placeholder, $value);
+
+					// Also try replacing the slugified placeholder (for multi-word placeholders in slugs)
+					$placeholder_slug = sanitize_title($placeholder);
+					// Check if slugified placeholder is different from raw placeholder (e.g. contains hyphens)
+					// and if it exists in the slug (simple check before doing replacement)
+					if ($placeholder_slug !== strtolower($placeholder)) {
+						$value_slug = sanitize_title($value);
+						$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
+					}
+
 					$slug = sanitize_title($new_slug);
 				}
 
