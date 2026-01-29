@@ -4,7 +4,7 @@ Donate link: https://buymeacoffee.com/nazim848
 Tags: duplicate, bulk, page, clone, bulk page
 Requires at least: 5.0
 Tested up to: 6.8
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -31,6 +31,8 @@ Yes, it is fully internationalized and ready for translation. The plugin include
 
 
 == Changelog ==
+= 1.0.1 =
+* Fixed capitalization for hyphenated names and improved multi-word placeholder replacement in slugs.
 = 1.0.0 =
 * Initial release
 
