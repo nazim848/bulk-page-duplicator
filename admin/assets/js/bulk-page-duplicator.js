@@ -213,6 +213,161 @@ jQuery(document).ready(function ($) {
 		}
 	});
 
+	// Dry Run functionality
+	$("#dry-run").on("click", function (e) {
+		e.preventDefault();
+
+		// Validate inputs first
+		const templateId = $("#template-page").val();
+		const placeholderInput = $("#placeholder-text").val();
+		const placeholders = placeholderInput
+			.split(",")
+			.map(p => p.trim())
+			.filter(p => p !== "");
+
+		const rawValues = $("#replacement-values")
+			.val()
+			.split("\n")
+			.filter(val => val.trim() !== "");
+
+		if (!templateId) {
+			alert("Please select a template.");
+			return;
+		}
+
+		if (placeholders.length === 0) {
+			alert("Please enter at least one placeholder.");
+			return;
+		}
+
+		if (rawValues.length === 0) {
+			alert("Please enter at least one replacement value.");
+			return;
+		}
+
+		// Parse values
+		const values = rawValues.map(line => {
+			if (placeholders.length > 1) {
+				return line.split(",").map(p => p.trim());
+			}
+			return [line.trim()];
+		});
+
+		// Get replacement options
+		const replaceOptions = [];
+		if ($("#replace-title").is(":checked")) replaceOptions.push("title");
+		if ($("#replace-slug").is(":checked")) replaceOptions.push("slug");
+		if ($("#replace-content").is(":checked")) replaceOptions.push("content");
+		if ($("#replace-elementor").is(":checked")) replaceOptions.push("elementor");
+		if ($("#replace-seo").is(":checked")) replaceOptions.push("seo");
+
+		// Show modal with loading state
+		$("#dry-run-modal").show();
+		$("#dry-run-loading").show();
+		$("#dry-run-results").hide();
+
+		// Make AJAX request for dry run
+		$.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_dry_run",
+				nonce: bulk_page_dup_ajax.nonce,
+				template_id: templateId,
+				placeholders: placeholders,
+				values: values,
+				post_type: $("#post-type").val(),
+				replace_options: replaceOptions
+			},
+			success: function (response) {
+				if (response.success) {
+					displayDryRunResults(response.data);
+				} else {
+					alert("Error: " + response.data);
+					$("#dry-run-modal").hide();
+				}
+			},
+			error: function () {
+				alert("Error performing dry run. Please try again.");
+				$("#dry-run-modal").hide();
+			}
+		});
+	});
+
+	// Display dry run results in modal
+	function displayDryRunResults(data) {
+		// Update summary
+		$("#dry-run-total").text(data.summary.total);
+		$("#dry-run-create").text(data.summary.will_create);
+		$("#dry-run-skip").text(data.summary.will_skip);
+
+		// Build table rows
+		const $tbody = $("#dry-run-table-body");
+		$tbody.empty();
+
+		data.items.forEach(function (item) {
+			const statusClass = item.status === 'create' ? 'bpd-status-create' : 'bpd-status-skip';
+			const statusIcon = item.status === 'create' ? '✓' : '⚠';
+			const statusText = item.status === 'create' ? 'Create' : 'Skip';
+
+			let row = '<tr class="' + statusClass + '">';
+			row += '<td><span class="bpd-status-badge bpd-status-' + item.status + '">' + statusIcon + ' ' + statusText + '</span></td>';
+			row += '<td>' + escapeHtml(item.value) + '</td>';
+			row += '<td>' + escapeHtml(item.title) + '</td>';
+			row += '<td><code>' + escapeHtml(item.slug) + '</code></td>';
+			row += '</tr>';
+
+			if (item.reason) {
+				row += '<tr class="bpd-reason-row"><td colspan="4"><small>' + escapeHtml(item.reason) + '</small></td></tr>';
+			}
+
+			$tbody.append(row);
+		});
+
+		// Show results, hide loading
+		$("#dry-run-loading").hide();
+		$("#dry-run-results").show();
+
+		// Disable proceed button if nothing to create
+		if (data.summary.will_create === 0) {
+			$("#dry-run-proceed").prop("disabled", true).text("Nothing to create");
+		} else {
+			$("#dry-run-proceed").prop("disabled", false).text("Proceed with Duplication (" + data.summary.will_create + " items)");
+		}
+	}
+
+	// Helper function to escape HTML
+	function escapeHtml(text) {
+		const div = document.createElement('div');
+		div.textContent = text;
+		return div.innerHTML;
+	}
+
+	// Close modal handlers
+	$(".bpd-modal-close, .bpd-modal-close-btn").on("click", function () {
+		$("#dry-run-modal").hide();
+	});
+
+	// Close modal on overlay click
+	$("#dry-run-modal").on("click", function (e) {
+		if ($(e.target).is("#dry-run-modal")) {
+			$(this).hide();
+		}
+	});
+
+	// Close modal on Escape key
+	$(document).on("keydown", function (e) {
+		if (e.key === "Escape" && $("#dry-run-modal").is(":visible")) {
+			$("#dry-run-modal").hide();
+		}
+	});
+
+	// Proceed button - close modal and start duplication
+	$("#dry-run-proceed").on("click", function () {
+		$("#dry-run-modal").hide();
+		$("#start-duplication").trigger("click");
+	});
+
 	$("#start-duplication").on("click", function (e) {
 		e.preventDefault();
 

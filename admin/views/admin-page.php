@@ -102,6 +102,7 @@ $seo_plugins = $core->detect_seo_plugins();
 				<p class="bulk-page-dup-status-text"></p>
 			</div>
 			<p class="submit">
+				<button id="dry-run" class="button button-secondary button-large"><?php esc_html_e('Dry Run (Preview)', 'bulk-page-duplicator'); ?></button>
 				<button id="start-duplication" class="button button-primary button-large"><?php esc_html_e('Start Duplication', 'bulk-page-duplicator'); ?></button>
 				<button id="cancel-duplication" class="button button-secondary button-large" style="display: none;"><?php esc_html_e('Cancel', 'bulk-page-duplicator'); ?></button>
 			</p>
@@ -143,6 +144,56 @@ $seo_plugins = $core->detect_seo_plugins();
 				<h3><?php esc_html_e('Results Log', 'bulk-page-duplicator'); ?></h3>
 				<div class="bulk-page-dup-log"></div>
 			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Dry Run Modal -->
+<div id="dry-run-modal" class="bpd-modal" style="display: none;">
+	<div class="bpd-modal-content">
+		<div class="bpd-modal-header">
+			<h2><?php esc_html_e('Dry Run Preview', 'bulk-page-duplicator'); ?></h2>
+			<button class="bpd-modal-close" aria-label="<?php esc_attr_e('Close', 'bulk-page-duplicator'); ?>">&times;</button>
+		</div>
+		<div class="bpd-modal-body">
+			<div id="dry-run-loading" style="text-align: center; padding: 40px;">
+				<span class="spinner is-active" style="float: none;"></span>
+				<p><?php esc_html_e('Generating preview...', 'bulk-page-duplicator'); ?></p>
+			</div>
+			<div id="dry-run-results" style="display: none;">
+				<div class="bpd-dry-run-summary">
+					<div class="bpd-summary-item bpd-summary-total">
+						<span class="bpd-summary-count" id="dry-run-total">0</span>
+						<span class="bpd-summary-label"><?php esc_html_e('Total', 'bulk-page-duplicator'); ?></span>
+					</div>
+					<div class="bpd-summary-item bpd-summary-create">
+						<span class="bpd-summary-count" id="dry-run-create">0</span>
+						<span class="bpd-summary-label"><?php esc_html_e('Will Create', 'bulk-page-duplicator'); ?></span>
+					</div>
+					<div class="bpd-summary-item bpd-summary-skip">
+						<span class="bpd-summary-count" id="dry-run-skip">0</span>
+						<span class="bpd-summary-label"><?php esc_html_e('Will Skip', 'bulk-page-duplicator'); ?></span>
+					</div>
+				</div>
+				<div class="bpd-dry-run-list-wrapper">
+					<table class="bpd-dry-run-table widefat">
+						<thead>
+							<tr>
+								<th><?php esc_html_e('Status', 'bulk-page-duplicator'); ?></th>
+								<th><?php esc_html_e('Value', 'bulk-page-duplicator'); ?></th>
+								<th><?php esc_html_e('Title', 'bulk-page-duplicator'); ?></th>
+								<th><?php esc_html_e('Slug', 'bulk-page-duplicator'); ?></th>
+							</tr>
+						</thead>
+						<tbody id="dry-run-table-body">
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="bpd-modal-footer">
+			<button class="button button-secondary bpd-modal-close-btn"><?php esc_html_e('Close', 'bulk-page-duplicator'); ?></button>
+			<button id="dry-run-proceed" class="button button-primary"><?php esc_html_e('Proceed with Duplication', 'bulk-page-duplicator'); ?></button>
 		</div>
 	</div>
 </div>
