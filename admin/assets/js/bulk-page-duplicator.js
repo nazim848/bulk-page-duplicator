@@ -112,7 +112,7 @@ jQuery(document).ready(function ($) {
 		updatePreview();
 	});
 
-	// Handle post type change - reload templates and parent pages
+	// Handle post type change - reload templates, parent pages, and taxonomies
 	$("#post-type").on("change", function () {
 		const postType = $(this).val();
 		const $templateSelect = $("#template-page");
@@ -188,7 +188,82 @@ jQuery(document).ready(function ($) {
 				$loading.hide();
 			}
 		});
+
+		// Load taxonomies for the post type
+		loadTaxonomies(postType);
 	});
+
+	// Function to load taxonomies for a post type
+	function loadTaxonomies(postType) {
+		const $section = $("#taxonomy-section");
+		const $loading = $("#taxonomy-loading");
+		const $list = $("#taxonomy-list");
+
+		$loading.show();
+		$list.empty();
+
+		$.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_get_taxonomies",
+				nonce: bulk_page_dup_ajax.nonce,
+				post_type: postType
+			},
+			success: function (response) {
+				$loading.hide();
+
+				if (response.success && response.data.taxonomies.length > 0) {
+					$section.show();
+
+					response.data.taxonomies.forEach(function (taxonomy) {
+						let termsHtml = '';
+
+						if (taxonomy.terms.length > 0) {
+							taxonomy.terms.forEach(function (term) {
+								termsHtml += `
+									<label>
+										<input type="checkbox" class="taxonomy-term" 
+											data-taxonomy="${taxonomy.name}" 
+											value="${term.id}">
+										${escapeHtml(term.name)}
+									</label>
+								`;
+							});
+						} else {
+							termsHtml = '<p class="taxonomy-empty">No terms available</p>';
+						}
+
+						const html = `
+							<div class="taxonomy-group" data-taxonomy="${taxonomy.name}">
+								<h4>${escapeHtml(taxonomy.label)}</h4>
+								<div class="taxonomy-terms">
+									${termsHtml}
+								</div>
+							</div>
+						`;
+						$list.append(html);
+					});
+				} else {
+					$section.hide();
+				}
+			},
+			error: function () {
+				$loading.hide();
+				$section.hide();
+			}
+		});
+	}
+
+	// Helper function to escape HTML
+	function escapeHtml(text) {
+		const div = document.createElement('div');
+		div.textContent = text;
+		return div.innerHTML;
+	}
+
+	// Load taxonomies for initial post type on page load
+	loadTaxonomies($("#post-type").val());
 
 	// Show/hide multi-placeholder help based on input
 	$("#placeholder-text").on("input", function () {
@@ -288,6 +363,17 @@ jQuery(document).ready(function ($) {
 			replaceOptions.push("elementor");
 		if ($("#replace-seo").is(":checked")) replaceOptions.push("seo");
 
+		// Get selected taxonomy terms
+		const taxonomyTerms = {};
+		$(".taxonomy-term:checked").each(function () {
+			const taxonomy = $(this).data("taxonomy");
+			const termId = parseInt($(this).val());
+			if (!taxonomyTerms[taxonomy]) {
+				taxonomyTerms[taxonomy] = [];
+			}
+			taxonomyTerms[taxonomy].push(termId);
+		});
+
 		// Initialize UI for processing
 		isProcessing = true;
 		cancelRequested = false;
@@ -310,6 +396,7 @@ jQuery(document).ready(function ($) {
 			replaceOptions,
 			postType,
 			parentPage,
+			taxonomyTerms,
 			0
 		);
 	});
@@ -329,6 +416,7 @@ jQuery(document).ready(function ($) {
 		replaceOptions,
 		postType,
 		parentPage,
+		taxonomyTerms,
 		batchIndex
 	) {
 		if (cancelRequested) {
@@ -374,6 +462,7 @@ jQuery(document).ready(function ($) {
 				replace_options: replaceOptions,
 				post_type: postType,
 				parent_page: parentPage,
+				taxonomy_terms: taxonomyTerms,
 				batch_index: batchIndex
 			},
 			success: function (response) {
@@ -416,6 +505,7 @@ jQuery(document).ready(function ($) {
 							replaceOptions,
 							postType,
 							parentPage,
+							taxonomyTerms,
 							endIndex
 						);
 					}

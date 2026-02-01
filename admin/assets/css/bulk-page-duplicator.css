@@ -128,3 +128,43 @@
 #parent-page-section {
 	margin-bottom: 15px;
 }
+
+/* Taxonomy section styles */
+#taxonomy-section {
+	margin-bottom: 15px;
+}
+
+.taxonomy-group {
+	margin-bottom: 15px;
+	padding: 10px;
+	background: #f9f9f9;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+}
+
+.taxonomy-group h4 {
+	margin: 0 0 10px 0;
+	font-size: 13px;
+	color: #23282d;
+}
+
+.taxonomy-terms {
+	max-height: 150px;
+	overflow-y: auto;
+}
+
+.taxonomy-terms label {
+	display: block;
+	margin-bottom: 5px;
+	font-size: 13px;
+}
+
+.taxonomy-terms input[type="checkbox"] {
+	margin-right: 5px;
+}
+
+.taxonomy-empty {
+	color: #666;
+	font-style: italic;
+	font-size: 12px;
+}
