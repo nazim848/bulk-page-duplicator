@@ -287,6 +287,7 @@ jQuery(document).ready(function ($) {
 		if ($("#replace-elementor").is(":checked"))
 			replaceOptions.push("elementor");
 		if ($("#replace-seo").is(":checked")) replaceOptions.push("seo");
+		if ($("#copy-featured-image").is(":checked")) replaceOptions.push("featured_image");
 
 		// Initialize UI for processing
 		isProcessing = true;

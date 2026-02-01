@@ -93,6 +93,11 @@ $seo_plugins = $core->detect_seo_plugins();
 					<label><input type="checkbox" id="replace-seo" checked> <?php esc_html_e('SEO Meta Data', 'bulk-page-duplicator'); ?></label>
 				<?php endif; ?>
 			</div>
+			<h2><?php esc_html_e('Additional Options', 'bulk-page-duplicator'); ?></h2>
+			<div class="bulk-page-dup-checkbox-group">
+				<label><input type="checkbox" id="copy-featured-image" checked> <?php esc_html_e('Copy Featured Image', 'bulk-page-duplicator'); ?></label>
+				<p class="description" style="margin-left: 24px;"><?php esc_html_e('Copy the template\'s featured image to all duplicated items.', 'bulk-page-duplicator'); ?></p>
+			</div>
 			<div class="bulk-page-dup-progress-container" style="display: none;">
 				<h3><?php esc_html_e('Progress', 'bulk-page-duplicator'); ?></h3>
 				<div class="bulk-page-dup-progress-bar">
