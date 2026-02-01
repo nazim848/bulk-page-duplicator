@@ -7,7 +7,12 @@
  */
 if (!defined('ABSPATH')) exit;
 
-// Get all pages for the dropdown
+// Get public post types
+$post_types = get_post_types(array('public' => true), 'objects');
+// Exclude attachments
+unset($post_types['attachment']);
+
+// Get all pages for the initial dropdown
 $pages = get_pages(array(
 	'sort_column' => 'post_title',
 	'sort_order' => 'ASC',
@@ -23,24 +28,56 @@ $seo_plugins = $core->detect_seo_plugins();
 	<h1><?php esc_html_e('Bulk Page Duplicator', 'bulk-page-duplicator'); ?></h1>
 	<div class="bulk-page-dup-container">
 		<div class="bulk-page-dup-panel">
-			<h2><?php esc_html_e('Select Template Page', 'bulk-page-duplicator'); ?></h2>
-			<p><?php esc_html_e('Choose the page you want to use as a template for duplication:', 'bulk-page-duplicator'); ?></p>
+			<h2><?php esc_html_e('Post Type', 'bulk-page-duplicator'); ?></h2>
+			<p><?php esc_html_e('Select the type of content you want to duplicate:', 'bulk-page-duplicator'); ?></p>
+			<select id="post-type" class="widefat">
+				<?php foreach ($post_types as $post_type) : ?>
+					<option value="<?php echo esc_attr($post_type->name); ?>" <?php selected($post_type->name, 'page'); ?>>
+						<?php echo esc_html($post_type->labels->singular_name); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+			<h2><?php esc_html_e('Select Template', 'bulk-page-duplicator'); ?></h2>
+			<p><?php esc_html_e('Choose the item you want to use as a template for duplication:', 'bulk-page-duplicator'); ?></p>
 			<select id="template-page" class="widefat">
-				<option value=""><?php esc_html_e('Select a page', 'bulk-page-duplicator'); ?></option>
+				<option value=""><?php esc_html_e('Select a template', 'bulk-page-duplicator'); ?></option>
 				<?php foreach ($pages as $page) : ?>
 					<option value="<?php echo esc_attr($page->ID); ?>">
 						<?php echo esc_html($page->post_title); ?> (ID: <?php echo esc_html($page->ID); ?>)
 					</option>
 				<?php endforeach; ?>
 			</select>
-			<h2><?php esc_html_e('Text to Replace', 'bulk-page-duplicator'); ?></h2>
-			<p><?php esc_html_e('Enter the placeholder text in your template that should be replaced with each value:', 'bulk-page-duplicator'); ?></p>
-			<input type="text" id="placeholder-text" class="widefat" placeholder="London">
+			<p class="description" id="template-loading" style="display: none;">
+				<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>
+				<?php esc_html_e('Loading templates...', 'bulk-page-duplicator'); ?>
+			</p>
+			<h2><?php esc_html_e('Placeholders', 'bulk-page-duplicator'); ?></h2>
+			<p><?php esc_html_e('Enter placeholder text(s) to replace. Use comma to separate multiple placeholders:', 'bulk-page-duplicator'); ?></p>
+			<input type="text" id="placeholder-text" class="widefat" placeholder="London" aria-describedby="placeholder-help">
+			<p class="description" id="placeholder-help">
+				<?php esc_html_e('Examples: "London" (single) or "London, UK" (multiple, comma-separated)', 'bulk-page-duplicator'); ?>
+			</p>
 			<h2><?php esc_html_e('Replacement Values', 'bulk-page-duplicator'); ?></h2>
-			<p><?php esc_html_e('Enter one value per line. Each value will create a new page:', 'bulk-page-duplicator'); ?></p>
+			<p id="replacement-help"><?php esc_html_e('Enter one value per line. Each line creates a new item:', 'bulk-page-duplicator'); ?></p>
+			<p class="description" id="replacement-multi-help" style="display: none;">
+				<?php esc_html_e('For multiple placeholders, separate values with commas (e.g., "New York, USA")', 'bulk-page-duplicator'); ?>
+			</p>
 			<textarea id="replacement-values" class="widefat" rows="10" placeholder="New York&#10;Los Angeles&#10;Chicago"></textarea>
+			<div id="parent-page-section">
+				<h2><?php esc_html_e('Parent Page', 'bulk-page-duplicator'); ?></h2>
+				<p><?php esc_html_e('Optionally assign a parent for all created items:', 'bulk-page-duplicator'); ?></p>
+				<select id="parent-page" class="widefat">
+					<option value="0"><?php esc_html_e('No parent (top level)', 'bulk-page-duplicator'); ?></option>
+					<option value="template"><?php esc_html_e('Same as template', 'bulk-page-duplicator'); ?></option>
+					<?php foreach ($pages as $page) : ?>
+						<option value="<?php echo esc_attr($page->ID); ?>">
+							<?php echo esc_html($page->post_title); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</div>
 			<h2><?php esc_html_e('Status', 'bulk-page-duplicator'); ?></h2>
-			<p><?php esc_html_e('Select status for the created pages:', 'bulk-page-duplicator'); ?></p>
+			<p><?php esc_html_e('Select status for the created items:', 'bulk-page-duplicator'); ?></p>
 			<select id="page-status" class="widefat">
 				<option value="publish"><?php esc_html_e('Published', 'bulk-page-duplicator'); ?></option>
 				<option value="draft"><?php esc_html_e('Draft', 'bulk-page-duplicator'); ?></option>
@@ -70,6 +107,24 @@ $seo_plugins = $core->detect_seo_plugins();
 			</p>
 		</div>
 		<div class="bulk-page-dup-panel">
+			<div id="preview-panel" style="display: none;">
+				<h2><?php esc_html_e('Preview', 'bulk-page-duplicator'); ?></h2>
+				<p class="description"><?php esc_html_e('Preview of the first item that will be created:', 'bulk-page-duplicator'); ?></p>
+				<div class="bulk-page-dup-preview">
+					<div class="preview-field">
+						<label><?php esc_html_e('Title:', 'bulk-page-duplicator'); ?></label>
+						<span id="preview-title">-</span>
+					</div>
+					<div class="preview-field">
+						<label><?php esc_html_e('Slug:', 'bulk-page-duplicator'); ?></label>
+						<span id="preview-slug">-</span>
+					</div>
+					<div class="preview-field">
+						<label><?php esc_html_e('Items to create:', 'bulk-page-duplicator'); ?></label>
+						<span id="preview-count">0</span>
+					</div>
+				</div>
+			</div>
 			<h2><?php esc_html_e('Instructions', 'bulk-page-duplicator'); ?></h2>
 			<ol>
 				<li><?php esc_html_e('Select the page you want to duplicate.', 'bulk-page-duplicator'); ?></li>
