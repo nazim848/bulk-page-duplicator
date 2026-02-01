@@ -157,58 +157,17 @@ class Bulk_Page_Duplicator_Core {
 
 				// Apply Elementor data if exists and option selected
 				if (in_array('elementor', $replace_options)) {
-					// First, ensure this is an Elementor post
-					$is_elementor_page = get_post_meta($template_id, '_elementor_edit_mode', true) === 'builder';
+					$this->process_elementor_data($template_id, $new_post_id, $placeholders, $value_set, $content);
+				}
 
-					if ($is_elementor_page) {
-						// 1. Copy _elementor_data with placeholders replaced
-						$elementor_data = get_post_meta($template_id, '_elementor_data', true);
-						if (!empty($elementor_data)) {
-							$new_elementor_data = $this->multi_replace($elementor_data, $placeholders, $value_set);
-							update_post_meta($new_post_id, '_elementor_data', wp_slash($new_elementor_data)); // Important: wp_slash for JSON
-						}
+				// Apply Beaver Builder data if exists and option selected
+				if (in_array('beaver', $replace_options)) {
+					$this->process_beaver_builder_data($template_id, $new_post_id, $placeholders, $value_set);
+				}
 
-						// 2. Get ALL post meta (including Elementor-specific ones)
-						$all_meta = get_post_meta($template_id);
-
-						// 3. Copy specific Elementor meta fields
-						$elementor_meta_keys = [
-							'_elementor_edit_mode',
-							'_elementor_version',
-							'_elementor_template_type',
-							'_elementor_page_settings',
-							'_wp_page_template',
-							'_elementor_page_meta',
-							'_elementor_controls_usage'
-						];
-
-						foreach ($elementor_meta_keys as $meta_key) {
-							if (isset($all_meta[$meta_key]) && !empty($all_meta[$meta_key][0])) {
-								$meta_value = $all_meta[$meta_key][0];
-								update_post_meta($new_post_id, $meta_key, maybe_unserialize($meta_value));
-							}
-						}
-
-						// 4. Force regeneration of CSS
-						delete_post_meta($new_post_id, '_elementor_css');
-
-						// 5. Clear Elementor cache for this post
-						if (class_exists('\Elementor\Plugin')) {
-							\Elementor\Plugin::$instance->files_manager->clear_cache();
-						}
-
-						// 6. Set post type to elementor
-						update_post_meta($new_post_id, '_elementor_edit_mode', 'builder');
-					}
-
-					// 7. Ensure the post content is properly set for Elementor
-					// Sometimes Elementor uses a special placeholder in post_content
-					if (empty($content) && $is_elementor_page) {
-						wp_update_post([
-							'ID' => $new_post_id,
-							'post_content' => '<!-- wp:shortcode -->[elementor-template id="' . $new_post_id . '"]<!-- /wp:shortcode -->'
-						]);
-					}
+				// Apply Bricks Builder data if exists and option selected
+				if (in_array('bricks', $replace_options)) {
+					$this->process_bricks_builder_data($template_id, $new_post_id, $placeholders, $value_set);
 				}
 
 				$results[] = [
@@ -226,6 +185,275 @@ class Bulk_Page_Duplicator_Core {
 			'results' => $results,
 			'is_last_batch' => $is_last_batch
 		]);
+	}
+
+	/**
+	 * Process Elementor data for a post
+	 */
+	private function process_elementor_data($template_id, $new_post_id, $placeholders, $value_set, $content) {
+		// First, ensure this is an Elementor post
+		$is_elementor_page = get_post_meta($template_id, '_elementor_edit_mode', true) === 'builder';
+
+		if ($is_elementor_page) {
+			// 1. Copy _elementor_data with placeholders replaced
+			$elementor_data = get_post_meta($template_id, '_elementor_data', true);
+			if (!empty($elementor_data)) {
+				$new_elementor_data = $this->multi_replace($elementor_data, $placeholders, $value_set);
+				update_post_meta($new_post_id, '_elementor_data', wp_slash($new_elementor_data));
+			}
+
+			// 2. Get ALL post meta (including Elementor-specific ones)
+			$all_meta = get_post_meta($template_id);
+
+			// 3. Copy specific Elementor meta fields
+			$elementor_meta_keys = [
+				'_elementor_edit_mode',
+				'_elementor_version',
+				'_elementor_template_type',
+				'_elementor_page_settings',
+				'_wp_page_template',
+				'_elementor_page_meta',
+				'_elementor_controls_usage'
+			];
+
+			foreach ($elementor_meta_keys as $meta_key) {
+				if (isset($all_meta[$meta_key]) && !empty($all_meta[$meta_key][0])) {
+					$meta_value = $all_meta[$meta_key][0];
+					update_post_meta($new_post_id, $meta_key, maybe_unserialize($meta_value));
+				}
+			}
+
+			// 4. Force regeneration of CSS
+			delete_post_meta($new_post_id, '_elementor_css');
+
+			// 5. Clear Elementor cache for this post
+			if (class_exists('\Elementor\Plugin')) {
+				\Elementor\Plugin::$instance->files_manager->clear_cache();
+			}
+
+			// 6. Set post type to elementor
+			update_post_meta($new_post_id, '_elementor_edit_mode', 'builder');
+		}
+
+		// 7. Ensure the post content is properly set for Elementor
+		if (empty($content) && $is_elementor_page) {
+			wp_update_post([
+				'ID' => $new_post_id,
+				'post_content' => '<!-- wp:shortcode -->[elementor-template id="' . $new_post_id . '"]<!-- /wp:shortcode -->'
+			]);
+		}
+	}
+
+	/**
+	 * Process Beaver Builder data for a post
+	 */
+	private function process_beaver_builder_data($template_id, $new_post_id, $placeholders, $value_set) {
+		// Check if this is a Beaver Builder post
+		$fl_builder_data = get_post_meta($template_id, '_fl_builder_data', true);
+		$fl_builder_draft = get_post_meta($template_id, '_fl_builder_draft', true);
+
+		if (empty($fl_builder_data) && empty($fl_builder_draft)) {
+			return;
+		}
+
+		// Process published layout data
+		if (!empty($fl_builder_data) && is_array($fl_builder_data)) {
+			$new_data = $this->replace_in_beaver_builder_data($fl_builder_data, $placeholders, $value_set);
+			update_post_meta($new_post_id, '_fl_builder_data', $new_data);
+		}
+
+		// Process draft layout data
+		if (!empty($fl_builder_draft) && is_array($fl_builder_draft)) {
+			$new_draft = $this->replace_in_beaver_builder_data($fl_builder_draft, $placeholders, $value_set);
+			update_post_meta($new_post_id, '_fl_builder_draft', $new_draft);
+		}
+
+		// Copy other Beaver Builder meta
+		$bb_meta_keys = [
+			'_fl_builder_enabled',
+			'_fl_builder_data_settings',
+			'_fl_builder_draft_settings'
+		];
+
+		foreach ($bb_meta_keys as $meta_key) {
+			$meta_value = get_post_meta($template_id, $meta_key, true);
+			if (!empty($meta_value)) {
+				update_post_meta($new_post_id, $meta_key, $meta_value);
+			}
+		}
+
+		// Clear Beaver Builder cache
+		if (class_exists('FLBuilderModel')) {
+			FLBuilderModel::delete_asset_cache($new_post_id);
+		}
+	}
+
+	/**
+	 * Helper function to replace placeholders in Beaver Builder data
+	 */
+	private function replace_in_beaver_builder_data($data, $placeholders, $values) {
+		if (!is_array($data)) {
+			return $data;
+		}
+
+		foreach ($data as $node_id => $node) {
+			if (is_object($node)) {
+				$node = (array) $node;
+			}
+
+			if (is_array($node)) {
+				// Replace in settings
+				if (isset($node['settings'])) {
+					$settings = (array) $node['settings'];
+					foreach ($settings as $key => $value) {
+						if (is_string($value)) {
+							$settings[$key] = $this->multi_replace($value, $placeholders, $values);
+						}
+					}
+					$node['settings'] = (object) $settings;
+				}
+
+				$data[$node_id] = (object) $node;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Process Bricks Builder data for a post
+	 */
+	private function process_bricks_builder_data($template_id, $new_post_id, $placeholders, $value_set) {
+		// Bricks stores data in _bricks_page_content_2 meta key
+		$bricks_data = get_post_meta($template_id, '_bricks_page_content_2', true);
+
+		if (empty($bricks_data)) {
+			// Try the older meta key format
+			$bricks_data = get_post_meta($template_id, '_bricks_page_content', true);
+		}
+
+		if (empty($bricks_data)) {
+			return;
+		}
+
+		// Bricks data can be JSON string or array
+		if (is_string($bricks_data)) {
+			$bricks_data = json_decode($bricks_data, true);
+		}
+
+		if (!is_array($bricks_data)) {
+			return;
+		}
+
+		// Process the Bricks data
+		$new_data = $this->replace_in_bricks_data($bricks_data, $placeholders, $value_set);
+
+		// Save the updated data
+		update_post_meta($new_post_id, '_bricks_page_content_2', $new_data);
+
+		// Copy other Bricks meta
+		$bricks_meta_keys = [
+			'_bricks_page_header_2',
+			'_bricks_page_footer_2',
+			'_bricks_page_settings',
+			'_bricks_editor_mode'
+		];
+
+		foreach ($bricks_meta_keys as $meta_key) {
+			$meta_value = get_post_meta($template_id, $meta_key, true);
+			if (!empty($meta_value)) {
+				// For content areas, also apply replacements
+				if (strpos($meta_key, '_content') !== false || strpos($meta_key, '_header') !== false || strpos($meta_key, '_footer') !== false) {
+					if (is_array($meta_value)) {
+						$meta_value = $this->replace_in_bricks_data($meta_value, $placeholders, $value_set);
+					}
+				}
+				update_post_meta($new_post_id, $meta_key, $meta_value);
+			}
+		}
+
+		// Clear Bricks cache if available
+		if (class_exists('Bricks\Assets')) {
+			delete_post_meta($new_post_id, '_bricks_page_assets_css');
+			delete_post_meta($new_post_id, '_bricks_page_assets_js');
+		}
+	}
+
+	/**
+	 * Helper function to replace placeholders in Bricks Builder data
+	 */
+	private function replace_in_bricks_data($data, $placeholders, $values) {
+		if (!is_array($data)) {
+			return $data;
+		}
+
+		foreach ($data as $index => $element) {
+			if (is_array($element)) {
+				// Replace in settings
+				if (isset($element['settings']) && is_array($element['settings'])) {
+					$data[$index]['settings'] = $this->replace_in_bricks_settings($element['settings'], $placeholders, $values);
+				}
+
+				// Process nested children
+				if (isset($element['children']) && is_array($element['children'])) {
+					$data[$index]['children'] = $this->replace_in_bricks_data($element['children'], $placeholders, $values);
+				}
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Helper function to replace placeholders in Bricks settings
+	 */
+	private function replace_in_bricks_settings($settings, $placeholders, $values) {
+		foreach ($settings as $key => $value) {
+			if (is_string($value)) {
+				$settings[$key] = $this->multi_replace($value, $placeholders, $values);
+			} elseif (is_array($value)) {
+				$settings[$key] = $this->replace_in_bricks_settings($value, $placeholders, $values);
+			}
+		}
+		return $settings;
+	}
+
+	/**
+	 * Detect supported page builders
+	 *
+	 * @return array
+	 */
+	public function detect_page_builders() {
+		$page_builders = [];
+
+		// Elementor
+		if (defined('ELEMENTOR_VERSION') || class_exists('\Elementor\Plugin')) {
+			$page_builders[] = [
+				'name' => 'Elementor',
+				'id' => 'elementor',
+				'meta_key' => '_elementor_data'
+			];
+		}
+
+		// Beaver Builder
+		if (defined('FL_BUILDER_VERSION') || class_exists('FLBuilder')) {
+			$page_builders[] = [
+				'name' => 'Beaver Builder',
+				'id' => 'beaver',
+				'meta_key' => '_fl_builder_data'
+			];
+		}
+
+		// Bricks Builder
+		if (defined('BRICKS_VERSION') || class_exists('Bricks\Elements')) {
+			$page_builders[] = [
+				'name' => 'Bricks Builder',
+				'id' => 'bricks',
+				'meta_key' => '_bricks_page_content_2'
+			];
+		}
+
+		return $page_builders;
 	}
 
 	/**
