@@ -26,17 +26,37 @@ class Bulk_Page_Duplicator_Core {
 
 		// Get data from AJAX request (validate, unslash, sanitize)
 		$template_id = isset($_POST['template_id']) ? intval(wp_unslash($_POST['template_id'])) : 0;
-		$placeholder = isset($_POST['placeholder']) ? sanitize_text_field(wp_unslash($_POST['placeholder'])) : '';
-		$batch_values = isset($_POST['values']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['values'])) : [];
+		// Support multiple placeholders (array)
+		$placeholders = isset($_POST['placeholders']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['placeholders'])) : [];
+		// Values can now be arrays (for multiple placeholders) or strings
+		$batch_values = [];
+		if (isset($_POST['values'])) {
+			$raw_values = wp_unslash($_POST['values']);
+			foreach ((array) $raw_values as $value_set) {
+				if (is_array($value_set)) {
+					$batch_values[] = array_map('sanitize_text_field', $value_set);
+				} else {
+					$batch_values[] = [sanitize_text_field($value_set)];
+				}
+			}
+		}
 		$page_status = isset($_POST['status']) ? sanitize_text_field(wp_unslash($_POST['status'])) : 'draft';
 		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['replace_options'])) : [];
+		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page';
+		$parent_page = isset($_POST['parent_page']) ? sanitize_text_field(wp_unslash($_POST['parent_page'])) : '0';
 		$batch_index = isset($_POST['batch_index']) ? intval(wp_unslash($_POST['batch_index'])) : 0;
-		$batch_size = 10; // Process 10 pages at a time
+		$batch_size = 10; // Process 10 items at a time
 
-		// Validate template page exists
+		// Validate post type exists and is public
+		$post_type_obj = get_post_type_object($post_type);
+		if (!$post_type_obj || !$post_type_obj->public) {
+			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		// Validate template post exists
 		$template_page = get_post($template_id);
 		if (!$template_page) {
-			wp_send_json_error(__('Template page not found', 'bulk-page-duplicator'));
+			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
 		}
 
 		$results = [];
@@ -52,27 +72,31 @@ class Bulk_Page_Duplicator_Core {
 			}
 
 			// Process this batch
-			foreach ($batch_values as $value) {
+			foreach ($batch_values as $value_set) {
 				// Skip empty values
-				if (empty($value)) continue;
+				if (empty($value_set) || (is_array($value_set) && empty(array_filter($value_set)))) continue;
 
-				// Create title
+				// For display purposes, use first value or joined values
+				$display_value = is_array($value_set) ? implode(', ', $value_set) : $value_set;
+
+				// Create title - apply all placeholder replacements
 				$title = $template_page->post_title;
 				if (in_array('title', $replace_options)) {
-					$title = $this->smart_replace($title, $placeholder, $value);
+					$title = $this->multi_replace($title, $placeholders, $value_set);
 				}
 
 				$slug = $template_page->post_name;
 				if (in_array('slug', $replace_options)) {
-					$new_slug = $this->smart_replace($slug, $placeholder, $value);
+					$new_slug = $this->multi_replace($slug, $placeholders, $value_set);
 
-					// Also try replacing the slugified placeholder (for multi-word placeholders in slugs)
-					$placeholder_slug = sanitize_title($placeholder);
-					// Check if slugified placeholder is different from raw placeholder (e.g. contains hyphens)
-					// and if it exists in the slug (simple check before doing replacement)
-					if ($placeholder_slug !== strtolower($placeholder)) {
-						$value_slug = sanitize_title($value);
-						$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
+					// Also try replacing the slugified placeholders (for multi-word placeholders in slugs)
+					foreach ($placeholders as $index => $placeholder) {
+						$value = is_array($value_set) ? ($value_set[$index] ?? '') : $value_set;
+						$placeholder_slug = sanitize_title($placeholder);
+						if ($placeholder_slug !== strtolower($placeholder)) {
+							$value_slug = sanitize_title($value);
+							$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
+						}
 					}
 
 					$slug = sanitize_title($new_slug);
@@ -81,56 +105,67 @@ class Bulk_Page_Duplicator_Core {
 				// Create content
 				$content = $template_page->post_content;
 				if (in_array('content', $replace_options)) {
-					$content = $this->smart_replace($content, $placeholder, $value);
+					$content = $this->multi_replace($content, $placeholders, $value_set);
 				}
 
-				// Check if page with this slug already exists
-				$existing_page = get_page_by_path($slug);
-				if ($existing_page) {
+				// Check if post with this slug already exists for the post type
+				$existing_post = get_page_by_path($slug, OBJECT, $post_type);
+				if ($existing_post) {
 					$results[] = [
-						'value' => $value,
+						'value' => $display_value,
 						'status' => 'skipped',
-						// translators: %s: The page slug that already exists.
-						'message' => sprintf(__('Page with slug "%s" already exists', 'bulk-page-duplicator'), $slug)
+						// translators: %s: The slug that already exists.
+						'message' => sprintf(__('Item with slug "%s" already exists', 'bulk-page-duplicator'), $slug)
 					];
 					continue;
 				}
 
-				// Create the duplicated page
-				$page_id = wp_insert_post([
+				// Determine parent page
+				$post_parent = 0;
+				if ($post_type_obj->hierarchical) {
+					if ($parent_page === 'template') {
+						$post_parent = $template_page->post_parent;
+					} elseif (is_numeric($parent_page) && intval($parent_page) > 0) {
+						$post_parent = intval($parent_page);
+					}
+				}
+
+				// Create the duplicated post
+				$new_post_id = wp_insert_post([
 					'post_title'     => $title,
 					'post_name'      => $slug,
 					'post_content'   => $content,
 					'post_status'    => $page_status,
-					'post_type'      => 'page',
+					'post_type'      => $post_type,
+					'post_parent'    => $post_parent,
 					'post_author'    => $template_page->post_author,
 					'comment_status' => $template_page->comment_status,
 					'ping_status'    => $template_page->ping_status,
 				]);
 
-				if (is_wp_error($page_id)) {
+				if (is_wp_error($new_post_id)) {
 					$results[] = [
-						'value' => $value,
+						'value' => $display_value,
 						'status' => 'error',
-						'message' => $page_id->get_error_message()
+						'message' => $new_post_id->get_error_message()
 					];
 					continue;
 				}
 
 				// Copy post meta
-				$this->copy_post_meta($template_id, $page_id, $placeholder, $value, $replace_options);
+				$this->copy_post_meta_multi($template_id, $new_post_id, $placeholders, $value_set, $replace_options);
 
 				// Apply Elementor data if exists and option selected
 				if (in_array('elementor', $replace_options)) {
-					// First, ensure this is an Elementor page
+					// First, ensure this is an Elementor post
 					$is_elementor_page = get_post_meta($template_id, '_elementor_edit_mode', true) === 'builder';
 
 					if ($is_elementor_page) {
 						// 1. Copy _elementor_data with placeholders replaced
 						$elementor_data = get_post_meta($template_id, '_elementor_data', true);
 						if (!empty($elementor_data)) {
-							$new_elementor_data = $this->smart_replace($elementor_data, $placeholder, $value);
-							update_post_meta($page_id, '_elementor_data', wp_slash($new_elementor_data)); // Important: wp_slash for JSON
+							$new_elementor_data = $this->multi_replace($elementor_data, $placeholders, $value_set);
+							update_post_meta($new_post_id, '_elementor_data', wp_slash($new_elementor_data)); // Important: wp_slash for JSON
 						}
 
 						// 2. Get ALL post meta (including Elementor-specific ones)
@@ -150,39 +185,39 @@ class Bulk_Page_Duplicator_Core {
 						foreach ($elementor_meta_keys as $meta_key) {
 							if (isset($all_meta[$meta_key]) && !empty($all_meta[$meta_key][0])) {
 								$meta_value = $all_meta[$meta_key][0];
-								update_post_meta($page_id, $meta_key, maybe_unserialize($meta_value));
+								update_post_meta($new_post_id, $meta_key, maybe_unserialize($meta_value));
 							}
 						}
 
 						// 4. Force regeneration of CSS
-						delete_post_meta($page_id, '_elementor_css');
+						delete_post_meta($new_post_id, '_elementor_css');
 
-						// 5. Clear Elementor cache for this page
+						// 5. Clear Elementor cache for this post
 						if (class_exists('\Elementor\Plugin')) {
 							\Elementor\Plugin::$instance->files_manager->clear_cache();
 						}
 
-						// 6. Set page type to elementor
-						update_post_meta($page_id, '_elementor_edit_mode', 'builder');
+						// 6. Set post type to elementor
+						update_post_meta($new_post_id, '_elementor_edit_mode', 'builder');
 					}
 
 					// 7. Ensure the post content is properly set for Elementor
 					// Sometimes Elementor uses a special placeholder in post_content
 					if (empty($content) && $is_elementor_page) {
 						wp_update_post([
-							'ID' => $page_id,
-							'post_content' => '<!-- wp:shortcode -->[elementor-template id="' . $page_id . '"]<!-- /wp:shortcode -->'
+							'ID' => $new_post_id,
+							'post_content' => '<!-- wp:shortcode -->[elementor-template id="' . $new_post_id . '"]<!-- /wp:shortcode -->'
 						]);
 					}
 				}
 
 				$results[] = [
-					'value' => $value,
+					'value' => $display_value,
 					'status' => 'success',
-					// translators: %s: The title of the newly created page.
-					'message' => sprintf(__('Created page: "%s"', 'bulk-page-duplicator'), $title),
-					'id' => $page_id,
-					'edit_url' => get_edit_post_link($page_id, '')
+					// translators: %s: The title of the newly created item.
+					'message' => sprintf(__('Created: "%s"', 'bulk-page-duplicator'), $title),
+					'id' => $new_post_id,
+					'edit_url' => get_edit_post_link($new_post_id, '')
 				];
 			}
 		}
@@ -194,15 +229,44 @@ class Bulk_Page_Duplicator_Core {
 	}
 
 	/**
-	 * Copy post meta from template to new page, with replacements
+	 * Apply multiple placeholder replacements to text
+	 *
+	 * @param string $text The text to process
+	 * @param array $placeholders Array of placeholder strings
+	 * @param array $values Array of replacement values (matching placeholders order)
+	 * @return string The processed text
 	 */
-	private function copy_post_meta($from_id, $to_id, $placeholder, $replacement, $replace_options) {
+	private function multi_replace($text, $placeholders, $values) {
+		if (empty($text) || empty($placeholders)) {
+			return $text;
+		}
+
+		// Ensure values is an array
+		if (!is_array($values)) {
+			$values = [$values];
+		}
+
+		// Apply each placeholder replacement
+		foreach ($placeholders as $index => $placeholder) {
+			$value = isset($values[$index]) ? $values[$index] : '';
+			if (!empty($placeholder) && !empty($value)) {
+				$text = $this->smart_replace($text, $placeholder, $value);
+			}
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Copy post meta from template to new post, with multiple placeholder replacements
+	 */
+	private function copy_post_meta_multi($from_id, $to_id, $placeholders, $values, $replace_options) {
 		$post_meta = get_post_meta($from_id);
 
 		// SEO plugins detection
 		$seo_plugins = $this->detect_seo_plugins();
 
-		foreach ($post_meta as $key => $values) {
+		foreach ($post_meta as $key => $meta_values) {
 			// Skip _edit_lock and _edit_last
 			if (in_array($key, ['_edit_lock', '_edit_last'])) {
 				continue;
@@ -222,30 +286,51 @@ class Bulk_Page_Duplicator_Core {
 				}
 			}
 
-			foreach ($values as $value) {
+			foreach ($meta_values as $meta_value) {
 				// Handle serialized data for SEO fields
 				if ($is_seo_field && in_array('seo', $replace_options)) {
 					// For serialized data
-					if (is_serialized($value)) {
-						$unserialized = maybe_unserialize($value);
-						$this->replace_in_array_recursive($unserialized, $placeholder, $replacement);
-						$value = maybe_serialize($unserialized);
+					if (is_serialized($meta_value)) {
+						$unserialized = maybe_unserialize($meta_value);
+						$this->replace_in_array_recursive_multi($unserialized, $placeholders, $values);
+						$meta_value = maybe_serialize($unserialized);
 					}
 					// For JSON data (common in newer SEO plugins)
-					else if ($this->is_json($value)) {
-						$decoded = json_decode($value, true);
+					else if ($this->is_json($meta_value)) {
+						$decoded = json_decode($meta_value, true);
 						if (is_array($decoded)) {
-							$this->replace_in_array_recursive($decoded, $placeholder, $replacement);
-							$value = json_encode($decoded);
+							$this->replace_in_array_recursive_multi($decoded, $placeholders, $values);
+							$meta_value = json_encode($decoded);
 						}
 					}
 					// For simple string values
 					else {
-						$value = $this->smart_replace($value, $placeholder, $replacement);
+						$meta_value = $this->multi_replace($meta_value, $placeholders, $values);
 					}
 				}
 
-				update_post_meta($to_id, $key, maybe_unserialize($value));
+				update_post_meta($to_id, $key, maybe_unserialize($meta_value));
+			}
+		}
+	}
+
+	/**
+	 * Helper function to replace multiple placeholders in a nested array
+	 *
+	 * @param array &$array The array to process
+	 * @param array $placeholders Array of placeholder strings
+	 * @param array $values Array of replacement values
+	 */
+	private function replace_in_array_recursive_multi(&$array, $placeholders, $values) {
+		if (!is_array($array)) {
+			return;
+		}
+
+		foreach ($array as $key => &$value) {
+			if (is_array($value)) {
+				$this->replace_in_array_recursive_multi($value, $placeholders, $values);
+			} else if (is_string($value)) {
+				$value = $this->multi_replace($value, $placeholders, $values);
 			}
 		}
 	}
