@@ -58,10 +58,29 @@ $seo_plugins = $core->detect_seo_plugins();
 				<?php esc_html_e('Examples: "London" (single) or "London, UK" (multiple, comma-separated)', 'bulk-page-duplicator'); ?>
 			</p>
 			<h2><?php esc_html_e('Replacement Values', 'bulk-page-duplicator'); ?></h2>
-			<p id="replacement-help"><?php esc_html_e('Enter one value per line. Each line creates a new item:', 'bulk-page-duplicator'); ?></p>
+			<p id="replacement-help"><?php esc_html_e('Enter one value per line, or import from a CSV file:', 'bulk-page-duplicator'); ?></p>
 			<p class="description" id="replacement-multi-help" style="display: none;">
 				<?php esc_html_e('For multiple placeholders, separate values with commas (e.g., "New York, USA")', 'bulk-page-duplicator'); ?>
 			</p>
+			<div class="csv-import-section">
+				<div class="csv-upload-area" id="csv-drop-zone">
+					<span class="dashicons dashicons-upload"></span>
+					<p><?php esc_html_e('Drag & drop a CSV file here, or', 'bulk-page-duplicator'); ?></p>
+					<label class="button button-secondary">
+						<?php esc_html_e('Browse Files', 'bulk-page-duplicator'); ?>
+						<input type="file" id="csv-file-input" accept=".csv,.txt" style="display: none;">
+					</label>
+					<p class="description"><?php esc_html_e('Supported: .csv and .txt files', 'bulk-page-duplicator'); ?></p>
+				</div>
+				<div id="csv-preview" style="display: none;">
+					<p class="csv-file-info">
+						<span class="dashicons dashicons-media-spreadsheet"></span>
+						<span id="csv-file-name"></span>
+						<button type="button" class="button-link" id="csv-clear"><?php esc_html_e('Remove', 'bulk-page-duplicator'); ?></button>
+					</p>
+					<p id="csv-row-count"></p>
+				</div>
+			</div>
 			<textarea id="replacement-values" class="widefat" rows="10" placeholder="New York&#10;Los Angeles&#10;Chicago"></textarea>
 			<div id="parent-page-section">
 				<h2><?php esc_html_e('Parent Page', 'bulk-page-duplicator'); ?></h2>

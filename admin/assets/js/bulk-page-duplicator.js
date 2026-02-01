@@ -213,6 +213,103 @@ jQuery(document).ready(function ($) {
 		}
 	});
 
+	// ===== CSV Import Functionality =====
+	const $dropZone = $("#csv-drop-zone");
+	const $fileInput = $("#csv-file-input");
+	const $csvPreview = $("#csv-preview");
+	const $csvFileName = $("#csv-file-name");
+	const $csvRowCount = $("#csv-row-count");
+	const $csvClear = $("#csv-clear");
+
+	// Parse CSV content
+	function parseCSV(content) {
+		const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
+		return lines;
+	}
+
+	// Handle file processing
+	function processFile(file) {
+		if (!file) return;
+
+		const validTypes = ["text/csv", "text/plain", "application/vnd.ms-excel"];
+		const validExtensions = [".csv", ".txt"];
+		const fileName = file.name.toLowerCase();
+		const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+
+		if (!validTypes.includes(file.type) && !hasValidExtension) {
+			alert("Please upload a CSV or TXT file.");
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = function (e) {
+			const content = e.target.result;
+			const lines = parseCSV(content);
+
+			if (lines.length === 0) {
+				alert("The file appears to be empty.");
+				return;
+			}
+
+			// Populate textarea
+			$("#replacement-values").val(lines.join("\n"));
+
+			// Show preview
+			$csvFileName.text(file.name);
+			$csvRowCount.text(lines.length + " values loaded");
+			$dropZone.hide();
+			$csvPreview.show();
+
+			// Update preview
+			updatePreview();
+		};
+		reader.readAsText(file);
+	}
+
+	// File input change
+	$fileInput.on("change", function () {
+		processFile(this.files[0]);
+		$(this).val(""); // Reset input
+	});
+
+	// Drag and drop handlers
+	$dropZone.on("dragover dragenter", function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+		$(this).addClass("drag-over");
+	});
+
+	$dropZone.on("dragleave dragend drop", function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+		$(this).removeClass("drag-over");
+	});
+
+	$dropZone.on("drop", function (e) {
+		const files = e.originalEvent.dataTransfer.files;
+		if (files.length > 0) {
+			processFile(files[0]);
+		}
+	});
+
+	// Clear CSV
+	$csvClear.on("click", function () {
+		$("#replacement-values").val("");
+		$csvPreview.hide();
+		$dropZone.show();
+		updatePreview();
+	});
+
+	// Update preview when textarea changes manually
+	$("#replacement-values").on("input", function () {
+		// If user manually edits, hide CSV preview
+		if ($csvPreview.is(":visible")) {
+			const lines = $(this).val().split("\n").filter(v => v.trim() !== "");
+			$csvRowCount.text(lines.length + " values");
+		}
+	});
+	// ===== End CSV Import =====
+
 	$("#start-duplication").on("click", function (e) {
 		e.preventDefault();
 
