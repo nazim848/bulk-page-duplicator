@@ -128,19 +128,47 @@ $page_builders = $core->detect_page_builders();
 					</div>
 				</div>
 			</div>
-			<h2><?php esc_html_e('Instructions', 'bulk-page-duplicator'); ?></h2>
+			<h2><?php esc_html_e('How It Works', 'bulk-page-duplicator'); ?></h2>
 			<ol>
-				<li><?php esc_html_e('Select the page you want to duplicate.', 'bulk-page-duplicator'); ?></li>
-				<li><?php esc_html_e('Enter the placeholder text that exists in your template page.', 'bulk-page-duplicator'); ?></li>
-				<li><?php esc_html_e('Enter all the values you want to replace the placeholder with (one per line).', 'bulk-page-duplicator'); ?></li>
-				<li><?php esc_html_e('Choose where the text should be replaced.', 'bulk-page-duplicator'); ?></li>
-				<li><?php esc_html_e('Click "Start Duplication" to begin the process.', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Create a template page with placeholder text (e.g., "London" for a city-based service page).', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Select your template and enter the placeholder text to find and replace.', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Enter replacement values (one per line) - each creates a new page.', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Choose which areas to apply replacements (title, content, page builder data, etc.).', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Click "Start Duplication" to create all pages automatically.', 'bulk-page-duplicator'); ?></li>
 			</ol>
-			<h3><?php esc_html_e('Tips', 'bulk-page-duplicator'); ?></h3>
+
+			<h3><?php esc_html_e('Multiple Placeholders', 'bulk-page-duplicator'); ?></h3>
+			<p class="description"><?php esc_html_e('You can use multiple placeholders separated by commas. For example:', 'bulk-page-duplicator'); ?></p>
 			<ul>
-				<li><?php esc_html_e('Make sure your template page contains the placeholder text in all areas you want to replace.', 'bulk-page-duplicator'); ?></li>
-				<li><?php esc_html_e('Large numbers of pages will be processed in batches to avoid timeout issues.', 'bulk-page-duplicator'); ?></li>
-				<li><?php esc_html_e('Processing will continue in the background - don\'t close the browser tab.', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Placeholders: "London, UK" (two placeholders)', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Values: "New York, USA" and "Paris, France" (one per line)', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Result: "London" → "New York" and "UK" → "USA" in the first page', 'bulk-page-duplicator'); ?></li>
+			</ul>
+
+			<h3><?php esc_html_e('Page Builder Support', 'bulk-page-duplicator'); ?></h3>
+			<p class="description"><?php esc_html_e('This plugin supports placeholder replacement in:', 'bulk-page-duplicator'); ?></p>
+			<ul>
+				<li><strong><?php esc_html_e('Elementor', 'bulk-page-duplicator'); ?></strong> - <?php esc_html_e('All text widgets, headings, and content areas', 'bulk-page-duplicator'); ?></li>
+				<li><strong><?php esc_html_e('Beaver Builder', 'bulk-page-duplicator'); ?></strong> - <?php esc_html_e('Module settings and text content', 'bulk-page-duplicator'); ?></li>
+				<li><strong><?php esc_html_e('Bricks Builder', 'bulk-page-duplicator'); ?></strong> - <?php esc_html_e('Element settings and nested content', 'bulk-page-duplicator'); ?></li>
+			</ul>
+			<p class="description"><?php esc_html_e('Keep the page builder options checked even if you\'re unsure - the plugin will only process data if it exists.', 'bulk-page-duplicator'); ?></p>
+
+			<h3><?php esc_html_e('Tips for Best Results', 'bulk-page-duplicator'); ?></h3>
+			<ul>
+				<li><?php esc_html_e('Use unique placeholder text that won\'t accidentally match other content (e.g., "CITYNAME" instead of common words).', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('The replacement is case-preserving: "London" → "Paris", "LONDON" → "PARIS", "london" → "paris".', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Pages with duplicate slugs will be skipped - check the results log for details.', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Use "Draft" status first to review pages before publishing.', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Large batches are processed automatically - don\'t close the browser tab during processing.', 'bulk-page-duplicator'); ?></li>
+			</ul>
+
+			<h3><?php esc_html_e('Common Use Cases', 'bulk-page-duplicator'); ?></h3>
+			<ul>
+				<li><?php esc_html_e('Location-based service pages (e.g., "Plumber in London" → multiple cities)', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Product variations (e.g., "Blue Widget" → multiple colors)', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Team member profiles with consistent layouts', 'bulk-page-duplicator'); ?></li>
+				<li><?php esc_html_e('Landing pages for different campaigns or audiences', 'bulk-page-duplicator'); ?></li>
 			</ul>
 			<div class="bulk-page-dup-log-container" style="display: none;">
 				<h3><?php esc_html_e('Results Log', 'bulk-page-duplicator'); ?></h3>
