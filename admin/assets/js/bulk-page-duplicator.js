@@ -2,6 +2,15 @@ jQuery(document).ready(function ($) {
 	let isProcessing = false;
 	let cancelRequested = false;
 	let templateData = null; // Cache for template title/slug
+	let availableTemplates = []; // Cache for template list
+	let highlightedIndex = -1; // For keyboard navigation
+
+	// Helper function to escape HTML
+	function escapeHtml(text) {
+		const div = document.createElement('div');
+		div.textContent = text;
+		return div.innerHTML;
+	}
 
 	// Helper function to simulate smart_replace (case-preserving)
 	function smartReplace(text, search, replace) {
@@ -80,16 +89,70 @@ jQuery(document).ready(function ($) {
 		$("#preview-panel").show();
 	}
 
-	// Fetch template data when template changes
-	$("#template-page").on("change", function () {
-		const templateId = $(this).val();
+	// === Enhanced Template Selector ===
 
-		if (!templateId) {
-			templateData = null;
-			$("#preview-panel").hide();
-			return;
+	// Render dropdown with filtered templates
+	function renderTemplateDropdown(filter = '') {
+		const $dropdown = $('#template-dropdown');
+		$dropdown.empty();
+		highlightedIndex = -1;
+
+		const filterLower = filter.toLowerCase();
+		const filtered = availableTemplates.filter(t => 
+			t.title.toLowerCase().includes(filterLower) || 
+			String(t.id).includes(filter)
+		);
+
+		if (filtered.length === 0) {
+			$dropdown.html('<div class="template-dropdown-empty">No templates found</div>');
+		} else {
+			filtered.forEach((template, index) => {
+				const thumbHtml = template.thumbnail 
+					? `<img class="template-dropdown-thumb" src="${escapeHtml(template.thumbnail)}" alt="">`
+					: `<div class="template-dropdown-thumb no-thumb">No img</div>`;
+
+				const html = `
+					<div class="template-dropdown-item" data-id="${template.id}" data-index="${index}">
+						${thumbHtml}
+						<div class="template-dropdown-info">
+							<div class="template-dropdown-title">${escapeHtml(template.title)}</div>
+							<div class="template-dropdown-meta">
+								<span class="template-dropdown-status ${template.status}">${escapeHtml(template.status_label)}</span>
+								<span>Modified: ${escapeHtml(template.modified)}</span>
+							</div>
+						</div>
+					</div>
+				`;
+				$dropdown.append(html);
+			});
 		}
 
+		$dropdown.show();
+	}
+
+	// Select a template
+	function selectTemplate(templateId) {
+		const template = availableTemplates.find(t => t.id == templateId);
+		if (!template) return;
+
+		$('#template-page').val(templateId).trigger('change');
+		$('#template-search').val('').hide();
+		$('#template-dropdown').hide();
+
+		// Show selected template info
+		if (template.thumbnail) {
+			$('#template-thumb').attr('src', template.thumbnail).show();
+			$('#template-no-thumb').hide();
+		} else {
+			$('#template-thumb').hide();
+			$('#template-no-thumb').show();
+		}
+		$('#template-title').text(template.title + ' (ID: ' + template.id + ')');
+		$('#template-status').text(template.status_label).attr('class', 'template-status ' + template.status);
+		$('#template-modified').text('Modified: ' + template.modified);
+		$('#selected-template-info').show();
+
+		// Fetch full template data for preview
 		$.ajax({
 			url: bulk_page_dup_ajax.ajax_url,
 			type: "POST",
@@ -105,6 +168,69 @@ jQuery(document).ready(function ($) {
 				}
 			}
 		});
+	}
+
+	// Clear template selection
+	$('#clear-template').on('click', function() {
+		$('#template-page').val('').trigger('change');
+		$('#selected-template-info').hide();
+		$('#template-search').val('').show();
+		templateData = null;
+		$('#preview-panel').hide();
+	});
+
+	// Handle search input
+	$('#template-search').on('input', function() {
+		const query = $(this).val();
+		if (availableTemplates.length > 0) {
+			renderTemplateDropdown(query);
+		}
+	});
+
+	// Handle focus on search
+	$('#template-search').on('focus', function() {
+		if (availableTemplates.length > 0) {
+			renderTemplateDropdown($(this).val());
+		}
+	});
+
+	// Handle click outside to close dropdown
+	$(document).on('click', function(e) {
+		if (!$(e.target).closest('.template-selector-wrapper').length) {
+			$('#template-dropdown').hide();
+		}
+	});
+
+	// Handle template item click
+	$(document).on('click', '.template-dropdown-item', function() {
+		const templateId = $(this).data('id');
+		selectTemplate(templateId);
+	});
+
+	// Keyboard navigation
+	$('#template-search').on('keydown', function(e) {
+		const $items = $('.template-dropdown-item');
+		const itemCount = $items.length;
+
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			highlightedIndex = Math.min(highlightedIndex + 1, itemCount - 1);
+			$items.removeClass('highlighted');
+			$items.eq(highlightedIndex).addClass('highlighted');
+		} else if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			highlightedIndex = Math.max(highlightedIndex - 1, 0);
+			$items.removeClass('highlighted');
+			$items.eq(highlightedIndex).addClass('highlighted');
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			if (highlightedIndex >= 0) {
+				const templateId = $items.eq(highlightedIndex).data('id');
+				selectTemplate(templateId);
+			}
+		} else if (e.key === 'Escape') {
+			$('#template-dropdown').hide();
+		}
 	});
 
 	// Update preview when placeholder or values change
@@ -115,21 +241,20 @@ jQuery(document).ready(function ($) {
 	// Handle post type change - reload templates and parent pages
 	$("#post-type").on("change", function () {
 		const postType = $(this).val();
-		const $templateSelect = $("#template-page");
 		const $parentSelect = $("#parent-page");
 		const $loading = $("#template-loading");
 		const $parentSection = $("#parent-page-section");
 
-		// Show/hide parent section based on whether post type is hierarchical
-		const hierarchicalTypes = ["page"]; // Add more as needed
-		if (hierarchicalTypes.includes(postType)) {
-			$parentSection.show();
-		} else {
-			$parentSection.hide();
-		}
+		// Clear current selection
+		$('#template-page').val('');
+		$('#selected-template-info').hide();
+		$('#template-search').val('').show();
+		templateData = null;
+		$('#preview-panel').hide();
+		availableTemplates = [];
 
 		// Show loading state
-		$templateSelect.prop("disabled", true);
+		$('#template-search').prop('disabled', true).attr('placeholder', 'Loading templates...');
 		$loading.show();
 
 		$.ajax({
@@ -142,19 +267,10 @@ jQuery(document).ready(function ($) {
 			},
 			success: function (response) {
 				if (response.success) {
-					// Clear and rebuild template options
-					$templateSelect.empty();
-					$templateSelect.append(
-						'<option value="">Select a template</option>'
-					);
+					// Store templates for search
+					availableTemplates = response.data.posts;
 
-					response.data.posts.forEach(function (post) {
-						$templateSelect.append(
-							'<option value="' + post.id + '">' + post.title + "</option>"
-						);
-					});
-
-					// Also update parent page dropdown if hierarchical
+					// Update parent page dropdown if hierarchical
 					if (response.data.is_hierarchical) {
 						$parentSection.show();
 						$parentSelect.empty();
@@ -166,16 +282,12 @@ jQuery(document).ready(function ($) {
 						);
 						response.data.posts.forEach(function (post) {
 							$parentSelect.append(
-								'<option value="' + post.id + '">' + post.title.replace(/ \(ID:.*\)/, '') + "</option>"
+								'<option value="' + post.id + '">' + escapeHtml(post.title) + "</option>"
 							);
 						});
 					} else {
 						$parentSection.hide();
 					}
-
-					// Reset template data and preview when post type changes
-					templateData = null;
-					$("#preview-panel").hide();
 				} else {
 					alert("Error loading templates: " + response.data);
 				}
@@ -184,11 +296,39 @@ jQuery(document).ready(function ($) {
 				alert("Error loading templates. Please try again.");
 			},
 			complete: function () {
-				$templateSelect.prop("disabled", false);
+				$('#template-search').prop('disabled', false).attr('placeholder', 'Type to search templates...');
 				$loading.hide();
 			}
 		});
 	});
+
+	// Load templates on page load
+	(function loadInitialTemplates() {
+		const postType = $('#post-type').val();
+		const $loading = $('#template-loading');
+
+		$('#template-search').prop('disabled', true).attr('placeholder', 'Loading templates...');
+		$loading.show();
+
+		$.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_get_posts_by_type",
+				nonce: bulk_page_dup_ajax.nonce,
+				post_type: postType
+			},
+			success: function (response) {
+				if (response.success) {
+					availableTemplates = response.data.posts;
+				}
+			},
+			complete: function () {
+				$('#template-search').prop('disabled', false).attr('placeholder', 'Type to search templates...');
+				$loading.hide();
+			}
+		});
+	})();
 
 	// Show/hide multi-placeholder help based on input
 	$("#placeholder-text").on("input", function () {

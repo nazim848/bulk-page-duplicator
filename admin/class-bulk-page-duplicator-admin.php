@@ -108,9 +108,24 @@ class Bulk_Page_Duplicator_Admin {
 			if ($post->post_status !== 'publish') {
 				$status_label = ' [' . ucfirst($post->post_status) . ']';
 			}
+
+			// Get featured image thumbnail
+			$thumbnail_url = '';
+			if (has_post_thumbnail($post->ID)) {
+				$thumbnail_url = get_the_post_thumbnail_url($post->ID, 'thumbnail');
+			}
+
+			// Get last modified date
+			$modified_date = get_the_modified_date('M j, Y', $post->ID);
+
 			$options[] = array(
-				'id'    => $post->ID,
-				'title' => $post->post_title . ' (ID: ' . $post->ID . ')' . $status_label,
+				'id'            => $post->ID,
+				'title'         => $post->post_title,
+				'display_title' => $post->post_title . ' (ID: ' . $post->ID . ')' . $status_label,
+				'status'        => $post->post_status,
+				'status_label'  => ucfirst($post->post_status),
+				'thumbnail'     => $thumbnail_url,
+				'modified'      => $modified_date,
 			);
 		}
 
