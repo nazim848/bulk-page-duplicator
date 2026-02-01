@@ -128,3 +128,66 @@
 #parent-page-section {
 	margin-bottom: 15px;
 }
+
+/* Validation styles */
+.validation-message {
+	margin-top: 8px;
+	padding: 8px 12px;
+	border-radius: 3px;
+	font-size: 13px;
+}
+
+.validation-message.error {
+	background: #f9ecec;
+	border-left: 3px solid #dc3232;
+	color: #a00;
+}
+
+.validation-message.warning {
+	background: #fff8e5;
+	border-left: 3px solid #ffb900;
+	color: #826200;
+}
+
+.validation-message.success {
+	background: #ecf9ec;
+	border-left: 3px solid #46b450;
+	color: #2e7d32;
+}
+
+.validation-message.info {
+	background: #e8f4fd;
+	border-left: 3px solid #0073aa;
+	color: #004a73;
+}
+
+.values-info {
+	margin-top: 8px;
+	font-size: 13px;
+	color: #666;
+}
+
+.values-info .warning {
+	color: #826200;
+	margin-left: 10px;
+}
+
+.values-info .warning::before {
+	content: "⚠ ";
+}
+
+/* Input validation states */
+#placeholder-text.has-error,
+#replacement-values.has-error {
+	border-color: #dc3232;
+}
+
+#placeholder-text.has-warning,
+#replacement-values.has-warning {
+	border-color: #ffb900;
+}
+
+#placeholder-text.has-success,
+#replacement-values.has-success {
+	border-color: #46b450;
+}
