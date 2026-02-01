@@ -2,6 +2,51 @@ jQuery(document).ready(function ($) {
 	let isProcessing = false;
 	let cancelRequested = false;
 
+	// Handle post type change - reload templates
+	$("#post-type").on("change", function () {
+		const postType = $(this).val();
+		const $templateSelect = $("#template-page");
+		const $loading = $("#template-loading");
+
+		// Show loading state
+		$templateSelect.prop("disabled", true);
+		$loading.show();
+
+		$.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_get_posts_by_type",
+				nonce: bulk_page_dup_ajax.nonce,
+				post_type: postType
+			},
+			success: function (response) {
+				if (response.success) {
+					// Clear and rebuild options
+					$templateSelect.empty();
+					$templateSelect.append(
+						'<option value="">Select a template</option>'
+					);
+
+					response.data.posts.forEach(function (post) {
+						$templateSelect.append(
+							'<option value="' + post.id + '">' + post.title + "</option>"
+						);
+					});
+				} else {
+					alert("Error loading templates: " + response.data);
+				}
+			},
+			error: function () {
+				alert("Error loading templates. Please try again.");
+			},
+			complete: function () {
+				$templateSelect.prop("disabled", false);
+				$loading.hide();
+			}
+		});
+	});
+
 	$("#start-duplication").on("click", function (e) {
 		e.preventDefault();
 
@@ -56,6 +101,9 @@ jQuery(document).ready(function ($) {
 		$("#start-duplication").hide();
 		$("#cancel-duplication").show();
 
+		// Get selected post type
+		const postType = $("#post-type").val();
+
 		// Process in batches
 		processBatch(
 			templateId,
@@ -63,6 +111,7 @@ jQuery(document).ready(function ($) {
 			values,
 			$("#page-status").val(),
 			replaceOptions,
+			postType,
 			0
 		);
 	});
@@ -80,6 +129,7 @@ jQuery(document).ready(function ($) {
 		allValues,
 		status,
 		replaceOptions,
+		postType,
 		batchIndex
 	) {
 		if (cancelRequested) {
@@ -123,6 +173,7 @@ jQuery(document).ready(function ($) {
 				values: currentBatch,
 				status: status,
 				replace_options: replaceOptions,
+				post_type: postType,
 				batch_index: batchIndex
 			},
 			success: function (response) {
@@ -163,6 +214,7 @@ jQuery(document).ready(function ($) {
 							allValues,
 							status,
 							replaceOptions,
+							postType,
 							endIndex
 						);
 					}

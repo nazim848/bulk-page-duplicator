@@ -30,13 +30,20 @@ class Bulk_Page_Duplicator_Core {
 		$batch_values = isset($_POST['values']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['values'])) : [];
 		$page_status = isset($_POST['status']) ? sanitize_text_field(wp_unslash($_POST['status'])) : 'draft';
 		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['replace_options'])) : [];
+		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page';
 		$batch_index = isset($_POST['batch_index']) ? intval(wp_unslash($_POST['batch_index'])) : 0;
-		$batch_size = 10; // Process 10 pages at a time
+		$batch_size = 10; // Process 10 items at a time
 
-		// Validate template page exists
+		// Validate post type exists and is public
+		$post_type_obj = get_post_type_object($post_type);
+		if (!$post_type_obj || !$post_type_obj->public) {
+			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		// Validate template post exists
 		$template_page = get_post($template_id);
 		if (!$template_page) {
-			wp_send_json_error(__('Template page not found', 'bulk-page-duplicator'));
+			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
 		}
 
 		$results = [];
@@ -84,45 +91,45 @@ class Bulk_Page_Duplicator_Core {
 					$content = $this->smart_replace($content, $placeholder, $value);
 				}
 
-				// Check if page with this slug already exists
-				$existing_page = get_page_by_path($slug);
-				if ($existing_page) {
+				// Check if post with this slug already exists for the post type
+				$existing_post = get_page_by_path($slug, OBJECT, $post_type);
+				if ($existing_post) {
 					$results[] = [
 						'value' => $value,
 						'status' => 'skipped',
-						// translators: %s: The page slug that already exists.
-						'message' => sprintf(__('Page with slug "%s" already exists', 'bulk-page-duplicator'), $slug)
+						// translators: %s: The slug that already exists.
+						'message' => sprintf(__('Item with slug "%s" already exists', 'bulk-page-duplicator'), $slug)
 					];
 					continue;
 				}
 
-				// Create the duplicated page
-				$page_id = wp_insert_post([
+				// Create the duplicated post
+				$new_post_id = wp_insert_post([
 					'post_title'     => $title,
 					'post_name'      => $slug,
 					'post_content'   => $content,
 					'post_status'    => $page_status,
-					'post_type'      => 'page',
+					'post_type'      => $post_type,
 					'post_author'    => $template_page->post_author,
 					'comment_status' => $template_page->comment_status,
 					'ping_status'    => $template_page->ping_status,
 				]);
 
-				if (is_wp_error($page_id)) {
+				if (is_wp_error($new_post_id)) {
 					$results[] = [
 						'value' => $value,
 						'status' => 'error',
-						'message' => $page_id->get_error_message()
+						'message' => $new_post_id->get_error_message()
 					];
 					continue;
 				}
 
 				// Copy post meta
-				$this->copy_post_meta($template_id, $page_id, $placeholder, $value, $replace_options);
+				$this->copy_post_meta($template_id, $new_post_id, $placeholder, $value, $replace_options);
 
 				// Apply Elementor data if exists and option selected
 				if (in_array('elementor', $replace_options)) {
-					// First, ensure this is an Elementor page
+					// First, ensure this is an Elementor post
 					$is_elementor_page = get_post_meta($template_id, '_elementor_edit_mode', true) === 'builder';
 
 					if ($is_elementor_page) {
@@ -130,7 +137,7 @@ class Bulk_Page_Duplicator_Core {
 						$elementor_data = get_post_meta($template_id, '_elementor_data', true);
 						if (!empty($elementor_data)) {
 							$new_elementor_data = $this->smart_replace($elementor_data, $placeholder, $value);
-							update_post_meta($page_id, '_elementor_data', wp_slash($new_elementor_data)); // Important: wp_slash for JSON
+							update_post_meta($new_post_id, '_elementor_data', wp_slash($new_elementor_data)); // Important: wp_slash for JSON
 						}
 
 						// 2. Get ALL post meta (including Elementor-specific ones)
@@ -150,28 +157,28 @@ class Bulk_Page_Duplicator_Core {
 						foreach ($elementor_meta_keys as $meta_key) {
 							if (isset($all_meta[$meta_key]) && !empty($all_meta[$meta_key][0])) {
 								$meta_value = $all_meta[$meta_key][0];
-								update_post_meta($page_id, $meta_key, maybe_unserialize($meta_value));
+								update_post_meta($new_post_id, $meta_key, maybe_unserialize($meta_value));
 							}
 						}
 
 						// 4. Force regeneration of CSS
-						delete_post_meta($page_id, '_elementor_css');
+						delete_post_meta($new_post_id, '_elementor_css');
 
-						// 5. Clear Elementor cache for this page
+						// 5. Clear Elementor cache for this post
 						if (class_exists('\Elementor\Plugin')) {
 							\Elementor\Plugin::$instance->files_manager->clear_cache();
 						}
 
-						// 6. Set page type to elementor
-						update_post_meta($page_id, '_elementor_edit_mode', 'builder');
+						// 6. Set post type to elementor
+						update_post_meta($new_post_id, '_elementor_edit_mode', 'builder');
 					}
 
 					// 7. Ensure the post content is properly set for Elementor
 					// Sometimes Elementor uses a special placeholder in post_content
 					if (empty($content) && $is_elementor_page) {
 						wp_update_post([
-							'ID' => $page_id,
-							'post_content' => '<!-- wp:shortcode -->[elementor-template id="' . $page_id . '"]<!-- /wp:shortcode -->'
+							'ID' => $new_post_id,
+							'post_content' => '<!-- wp:shortcode -->[elementor-template id="' . $new_post_id . '"]<!-- /wp:shortcode -->'
 						]);
 					}
 				}
@@ -179,10 +186,10 @@ class Bulk_Page_Duplicator_Core {
 				$results[] = [
 					'value' => $value,
 					'status' => 'success',
-					// translators: %s: The title of the newly created page.
-					'message' => sprintf(__('Created page: "%s"', 'bulk-page-duplicator'), $title),
-					'id' => $page_id,
-					'edit_url' => get_edit_post_link($page_id, '')
+					// translators: %s: The title of the newly created item.
+					'message' => sprintf(__('Created: "%s"', 'bulk-page-duplicator'), $title),
+					'id' => $new_post_id,
+					'edit_url' => get_edit_post_link($new_post_id, '')
 				];
 			}
 		}

@@ -16,6 +16,7 @@ class Bulk_Page_Duplicator_Admin {
 		add_action('admin_menu', array($this, 'add_admin_menu'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 		add_action('wp_ajax_process_bulk_duplication', array($this, 'process_bulk_duplication'));
+		add_action('wp_ajax_bpd_get_posts_by_type', array($this, 'get_posts_by_type'));
 	}
 
 	/**
@@ -64,5 +65,57 @@ class Bulk_Page_Duplicator_Admin {
 		}
 		$core = new Bulk_Page_Duplicator_Core();
 		$core->process_bulk_duplication();
+	}
+
+	/**
+	 * AJAX handler to get posts by post type
+	 */
+	public function get_posts_by_type() {
+		// Verify nonce
+		$nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+		if (empty($nonce) || !wp_verify_nonce($nonce, 'bulk_page_duplication')) {
+			wp_send_json_error(__('Security check failed', 'bulk-page-duplicator'));
+		}
+
+		// Check capability
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
+		}
+
+		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page';
+
+		// Validate post type exists and is public
+		$post_type_obj = get_post_type_object($post_type);
+		if (!$post_type_obj || !$post_type_obj->public) {
+			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		// Get posts of the specified type
+		$args = array(
+			'post_type'      => $post_type,
+			'posts_per_page' => -1,
+			'orderby'        => 'title',
+			'order'          => 'ASC',
+			'post_status'    => array('publish', 'draft', 'private'),
+		);
+
+		$posts = get_posts($args);
+		$options = array();
+
+		foreach ($posts as $post) {
+			$status_label = '';
+			if ($post->post_status !== 'publish') {
+				$status_label = ' [' . ucfirst($post->post_status) . ']';
+			}
+			$options[] = array(
+				'id'    => $post->ID,
+				'title' => $post->post_title . ' (ID: ' . $post->ID . ')' . $status_label,
+			);
+		}
+
+		wp_send_json_success(array(
+			'posts' => $options,
+			'label' => $post_type_obj->labels->singular_name,
+		));
 	}
 }

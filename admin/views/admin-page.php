@@ -7,7 +7,12 @@
  */
 if (!defined('ABSPATH')) exit;
 
-// Get all pages for the dropdown
+// Get public post types
+$post_types = get_post_types(array('public' => true), 'objects');
+// Exclude attachments
+unset($post_types['attachment']);
+
+// Get all pages for the initial dropdown
 $pages = get_pages(array(
 	'sort_column' => 'post_title',
 	'sort_order' => 'ASC',
@@ -23,16 +28,29 @@ $seo_plugins = $core->detect_seo_plugins();
 	<h1><?php esc_html_e('Bulk Page Duplicator', 'bulk-page-duplicator'); ?></h1>
 	<div class="bulk-page-dup-container">
 		<div class="bulk-page-dup-panel">
-			<h2><?php esc_html_e('Select Template Page', 'bulk-page-duplicator'); ?></h2>
-			<p><?php esc_html_e('Choose the page you want to use as a template for duplication:', 'bulk-page-duplicator'); ?></p>
+			<h2><?php esc_html_e('Post Type', 'bulk-page-duplicator'); ?></h2>
+			<p><?php esc_html_e('Select the type of content you want to duplicate:', 'bulk-page-duplicator'); ?></p>
+			<select id="post-type" class="widefat">
+				<?php foreach ($post_types as $post_type) : ?>
+					<option value="<?php echo esc_attr($post_type->name); ?>" <?php selected($post_type->name, 'page'); ?>>
+						<?php echo esc_html($post_type->labels->singular_name); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+			<h2><?php esc_html_e('Select Template', 'bulk-page-duplicator'); ?></h2>
+			<p><?php esc_html_e('Choose the item you want to use as a template for duplication:', 'bulk-page-duplicator'); ?></p>
 			<select id="template-page" class="widefat">
-				<option value=""><?php esc_html_e('Select a page', 'bulk-page-duplicator'); ?></option>
+				<option value=""><?php esc_html_e('Select a template', 'bulk-page-duplicator'); ?></option>
 				<?php foreach ($pages as $page) : ?>
 					<option value="<?php echo esc_attr($page->ID); ?>">
 						<?php echo esc_html($page->post_title); ?> (ID: <?php echo esc_html($page->ID); ?>)
 					</option>
 				<?php endforeach; ?>
 			</select>
+			<p class="description" id="template-loading" style="display: none;">
+				<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>
+				<?php esc_html_e('Loading templates...', 'bulk-page-duplicator'); ?>
+			</p>
 			<h2><?php esc_html_e('Text to Replace', 'bulk-page-duplicator'); ?></h2>
 			<p><?php esc_html_e('Enter the placeholder text in your template that should be replaced with each value:', 'bulk-page-duplicator'); ?></p>
 			<input type="text" id="placeholder-text" class="widefat" placeholder="London">
