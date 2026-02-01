@@ -141,6 +141,22 @@ $seo_plugins = $core->detect_seo_plugins();
 			</ul>
 			<div class="bulk-page-dup-log-container" style="display: none;">
 				<h3><?php esc_html_e('Results Log', 'bulk-page-duplicator'); ?></h3>
+				<div class="results-summary" id="results-summary" style="display: none;">
+					<span class="summary-item summary-success"><span id="count-success">0</span> <?php esc_html_e('created', 'bulk-page-duplicator'); ?></span>
+					<span class="summary-item summary-skipped"><span id="count-skipped">0</span> <?php esc_html_e('skipped', 'bulk-page-duplicator'); ?></span>
+					<span class="summary-item summary-error"><span id="count-error">0</span> <?php esc_html_e('errors', 'bulk-page-duplicator'); ?></span>
+				</div>
+				<div class="log-controls">
+					<div class="log-filters">
+						<button type="button" class="button button-small log-filter active" data-filter="all"><?php esc_html_e('All', 'bulk-page-duplicator'); ?></button>
+						<button type="button" class="button button-small log-filter" data-filter="success"><?php esc_html_e('Success', 'bulk-page-duplicator'); ?></button>
+						<button type="button" class="button button-small log-filter" data-filter="skipped"><?php esc_html_e('Skipped', 'bulk-page-duplicator'); ?></button>
+						<button type="button" class="button button-small log-filter" data-filter="error"><?php esc_html_e('Errors', 'bulk-page-duplicator'); ?></button>
+					</div>
+					<div class="log-actions">
+						<button type="button" class="button button-small" id="export-results"><?php esc_html_e('Export CSV', 'bulk-page-duplicator'); ?></button>
+					</div>
+				</div>
 				<div class="bulk-page-dup-log"></div>
 			</div>
 		</div>

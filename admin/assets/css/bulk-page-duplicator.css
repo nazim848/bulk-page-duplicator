@@ -128,3 +128,63 @@
 #parent-page-section {
 	margin-bottom: 15px;
 }
+
+/* Results log improvements */
+.results-summary {
+	display: flex;
+	gap: 15px;
+	margin-bottom: 12px;
+	padding: 10px;
+	background: #f9f9f9;
+	border-radius: 3px;
+}
+
+.summary-item {
+	padding: 5px 12px;
+	border-radius: 3px;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.summary-item span {
+	font-weight: 700;
+	margin-right: 3px;
+}
+
+.summary-success {
+	background: #ecf9ec;
+	color: #2e7d32;
+}
+
+.summary-skipped {
+	background: #fff8e5;
+	color: #826200;
+}
+
+.summary-error {
+	background: #f9ecec;
+	color: #a00;
+}
+
+.log-controls {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+}
+
+.log-filters {
+	display: flex;
+	gap: 5px;
+}
+
+.log-filter.active {
+	background: #0073aa;
+	color: #fff;
+	border-color: #0073aa;
+}
+
+.log-actions {
+	display: flex;
+	gap: 5px;
+}
