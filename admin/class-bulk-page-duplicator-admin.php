@@ -18,6 +18,7 @@ class Bulk_Page_Duplicator_Admin {
 		add_action('wp_ajax_process_bulk_duplication', array($this, 'process_bulk_duplication'));
 		add_action('wp_ajax_bpd_get_posts_by_type', array($this, 'get_posts_by_type'));
 		add_action('wp_ajax_bpd_get_template_data', array($this, 'get_template_data'));
+		add_action('wp_ajax_bpd_dry_run', array($this, 'process_dry_run'));
 	}
 
 	/**
@@ -119,6 +120,122 @@ class Bulk_Page_Duplicator_Admin {
 			'label' => $post_type_obj->labels->singular_name,
 			'is_hierarchical' => $post_type_obj->hierarchical,
 		));
+	}
+
+	/**
+	 * AJAX handler for dry run (preview without creating)
+	 */
+	public function process_dry_run() {
+		// Verify nonce
+		$nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+		if (empty($nonce) || !wp_verify_nonce($nonce, 'bulk_page_duplication')) {
+			wp_send_json_error(__('Security check failed', 'bulk-page-duplicator'));
+		}
+
+		// Check capability
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
+		}
+
+		// Get data from AJAX request
+		$template_id = isset($_POST['template_id']) ? intval(wp_unslash($_POST['template_id'])) : 0;
+		$placeholders = isset($_POST['placeholders']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['placeholders'])) : [];
+		$batch_values = [];
+		if (isset($_POST['values'])) {
+			$raw_values = wp_unslash($_POST['values']);
+			foreach ((array) $raw_values as $value_set) {
+				if (is_array($value_set)) {
+					$batch_values[] = array_map('sanitize_text_field', $value_set);
+				} else {
+					$batch_values[] = [sanitize_text_field($value_set)];
+				}
+			}
+		}
+		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page';
+		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['replace_options'])) : [];
+
+		// Validate template post exists
+		$template_page = get_post($template_id);
+		if (!$template_page) {
+			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
+		}
+
+		// Validate post type
+		$post_type_obj = get_post_type_object($post_type);
+		if (!$post_type_obj || !$post_type_obj->public) {
+			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		// Load core class for smart_replace
+		if (!class_exists('Bulk_Page_Duplicator_Core')) {
+			require_once dirname(dirname(__FILE__)) . '/includes/class-bulk-page-duplicator.php';
+		}
+		$core = new Bulk_Page_Duplicator_Core();
+
+		$preview_items = [];
+		$will_create = 0;
+		$will_skip = 0;
+
+		foreach ($batch_values as $value_set) {
+			// Skip empty values
+			if (empty($value_set) || (is_array($value_set) && empty(array_filter($value_set)))) {
+				continue;
+			}
+
+			// For display purposes
+			$display_value = is_array($value_set) ? implode(', ', $value_set) : $value_set;
+
+			// Generate title
+			$title = $template_page->post_title;
+			if (in_array('title', $replace_options)) {
+				$title = $core->multi_replace_public($title, $placeholders, $value_set);
+			}
+
+			// Generate slug
+			$slug = $template_page->post_name;
+			if (in_array('slug', $replace_options)) {
+				$new_slug = $core->multi_replace_public($slug, $placeholders, $value_set);
+
+				// Also replace slugified placeholders
+				foreach ($placeholders as $index => $placeholder) {
+					$value = is_array($value_set) ? ($value_set[$index] ?? '') : $value_set;
+					$placeholder_slug = sanitize_title($placeholder);
+					if ($placeholder_slug !== strtolower($placeholder)) {
+						$value_slug = sanitize_title($value);
+						$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
+					}
+				}
+
+				$slug = sanitize_title($new_slug);
+			}
+
+			// Check if post with this slug already exists
+			$existing_post = get_page_by_path($slug, OBJECT, $post_type);
+			$will_be_skipped = ($existing_post !== null);
+
+			if ($will_be_skipped) {
+				$will_skip++;
+			} else {
+				$will_create++;
+			}
+
+			$preview_items[] = [
+				'value' => $display_value,
+				'title' => $title,
+				'slug' => $slug,
+				'status' => $will_be_skipped ? 'skip' : 'create',
+				'reason' => $will_be_skipped ? sprintf(__('Slug "%s" already exists', 'bulk-page-duplicator'), $slug) : ''
+			];
+		}
+
+		wp_send_json_success([
+			'items' => $preview_items,
+			'summary' => [
+				'total' => count($preview_items),
+				'will_create' => $will_create,
+				'will_skip' => $will_skip
+			]
+		]);
 	}
 
 	/**

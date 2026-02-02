@@ -229,6 +229,18 @@ class Bulk_Page_Duplicator_Core {
 	}
 
 	/**
+	 * Public wrapper for multi_replace (used by admin class for dry run)
+	 *
+	 * @param string $text The text to process
+	 * @param array $placeholders Array of placeholder strings
+	 * @param array $values Array of replacement values (matching placeholders order)
+	 * @return string The processed text
+	 */
+	public function multi_replace_public($text, $placeholders, $values) {
+		return $this->multi_replace($text, $placeholders, $values);
+	}
+
+	/**
 	 * Apply multiple placeholder replacements to text
 	 *
 	 * @param string $text The text to process
