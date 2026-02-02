@@ -761,89 +761,65 @@ tr.bpd-status-skip {
 	font-size: 12px;
 }
 
-/* History/Rollback section styles */
-.bulk-page-dup-history-container {
-	margin-top: 20px;
-	padding-top: 20px;
-	border-top: 1px solid #eee;
-}
-
-.bulk-page-dup-history-item {
-	background: #f9f9f9;
-	border: 1px solid #e5e5e5;
+/* Validation styles */
+.validation-message {
+	margin-top: 8px;
+	padding: 8px 12px;
 	border-radius: 3px;
-	padding: 12px;
-	margin-bottom: 10px;
+	font-size: 13px;
 }
 
-.bulk-page-dup-history-item:last-child {
-	margin-bottom: 0;
+.validation-message.error {
+	background: #f9ecec;
+	border-left: 3px solid #dc3232;
+	color: #a00;
 }
 
-.history-item-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-start;
-	margin-bottom: 8px;
+.validation-message.warning {
+	background: #fff8e5;
+	border-left: 3px solid #ffb900;
+	color: #826200;
 }
 
-.history-item-info {
-	flex: 1;
+.validation-message.success {
+	background: #ecf9ec;
+	border-left: 3px solid #46b450;
+	color: #2e7d32;
 }
 
-.history-item-title {
-	font-weight: 600;
-	color: #23282d;
-	margin-bottom: 4px;
+.validation-message.info {
+	background: #e8f4fd;
+	border-left: 3px solid #0073aa;
+	color: #004a73;
 }
 
-.history-item-meta {
-	font-size: 12px;
+.values-info {
+	margin-top: 8px;
+	font-size: 13px;
 	color: #666;
 }
 
-.history-item-meta span {
-	margin-right: 10px;
+.values-info .warning {
+	color: #826200;
+	margin-left: 10px;
 }
 
-.history-item-count {
-	background: #0073aa;
-	color: #fff;
-	padding: 2px 8px;
-	border-radius: 10px;
-	font-size: 12px;
-	font-weight: 500;
+.values-info .warning::before {
+	content: "⚠ ";
 }
 
-.history-item-count.partial {
-	background: #ffb900;
-	color: #23282d;
+/* Input validation states */
+#placeholder-text.has-error,
+#replacement-values.has-error {
+	border-color: #dc3232;
 }
 
-.history-item-count.none {
-	background: #dc3232;
+#placeholder-text.has-warning,
+#replacement-values.has-warning {
+	border-color: #ffb900;
 }
 
-.history-item-actions {
-	margin-top: 8px;
-}
-
-.history-item-actions .button {
-	margin-right: 5px;
-}
-
-.rollback-btn {
-	color: #a00 !important;
-	border-color: #a00 !important;
-}
-
-.rollback-btn:hover {
-	background: #a00 !important;
-	color: #fff !important;
-}
-
-.rollback-btn:disabled {
-	color: #a7aaad !important;
-	border-color: #dcdcde !important;
-	background: #f6f7f7 !important;
+#placeholder-text.has-success,
+#replacement-values.has-success {
+	border-color: #46b450;
 }

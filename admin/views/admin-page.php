@@ -68,6 +68,7 @@ $seo_plugins = $core->detect_seo_plugins();
 			<p class="description" id="placeholder-help">
 				<?php esc_html_e('Examples: "London" (single) or "London, UK" (multiple, comma-separated)', 'bulk-page-duplicator'); ?>
 			</p>
+			<div id="placeholder-validation" class="validation-message" style="display: none;"></div>
 			<h2><?php esc_html_e('Replacement Values', 'bulk-page-duplicator'); ?></h2>
 			<p id="replacement-help"><?php esc_html_e('Enter one value per line, or import from a CSV file:', 'bulk-page-duplicator'); ?></p>
 			<p class="description" id="replacement-multi-help" style="display: none;">
@@ -93,6 +94,11 @@ $seo_plugins = $core->detect_seo_plugins();
 				</div>
 			</div>
 			<textarea id="replacement-values" class="widefat" rows="10" placeholder="New York&#10;Los Angeles&#10;Chicago"></textarea>
+			<div id="values-info" class="values-info" style="display: none;">
+				<span id="values-count"></span>
+				<span id="slug-length-warning" class="warning" style="display: none;"></span>
+			</div>
+			<div id="values-validation" class="validation-message" style="display: none;"></div>
 			<div id="parent-page-section">
 				<h2><?php esc_html_e('Parent Page', 'bulk-page-duplicator'); ?></h2>
 				<p><?php esc_html_e('Optionally assign a parent for all created items:', 'bulk-page-duplicator'); ?></p>

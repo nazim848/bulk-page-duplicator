@@ -375,9 +375,19 @@ class Bulk_Page_Duplicator_Admin {
 			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
 		}
 
+		// Get Elementor data if exists
+		$elementor_data = get_post_meta($template_id, '_elementor_data', true);
+
+		// Combine content for placeholder checking
+		$searchable_content = $template->post_title . ' ' . $template->post_name . ' ' . $template->post_content;
+		if (!empty($elementor_data)) {
+			$searchable_content .= ' ' . $elementor_data;
+		}
+
 		wp_send_json_success(array(
 			'title' => $template->post_title,
 			'slug'  => $template->post_name,
+			'searchable_content' => $searchable_content,
 		));
 	}
 
