@@ -18,15 +18,12 @@ class Bulk_Page_Duplicator_Admin {
 		add_action('wp_ajax_process_bulk_duplication', array($this, 'process_bulk_duplication'));
 		add_action('wp_ajax_bpd_get_posts_by_type', array($this, 'get_posts_by_type'));
 		add_action('wp_ajax_bpd_get_template_data', array($this, 'get_template_data'));
-<<<<<<< HEAD
 		add_action('wp_ajax_bpd_dry_run', array($this, 'process_dry_run'));
 		add_action('wp_ajax_bpd_save_preferences', array($this, 'save_preferences'));
 		add_action('wp_ajax_bpd_get_preferences', array($this, 'get_preferences'));
 		add_action('wp_ajax_bpd_get_taxonomies', array($this, 'get_taxonomies'));
-=======
 		add_action('wp_ajax_bpd_get_history', array($this, 'get_history'));
 		add_action('wp_ajax_bpd_rollback', array($this, 'rollback'));
->>>>>>> feature/undo-rollback
 	}
 
 	/**
