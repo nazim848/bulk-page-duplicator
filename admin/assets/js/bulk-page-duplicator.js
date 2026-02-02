@@ -4,6 +4,7 @@ jQuery(document).ready(function ($) {
 	let templateData = null; // Cache for template title/slug
 	let availableTemplates = []; // Cache for template list
 	let highlightedIndex = -1; // For keyboard navigation
+	let resultsData = []; // Store results for filtering/export
 
 	// Helper function to escape HTML
 	function escapeHtml(text) {
@@ -683,9 +684,13 @@ jQuery(document).ready(function ($) {
 		// Initialize UI for processing
 		isProcessing = true;
 		cancelRequested = false;
+		resultsData = []; // Reset results
 		$(".bulk-page-dup-progress-container").show();
 		$(".bulk-page-dup-log-container").show();
 		$(".bulk-page-dup-log").empty();
+		$("#results-summary").hide();
+		$("#count-success, #count-skipped, #count-error").text("0");
+		$(".log-filter").removeClass("active").filter('[data-filter="all"]').addClass("active");
 		$("#start-duplication").hide();
 		$("#cancel-duplication").show();
 
@@ -773,6 +778,9 @@ jQuery(document).ready(function ($) {
 					// Log results
 					if (response.data.results && response.data.results.length > 0) {
 						response.data.results.forEach(function (result) {
+							// Store result for filtering/export
+							resultsData.push(result);
+
 							let logClass = "bulk-page-dup-log-" + result.status;
 							let message = result.value + ": " + result.message;
 
@@ -786,11 +794,14 @@ jQuery(document).ready(function ($) {
 							$(".bulk-page-dup-log").prepend(
 								'<div class="bulk-page-dup-log-entry ' +
 									logClass +
-									'">' +
+									'" data-status="' + result.status + '">' +
 									message +
 									"</div>"
 							);
 						});
+
+						// Update summary counts
+						updateResultsSummary();
 					}
 
 					// If this is the last batch or operation was cancelled, finish
@@ -841,5 +852,65 @@ jQuery(document).ready(function ($) {
 		if (cancelRequested) {
 			$("#cancel-duplication").text("Cancel");
 		}
+
+		// Show summary
+		$("#results-summary").show();
 	}
+
+	// Update results summary counts
+	function updateResultsSummary() {
+		const counts = { success: 0, skipped: 0, error: 0 };
+		resultsData.forEach(r => {
+			if (counts.hasOwnProperty(r.status)) {
+				counts[r.status]++;
+			}
+		});
+		$("#count-success").text(counts.success);
+		$("#count-skipped").text(counts.skipped);
+		$("#count-error").text(counts.error);
+	}
+
+	// Filter log entries
+	$(document).on("click", ".log-filter", function() {
+		const filter = $(this).data("filter");
+		$(".log-filter").removeClass("active");
+		$(this).addClass("active");
+
+		if (filter === "all") {
+			$(".bulk-page-dup-log-entry").show();
+		} else {
+			$(".bulk-page-dup-log-entry").hide();
+			$('.bulk-page-dup-log-entry[data-status="' + filter + '"]').show();
+		}
+	});
+
+	// Export results to CSV
+	$("#export-results").on("click", function() {
+		if (resultsData.length === 0) {
+			alert("No results to export.");
+			return;
+		}
+
+		// Build CSV content
+		const headers = ["Value", "Status", "Message", "Edit URL"];
+		const rows = resultsData.map(r => [
+			'"' + (r.value || '').replace(/"/g, '""') + '"',
+			r.status,
+			'"' + (r.message || '').replace(/"/g, '""') + '"',
+			r.edit_url || ''
+		]);
+
+		const csv = [headers.join(",")].concat(rows.map(r => r.join(","))).join("\n");
+
+		// Download
+		const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+		const link = document.createElement("a");
+		const url = URL.createObjectURL(blob);
+		link.setAttribute("href", url);
+		link.setAttribute("download", "bulk-duplication-results.csv");
+		link.style.visibility = "hidden";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	});
 });
