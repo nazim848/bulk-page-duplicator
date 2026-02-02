@@ -375,6 +375,9 @@ class Bulk_Page_Duplicator_Core {
 	 */
 	public function multi_replace_public($text, $placeholders, $values) {
 		return $this->multi_replace($text, $placeholders, $values);
+	}
+
+	/**
 	 * Process Elementor data for a post
 	 */
 	private function process_elementor_data($template_id, $new_post_id, $placeholders, $value_set, $content) {
