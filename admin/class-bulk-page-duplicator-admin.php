@@ -335,7 +335,11 @@ class Bulk_Page_Duplicator_Admin {
 				'title' => $title,
 				'slug' => $slug,
 				'status' => $will_be_skipped ? 'skip' : 'create',
-				'reason' => $will_be_skipped ? sprintf(__('Slug "%s" already exists', 'bulk-page-duplicator'), $slug) : ''
+				'reason' => $will_be_skipped ? sprintf(
+					/* translators: %s: page slug */
+					__('Slug "%s" already exists', 'bulk-page-duplicator'),
+					$slug
+				) : ''
 			];
 		}
 

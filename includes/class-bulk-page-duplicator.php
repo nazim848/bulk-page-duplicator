@@ -231,7 +231,7 @@ class Bulk_Page_Duplicator_Core {
 	 */
 	private function save_batch_history($template_id, $post_type, $post_ids, $batch_index) {
 		$history = get_option('bpd_batch_history', []);
-		$session_key = 'session_' . get_current_user_id() . '_' . date('Ymd_His');
+		$session_key = 'session_' . get_current_user_id() . '_' . gmdate('Ymd_His');
 
 		// If batch_index is 0, create a new session entry
 		if ($batch_index === 0) {
