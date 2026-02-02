@@ -8,12 +8,12 @@
 if (!defined('ABSPATH')) exit;
 
 // Get public post types
-$post_types = get_post_types(array('public' => true), 'objects');
+$bpd_post_types = get_post_types(array('public' => true), 'objects');
 // Exclude attachments
-unset($post_types['attachment']);
+unset($bpd_post_types['attachment']);
 
 // Get all pages for the initial dropdown
-$pages = get_pages(array(
+$bpd_pages = get_pages(array(
 	'sort_column' => 'post_title',
 	'sort_order' => 'ASC',
 ));
@@ -21,9 +21,9 @@ $pages = get_pages(array(
 if (!class_exists('Bulk_Page_Duplicator_Core')) {
 	require_once dirname(dirname(__FILE__)) . '/../includes/class-bulk-page-duplicator.php';
 }
-$core = new Bulk_Page_Duplicator_Core();
-$seo_plugins = $core->detect_seo_plugins();
-$page_builders = $core->detect_page_builders();
+$bpd_core = new Bulk_Page_Duplicator_Core();
+$bpd_seo_plugins = $bpd_core->detect_seo_plugins();
+$bpd_page_builders = $bpd_core->detect_page_builders();
 ?>
 <div class="wrap">
 	<h1><?php esc_html_e('Bulk Page Duplicator', 'bulk-page-duplicator'); ?></h1>
@@ -32,7 +32,7 @@ $page_builders = $core->detect_page_builders();
 			<h2><?php esc_html_e('Post Type', 'bulk-page-duplicator'); ?></h2>
 			<p><?php esc_html_e('Select the type of content you want to duplicate:', 'bulk-page-duplicator'); ?></p>
 			<select id="post-type" class="widefat">
-				<?php foreach ($post_types as $post_type) : ?>
+				<?php foreach ($bpd_post_types as $post_type) : ?>
 					<option value="<?php echo esc_attr($post_type->name); ?>" <?php selected($post_type->name, 'page'); ?>>
 						<?php echo esc_html($post_type->labels->singular_name); ?>
 					</option>
@@ -106,7 +106,7 @@ $page_builders = $core->detect_page_builders();
 				<select id="parent-page" class="widefat">
 					<option value="0"><?php esc_html_e('No parent (top level)', 'bulk-page-duplicator'); ?></option>
 					<option value="template"><?php esc_html_e('Same as template', 'bulk-page-duplicator'); ?></option>
-					<?php foreach ($pages as $page) : ?>
+					<?php foreach ($bpd_pages as $page) : ?>
 						<option value="<?php echo esc_attr($page->ID); ?>">
 							<?php echo esc_html($page->post_title); ?>
 						</option>
@@ -137,10 +137,10 @@ $page_builders = $core->detect_page_builders();
 				<label><input type="checkbox" id="replace-title" checked> <?php esc_html_e('Page Title', 'bulk-page-duplicator'); ?></label>
 				<label><input type="checkbox" id="replace-slug" checked> <?php esc_html_e('Page Slug', 'bulk-page-duplicator'); ?></label>
 				<label><input type="checkbox" id="replace-content" checked> <?php esc_html_e('Page Content', 'bulk-page-duplicator'); ?></label>
-				<?php foreach ($page_builders as $builder) : ?>
-					<label><input type="checkbox" id="replace-<?php echo esc_attr($builder['id']); ?>" checked> <?php echo esc_html($builder['name']); ?> <?php esc_html_e('Data (if exists)', 'bulk-page-duplicator'); ?></label>
+				<?php foreach ($bpd_page_builders as $bpd_builder) : ?>
+					<label><input type="checkbox" id="replace-<?php echo esc_attr($bpd_builder['id']); ?>" checked> <?php echo esc_html($bpd_builder['name']); ?> <?php esc_html_e('Data (if exists)', 'bulk-page-duplicator'); ?></label>
 				<?php endforeach; ?>
-				<?php if (!empty($seo_plugins)) : ?>
+				<?php if (!empty($bpd_seo_plugins)) : ?>
 					<label><input type="checkbox" id="replace-seo" checked> <?php esc_html_e('SEO Meta Data', 'bulk-page-duplicator'); ?></label>
 				<?php endif; ?>
 			</div>
