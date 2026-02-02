@@ -3,7 +3,7 @@ Contributors: nazim848
 Donate link: https://buymeacoffee.com/nazim848
 Tags: duplicate, bulk, page, clone, bulk page
 Requires at least: 5.0
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 1.1.0
 Requires PHP: 7.2
 License: GPLv2 or later
