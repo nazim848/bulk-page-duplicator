@@ -170,6 +170,24 @@ jQuery(document).ready(function ($) {
 		return text;
 	}
 
+	// Helper function to get all checked replace options
+	function getReplaceOptions() {
+		const replaceOptions = [];
+		if ($("#replace-title").is(":checked")) replaceOptions.push("title");
+		if ($("#replace-slug").is(":checked")) replaceOptions.push("slug");
+		if ($("#replace-content").is(":checked")) replaceOptions.push("content");
+		// Dynamically get page builder options
+		$("input[id^='replace-']:checked").each(function () {
+			const id = $(this).attr("id").replace("replace-", "");
+			// Skip already added and special cases
+			if (!replaceOptions.includes(id) && id !== "title" && id !== "slug" && id !== "content" && id !== "seo") {
+				replaceOptions.push(id);
+			}
+		});
+		if ($("#replace-seo").is(":checked")) replaceOptions.push("seo");
+		return replaceOptions;
+	}
+
 	// Helper function to convert text to slug
 	function toSlug(text) {
 		return text
@@ -1004,14 +1022,7 @@ jQuery(document).ready(function ($) {
 		}
 
 		// Get replacement options
-		const replaceOptions = [];
-		if ($("#replace-title").is(":checked")) replaceOptions.push("title");
-		if ($("#replace-slug").is(":checked")) replaceOptions.push("slug");
-		if ($("#replace-content").is(":checked")) replaceOptions.push("content");
-		if ($("#replace-elementor").is(":checked"))
-			replaceOptions.push("elementor");
-		if ($("#replace-seo").is(":checked")) replaceOptions.push("seo");
-		if ($("#copy-featured-image").is(":checked")) replaceOptions.push("featured_image");
+		const replaceOptions = getReplaceOptions();
 
 		// Get selected taxonomy terms
 		const taxonomyTerms = {};
