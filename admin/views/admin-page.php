@@ -134,6 +134,10 @@ $seo_plugins = $core->detect_seo_plugins();
 					<div class="bulk-page-dup-progress-bar-inner"></div>
 				</div>
 				<p class="bulk-page-dup-progress-text">0%</p>
+				<p class="bulk-page-dup-progress-details">
+					<span id="progress-current-item"></span>
+					<span id="progress-eta"></span>
+				</p>
 				<p class="bulk-page-dup-status-text"></p>
 			</div>
 			<p class="submit">

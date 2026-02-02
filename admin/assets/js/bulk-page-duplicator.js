@@ -5,12 +5,67 @@ jQuery(document).ready(function ($) {
 	let availableTemplates = []; // Cache for template list
 	let highlightedIndex = -1; // For keyboard navigation
 	let resultsData = []; // Store results for filtering/export
+	let processingStartTime = null; // Track when processing started
+	let batchTimings = []; // Track timing for each batch to estimate remaining time
+
+	// Request notification permission on page load
+	function requestNotificationPermission() {
+		if ("Notification" in window && Notification.permission === "default") {
+			Notification.requestPermission();
+		}
+	}
+	requestNotificationPermission();
+
+	// Show browser notification
+	function showNotification(title, body) {
+		if ("Notification" in window && Notification.permission === "granted") {
+			const notification = new Notification(title, {
+				body: body,
+				icon: "/wp-admin/images/wordpress-logo.svg"
+			});
+			// Auto-close after 5 seconds
+			setTimeout(() => notification.close(), 5000);
+		}
+	}
+
+	// Format time in human readable format
+	function formatTime(seconds) {
+		if (seconds < 60) {
+			return Math.round(seconds) + " seconds";
+		} else if (seconds < 3600) {
+			const mins = Math.floor(seconds / 60);
+			const secs = Math.round(seconds % 60);
+			return mins + " min" + (mins > 1 ? "s" : "") + (secs > 0 ? " " + secs + "s" : "");
+		} else {
+			const hours = Math.floor(seconds / 3600);
+			const mins = Math.round((seconds % 3600) / 60);
+			return hours + " hour" + (hours > 1 ? "s" : "") + (mins > 0 ? " " + mins + " min" : "");
+		}
+	}
+
+	// Calculate estimated time remaining
+	function calculateETA(processedCount, totalCount) {
+		if (batchTimings.length === 0 || processedCount === 0) {
+			return "Calculating...";
+		}
+
+		// Calculate average time per item based on recent batches
+		const totalTime = batchTimings.reduce((a, b) => a + b, 0);
+		const totalItems = batchTimings.length * 10; // Each batch is 10 items
+		const avgTimePerItem = totalTime / Math.min(processedCount, totalItems);
+
+		const remainingItems = totalCount - processedCount;
+		const estimatedSeconds = remainingItems * avgTimePerItem / 1000;
+
+		return formatTime(estimatedSeconds);
+	}
 
 	// Helper function to escape HTML
 	function escapeHtml(text) {
 		const div = document.createElement('div');
 		div.textContent = text;
 		return div.innerHTML;
+	}
 	}
 
 	// Helper function to simulate smart_replace (case-preserving)
@@ -685,6 +740,8 @@ jQuery(document).ready(function ($) {
 		isProcessing = true;
 		cancelRequested = false;
 		resultsData = []; // Reset results
+		processingStartTime = Date.now();
+		batchTimings = [];
 		$(".bulk-page-dup-progress-container").show();
 		$(".bulk-page-dup-log-container").show();
 		$(".bulk-page-dup-log").empty();
@@ -693,6 +750,8 @@ jQuery(document).ready(function ($) {
 		$(".log-filter").removeClass("active").filter('[data-filter="all"]').addClass("active");
 		$("#start-duplication").hide();
 		$("#cancel-duplication").show();
+		$("#progress-eta").text("");
+		$("#progress-current-item").text("");
 
 		// Get selected post type and parent page
 		const postType = $("#post-type").val();
@@ -728,6 +787,8 @@ jQuery(document).ready(function ($) {
 		parentPage,
 		batchIndex
 	) {
+		const batchStartTime = Date.now();
+
 		if (cancelRequested) {
 			finishProcessing("Operation cancelled by user.");
 			return;
@@ -745,11 +806,21 @@ jQuery(document).ready(function ($) {
 		);
 		$(".bulk-page-dup-status-text").text("Processing pages...");
 
+		// Update ETA
+		const eta = calculateETA(processedValues, totalValues);
+		$("#progress-eta").text(processedValues > 0 ? "Estimated time remaining: " + eta : "");
+
 		// Get current batch of values
 		const batchSize = 10;
 		const startIndex = batchIndex;
 		const endIndex = Math.min(startIndex + batchSize, totalValues);
 		const currentBatch = allValues.slice(startIndex, endIndex);
+
+		// Show current item being processed
+		if (currentBatch.length > 0) {
+			const currentItemName = Array.isArray(currentBatch[0]) ? currentBatch[0][0] : currentBatch[0];
+			$("#progress-current-item").text("Processing: " + currentItemName + "...");
+		}
 
 		// If we've processed all values, finish
 		if (startIndex >= totalValues) {
@@ -804,6 +875,14 @@ jQuery(document).ready(function ($) {
 						updateResultsSummary();
 					}
 
+					// Track batch timing for ETA calculation
+					const batchDuration = Date.now() - batchStartTime;
+					batchTimings.push(batchDuration);
+					// Keep only last 5 batches for more accurate recent average
+					if (batchTimings.length > 5) {
+						batchTimings.shift();
+					}
+
 					// If this is the last batch or operation was cancelled, finish
 					if (response.data.is_last_batch || cancelRequested) {
 						finishProcessing(
@@ -848,6 +927,20 @@ jQuery(document).ready(function ($) {
 		$(".bulk-page-dup-status-text").text(message);
 		$("#cancel-duplication").hide();
 		$("#start-duplication").show();
+		$("#progress-eta").text("");
+		$("#progress-current-item").text("");
+
+		// Calculate total time taken
+		if (processingStartTime && !cancelRequested) {
+			const totalTime = (Date.now() - processingStartTime) / 1000;
+			$(".bulk-page-dup-status-text").text(message + " (Completed in " + formatTime(totalTime) + ")");
+
+			// Show browser notification
+			showNotification(
+				"Bulk Page Duplicator",
+				"Duplication complete! " + formatTime(totalTime)
+			);
+		}
 
 		if (cancelRequested) {
 			$("#cancel-duplication").text("Cancel");
@@ -855,6 +948,10 @@ jQuery(document).ready(function ($) {
 
 		// Show summary
 		$("#results-summary").show();
+
+		// Reset timing variables
+		processingStartTime = null;
+		batchTimings = [];
 	}
 
 	// Update results summary counts

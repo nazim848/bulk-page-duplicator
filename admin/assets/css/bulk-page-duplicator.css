@@ -660,4 +660,22 @@ tr.bpd-status-skip {
 	display: flex;
 	gap: 5px;
 }
+
+/* Progress feedback styles */
+.bulk-page-dup-progress-details {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	margin: 10px 0;
+	font-size: 13px;
+}
+
+#progress-current-item {
+	color: #0073aa;
+	font-style: italic;
+}
+
+#progress-eta {
+	color: #666;
+	font-weight: 500;
 }
