@@ -301,7 +301,7 @@ class Bulk_Page_Duplicator_Core {
 			$formatted[] = [
 				'key' => $key,
 				'timestamp' => $item['timestamp'],
-				'date' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $item['timestamp']),
+				'date' => wp_date(get_option('date_format') . ' ' . get_option('time_format'), $item['timestamp']),
 				'template_title' => $item['template_title'],
 				'post_type_label' => $item['post_type_label'],
 				'total_count' => count($item['post_ids']),
