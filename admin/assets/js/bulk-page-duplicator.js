@@ -66,7 +66,6 @@ jQuery(document).ready(function ($) {
 		div.textContent = text;
 		return div.innerHTML;
 	}
-	}
 
 	// Helper function to simulate smart_replace (case-preserving)
 	function smartReplace(text, search, replace) {
