@@ -39,14 +39,25 @@ $seo_plugins = $core->detect_seo_plugins();
 			</select>
 			<h2><?php esc_html_e('Select Template', 'bulk-page-duplicator'); ?></h2>
 			<p><?php esc_html_e('Choose the item you want to use as a template for duplication:', 'bulk-page-duplicator'); ?></p>
-			<select id="template-page" class="widefat">
-				<option value=""><?php esc_html_e('Select a template', 'bulk-page-duplicator'); ?></option>
-				<?php foreach ($pages as $page) : ?>
-					<option value="<?php echo esc_attr($page->ID); ?>">
-						<?php echo esc_html($page->post_title); ?> (ID: <?php echo esc_html($page->ID); ?>)
-					</option>
-				<?php endforeach; ?>
-			</select>
+			<div class="template-selector-wrapper">
+				<input type="text" id="template-search" class="widefat" placeholder="<?php esc_attr_e('Type to search templates...', 'bulk-page-duplicator'); ?>" autocomplete="off">
+				<input type="hidden" id="template-page" value="">
+				<div id="template-dropdown" class="template-dropdown" style="display: none;"></div>
+			</div>
+			<div id="selected-template-info" class="selected-template-info" style="display: none;">
+				<div class="template-thumbnail">
+					<img id="template-thumb" src="" alt="">
+					<span id="template-no-thumb" class="no-thumbnail"><?php esc_html_e('No image', 'bulk-page-duplicator'); ?></span>
+				</div>
+				<div class="template-details">
+					<strong id="template-title"></strong>
+					<span class="template-meta">
+						<span id="template-status" class="template-status"></span>
+						<span id="template-modified"></span>
+					</span>
+				</div>
+				<button type="button" id="clear-template" class="button button-small">&times;</button>
+			</div>
 			<p class="description" id="template-loading" style="display: none;">
 				<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>
 				<?php esc_html_e('Loading templates...', 'bulk-page-duplicator'); ?>
