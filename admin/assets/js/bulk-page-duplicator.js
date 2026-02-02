@@ -436,7 +436,7 @@ jQuery(document).ready(function ($) {
 		if (notFound.length > 0) {
 			$input.addClass("has-warning");
 			$validation.addClass("warning").html(
-				'<strong>Warning:</strong> Placeholder"' + notFound.join('", "') + '" not found in template content. '
+				'<strong>Warning:</strong> Placeholder"' + notFound.join('", "') + '" not found in template content. ' +
 				'Make sure it exists in the title, slug, or content.'
 			).show();
 		} else {
