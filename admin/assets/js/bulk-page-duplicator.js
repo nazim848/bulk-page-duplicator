@@ -1165,7 +1165,7 @@ jQuery(document).ready(function ($) {
 							}
 
 							$(".bulk-page-dup-log").prepend(
-								'<div class="bulk-page-dup-log-entry " +
+								'<div class="bulk-page-dup-log-entry ' +
 										logClass +
 										'" data-status="' + result.status + '">' +
 										message +
