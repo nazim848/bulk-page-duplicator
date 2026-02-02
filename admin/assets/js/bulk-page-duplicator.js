@@ -7,6 +7,87 @@ jQuery(document).ready(function ($) {
 	let resultsData = []; // Store results for filtering/export
 	let processingStartTime = null; // Track when processing started
 	let batchTimings = []; // Track timing for each batch to estimate remaining time
+	let savePreferencesTimeout = null; // Debounce timer for saving preferences
+
+	// Load saved user preferences on page load
+	function loadUserPreferences() {
+		const prefs = bulk_page_dup_ajax.user_preferences;
+		if (!prefs) return;
+
+		// Set post type first (this triggers template reload)
+		if (prefs.post_type) {
+			$("#post-type").val(prefs.post_type);
+			// Trigger change to load templates for this post type
+			$("#post-type").trigger("change");
+		}
+
+		// Set page status
+		if (prefs.page_status) {
+			$("#page-status").val(prefs.page_status);
+		}
+
+		// Set checkbox preferences
+		$("#replace-title").prop("checked", prefs.replace_title !== false);
+		$("#replace-slug").prop("checked", prefs.replace_slug !== false);
+		$("#replace-content").prop("checked", prefs.replace_content !== false);
+		$("#replace-elementor").prop("checked", prefs.replace_elementor !== false);
+		$("#replace-seo").prop("checked", prefs.replace_seo !== false);
+
+		// Set template and parent after templates are loaded (delayed)
+		if (prefs.template_id || prefs.parent_page) {
+			setTimeout(function() {
+				if (prefs.template_id) {
+					// For Enhanced Template Selector, we need to find the template in availableTemplates
+					selectTemplate(prefs.template_id);
+				}
+				if (prefs.parent_page) {
+					$("#parent-page").val(prefs.parent_page);
+				}
+			}, 1000); // Wait for AJAX to complete (increased delay for reliability)
+		}
+	}
+
+	// Save user preferences (debounced)
+	function saveUserPreferences() {
+		// Clear existing timeout
+		if (savePreferencesTimeout) {
+			clearTimeout(savePreferencesTimeout);
+		}
+
+		// Debounce to avoid too many AJAX calls
+		savePreferencesTimeout = setTimeout(function() {
+			$.ajax({
+				url: bulk_page_dup_ajax.ajax_url,
+				type: "POST",
+				data: {
+					action: "bpd_save_preferences",
+					nonce: bulk_page_dup_ajax.nonce,
+					post_type: $("#post-type").val(),
+					template_id: $("#template-page").val(),
+					page_status: $("#page-status").val(),
+					parent_page: $("#parent-page").val() || "0",
+					replace_title: $("#replace-title").is(":checked").toString(),
+					replace_slug: $("#replace-slug").is(":checked").toString(),
+					replace_content: $("#replace-content").is(":checked").toString(),
+					replace_elementor: $("#replace-elementor").is(":checked").toString(),
+					replace_seo: $("#replace-seo").is(":checked").toString()
+				}
+			});
+		}, 1000); // Save after 1 second of inactivity
+	}
+
+	// Bind save preferences to relevant form changes
+	function bindPreferenceSaving() {
+		// Save on select changes
+		$("#post-type, #template-page, #page-status, #parent-page").on("change", function() {
+			saveUserPreferences();
+		});
+
+		// Save on checkbox changes
+		$("#replace-title, #replace-slug, #replace-content, #replace-elementor, #replace-seo").on("change", function() {
+			saveUserPreferences();
+		});
+	}
 
 	// Request notification permission on page load
 	function requestNotificationPermission() {
@@ -66,6 +147,10 @@ jQuery(document).ready(function ($) {
 		div.textContent = text;
 		return div.innerHTML;
 	}
+
+	// Initialize preferences on page load
+	loadUserPreferences();
+	bindPreferenceSaving();
 
 	// Helper function to simulate smart_replace (case-preserving)
 	function smartReplace(text, search, replace) {

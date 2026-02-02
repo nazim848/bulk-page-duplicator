@@ -19,6 +19,8 @@ class Bulk_Page_Duplicator_Admin {
 		add_action('wp_ajax_bpd_get_posts_by_type', array($this, 'get_posts_by_type'));
 		add_action('wp_ajax_bpd_get_template_data', array($this, 'get_template_data'));
 		add_action('wp_ajax_bpd_dry_run', array($this, 'process_dry_run'));
+		add_action('wp_ajax_bpd_save_preferences', array($this, 'save_preferences'));
+		add_action('wp_ajax_bpd_get_preferences', array($this, 'get_preferences'));
 	}
 
 	/**
@@ -44,9 +46,14 @@ class Bulk_Page_Duplicator_Admin {
 		}
 		wp_enqueue_style('bulk-page-duplicator-css', plugin_dir_url(__FILE__) . 'assets/css/bulk-page-duplicator.css', array(), BULK_PAGE_DUPLICATOR_VERSION);
 		wp_enqueue_script('bulk-page-duplicator-js', plugin_dir_url(__FILE__) . 'assets/js/bulk-page-duplicator.js', array('jquery'), BULK_PAGE_DUPLICATOR_VERSION, true);
+		
+		// Get saved user preferences
+		$user_prefs = $this->get_user_preferences();
+		
 		wp_localize_script('bulk-page-duplicator-js', 'bulk_page_dup_ajax', array(
 			'ajax_url' => admin_url('admin-ajax.php'),
-			'nonce' => wp_create_nonce('bulk_page_duplication')
+			'nonce' => wp_create_nonce('bulk_page_duplication'),
+			'user_preferences' => $user_prefs
 		));
 	}
 
@@ -135,6 +142,92 @@ class Bulk_Page_Duplicator_Admin {
 			'label' => $post_type_obj->labels->singular_name,
 			'is_hierarchical' => $post_type_obj->hierarchical,
 		));
+	}
+
+	/**
+	 * Get user preferences from user meta
+	 * @return array
+	 */
+	private function get_user_preferences() {
+		$user_id = get_current_user_id();
+		if (!$user_id) {
+			return array();
+		}
+
+		$defaults = array(
+			'post_type' => 'page',
+			'template_id' => '',
+			'page_status' => 'publish',
+			'parent_page' => '0',
+			'replace_title' => true,
+			'replace_slug' => true,
+			'replace_content' => true,
+			'replace_elementor' => true,
+			'replace_seo' => true,
+		);
+
+		$saved = get_user_meta($user_id, 'bpd_preferences', true);
+		if (!is_array($saved)) {
+			return $defaults;
+		}
+
+		return wp_parse_args($saved, $defaults);
+	}
+
+	/**
+	 * AJAX handler to save user preferences
+	 */
+	public function save_preferences() {
+		// Verify nonce
+		$nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+		if (empty($nonce) || !wp_verify_nonce($nonce, 'bulk_page_duplication')) {
+			wp_send_json_error(__('Security check failed', 'bulk-page-duplicator'));
+		}
+
+		// Check capability
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
+		}
+
+		$user_id = get_current_user_id();
+		if (!$user_id) {
+			wp_send_json_error(__('User not logged in', 'bulk-page-duplicator'));
+		}
+
+		// Sanitize and save preferences
+		$preferences = array(
+			'post_type' => isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page',
+			'template_id' => isset($_POST['template_id']) ? intval(wp_unslash($_POST['template_id'])) : '',
+			'page_status' => isset($_POST['page_status']) ? sanitize_text_field(wp_unslash($_POST['page_status'])) : 'publish',
+			'parent_page' => isset($_POST['parent_page']) ? sanitize_text_field(wp_unslash($_POST['parent_page'])) : '0',
+			'replace_title' => isset($_POST['replace_title']) && $_POST['replace_title'] === 'true',
+			'replace_slug' => isset($_POST['replace_slug']) && $_POST['replace_slug'] === 'true',
+			'replace_content' => isset($_POST['replace_content']) && $_POST['replace_content'] === 'true',
+			'replace_elementor' => isset($_POST['replace_elementor']) && $_POST['replace_elementor'] === 'true',
+			'replace_seo' => isset($_POST['replace_seo']) && $_POST['replace_seo'] === 'true',
+		);
+
+		update_user_meta($user_id, 'bpd_preferences', $preferences);
+
+		wp_send_json_success(array('message' => __('Preferences saved', 'bulk-page-duplicator')));
+	}
+
+	/**
+	 * AJAX handler to get user preferences
+	 */
+	public function get_preferences() {
+		// Verify nonce
+		$nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+		if (empty($nonce) || !wp_verify_nonce($nonce, 'bulk_page_duplication')) {
+			wp_send_json_error(__('Security check failed', 'bulk-page-duplicator'));
+		}
+
+		// Check capability
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
+		}
+
+		wp_send_json_success($this->get_user_preferences());
 	}
 
 	/**
