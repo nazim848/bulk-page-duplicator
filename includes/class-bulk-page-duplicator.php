@@ -155,6 +155,14 @@ class Bulk_Page_Duplicator_Core {
 				// Copy post meta
 				$this->copy_post_meta_multi($template_id, $new_post_id, $placeholders, $value_set, $replace_options);
 
+				// Copy featured image if option selected
+				if (in_array('featured_image', $replace_options)) {
+					$thumbnail_id = get_post_thumbnail_id($template_id);
+					if ($thumbnail_id) {
+						set_post_thumbnail($new_post_id, $thumbnail_id);
+					}
+				}
+
 				// Apply Elementor data if exists and option selected
 				if (in_array('elementor', $replace_options)) {
 					// First, ensure this is an Elementor post
