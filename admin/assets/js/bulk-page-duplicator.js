@@ -378,7 +378,7 @@ jQuery(document).ready(function ($) {
 		updatePreview();
 	});
 
-	// Handle post type change - reload templates and parent pages
+	// Handle post type change - reload templates, parent pages, and taxonomies
 	$("#post-type").on("change", function () {
 		const postType = $(this).val();
 		const $parentSelect = $("#parent-page");
@@ -422,7 +422,7 @@ jQuery(document).ready(function ($) {
 						);
 						response.data.posts.forEach(function (post) {
 							$parentSelect.append(
-								'<option value="' + post.id + '">' + escapeHtml(post.title) + "</option>"
+								'<option value="' + post.id + '">' + escapeHtml(post.title) + '</option>'
 							);
 						});
 					} else {
@@ -440,10 +440,75 @@ jQuery(document).ready(function ($) {
 				$loading.hide();
 			}
 		});
+
+		// Load taxonomies for the post type
+		loadTaxonomies(postType);
 	});
 
-	// Load templates on page load
-	(function loadInitialTemplates() {
+	// Function to load taxonomies for a post type
+	function loadTaxonomies(postType) {
+		const $section = $("#taxonomy-section");
+		const $loading = $("#taxonomy-loading");
+		const $list = $("#taxonomy-list");
+
+		$loading.show();
+		$list.empty();
+
+		$.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_get_taxonomies",
+				nonce: bulk_page_dup_ajax.nonce,
+				post_type: postType
+			},
+			success: function (response) {
+				$loading.hide();
+
+				if (response.success && response.data.taxonomies.length > 0) {
+					$section.show();
+
+					response.data.taxonomies.forEach(function (taxonomy) {
+						let termsHtml = '';
+
+						if (taxonomy.terms.length > 0) {
+							taxonomy.terms.forEach(function (term) {
+								termsHtml += `
+									<label>
+										<input type="checkbox" class="taxonomy-term" 
+											data-taxonomy="${taxonomy.name}" 
+											value="${term.id}">
+										${escapeHtml(term.name)}
+									</label>
+								`;
+							});
+						} else {
+							termsHtml = '<p class="taxonomy-empty">No terms available</p>';
+						}
+
+						const html = `
+							<div class="taxonomy-group" data-taxonomy="${taxonomy.name}">
+								<h4>${escapeHtml(taxonomy.label)}</h4>
+								<div class="taxonomy-terms">
+									${termsHtml}
+								</div>
+							</div>
+						`;
+						$list.append(html);
+					});
+				} else {
+					$section.hide();
+				}
+			},
+			error: function () {
+				$loading.hide();
+				$section.hide();
+			}
+		});
+	}
+
+	// Load templates and taxonomies on page load
+	(function loadInitialData() {
 		const postType = $('#post-type').val();
 		const $loading = $('#template-loading');
 
@@ -468,6 +533,8 @@ jQuery(document).ready(function ($) {
 				$loading.hide();
 			}
 		});
+
+		loadTaxonomies(postType);
 	})();
 
 	// Show/hide multi-placeholder help based on input
@@ -522,7 +589,7 @@ jQuery(document).ready(function ($) {
 		}
 
 		const reader = new FileReader();
-		reader.onload = function (e) {
+	eader.onload = function (e) {
 			const content = e.target.result;
 			const lines = parseCSV(content);
 
@@ -543,7 +610,7 @@ jQuery(document).ready(function ($) {
 			// Update preview
 			updatePreview();
 		};
-		reader.readAsText(file);
+	eader.readAsText(file);
 	}
 
 	// File input change
@@ -713,13 +780,6 @@ jQuery(document).ready(function ($) {
 		}
 	}
 
-	// Helper function to escape HTML
-	function escapeHtml(text) {
-		const div = document.createElement('div');
-		div.textContent = text;
-		return div.innerHTML;
-	}
-
 	// Close modal handlers
 	$(".bpd-modal-close, .bpd-modal-close-btn").on("click", function () {
 		$("#dry-run-modal").hide();
@@ -744,6 +804,7 @@ jQuery(document).ready(function ($) {
 		$("#dry-run-modal").hide();
 		$("#start-duplication").trigger("click");
 	});
+
 	$("#start-duplication").on("click", function (e) {
 		e.preventDefault();
 
@@ -792,8 +853,8 @@ jQuery(document).ready(function ($) {
 				alert(
 					"Each line must have " +
 						placeholders.length +
-						" comma-separated values (one for each placeholder).\n\n" +
-						"Placeholders: " +
+					" comma-separated values (one for each placeholder).\n\n" +
+					"Placeholders: " +
 						placeholders.join(", ")
 				);
 				return;
@@ -819,6 +880,17 @@ jQuery(document).ready(function ($) {
 			replaceOptions.push("elementor");
 		if ($("#replace-seo").is(":checked")) replaceOptions.push("seo");
 		if ($("#copy-featured-image").is(":checked")) replaceOptions.push("featured_image");
+
+		// Get selected taxonomy terms
+		const taxonomyTerms = {};
+		$(".taxonomy-term:checked").each(function () {
+			const taxonomy = $(this).data("taxonomy");
+			const termId = parseInt($(this).val());
+			if (!taxonomyTerms[taxonomy]) {
+				taxonomyTerms[taxonomy] = [];
+			}
+			taxonomyTerms[taxonomy].push(termId);
+		});
 
 		// Initialize UI for processing
 		isProcessing = true;
@@ -850,6 +922,7 @@ jQuery(document).ready(function ($) {
 			replaceOptions,
 			postType,
 			parentPage,
+			taxonomyTerms,
 			0
 		);
 	});
@@ -869,6 +942,7 @@ jQuery(document).ready(function ($) {
 		replaceOptions,
 		postType,
 		parentPage,
+		taxonomyTerms,
 		batchIndex
 	) {
 		const batchStartTime = Date.now();
@@ -926,6 +1000,7 @@ jQuery(document).ready(function ($) {
 				replace_options: replaceOptions,
 				post_type: postType,
 				parent_page: parentPage,
+				taxonomy_terms: taxonomyTerms,
 				batch_index: batchIndex
 			},
 			success: function (response) {
@@ -942,16 +1017,16 @@ jQuery(document).ready(function ($) {
 							if (result.edit_url) {
 								message +=
 									' (<a href="' +
-									result.edit_url +
-									'" target="_blank">Edit</a>)';
+										result.edit_url +
+										'" target="_blank">Edit</a>)';
 							}
 
 							$(".bulk-page-dup-log").prepend(
 								'<div class="bulk-page-dup-log-entry ' +
-									logClass +
-									'" data-status="' + result.status + '">' +
-									message +
-									"</div>"
+										logClass +
+										'" data-status="' + result.status + '">' +
+										message +
+										"</div>"
 							);
 						});
 
@@ -982,6 +1057,7 @@ jQuery(document).ready(function ($) {
 							replaceOptions,
 							postType,
 							parentPage,
+							taxonomyTerms,
 							endIndex
 						);
 					}

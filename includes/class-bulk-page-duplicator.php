@@ -47,6 +47,14 @@ class Bulk_Page_Duplicator_Core {
 		$batch_index = isset($_POST['batch_index']) ? intval(wp_unslash($_POST['batch_index'])) : 0;
 		$batch_size = 10; // Process 10 items at a time
 
+		// Get taxonomy terms to assign
+		$taxonomy_terms = [];
+		if (isset($_POST['taxonomy_terms']) && is_array($_POST['taxonomy_terms'])) {
+			foreach (wp_unslash($_POST['taxonomy_terms']) as $taxonomy => $term_ids) {
+				$taxonomy_terms[sanitize_key($taxonomy)] = array_map('intval', (array) $term_ids);
+			}
+		}
+
 		// Validate post type exists and is public
 		$post_type_obj = get_post_type_object($post_type);
 		if (!$post_type_obj || !$post_type_obj->public) {
@@ -160,6 +168,15 @@ class Bulk_Page_Duplicator_Core {
 					$thumbnail_id = get_post_thumbnail_id($template_id);
 					if ($thumbnail_id) {
 						set_post_thumbnail($new_post_id, $thumbnail_id);
+					}
+				}
+
+				// Assign taxonomy terms
+				if (!empty($taxonomy_terms)) {
+					foreach ($taxonomy_terms as $taxonomy => $term_ids) {
+						if (!empty($term_ids) && taxonomy_exists($taxonomy)) {
+							wp_set_object_terms($new_post_id, $term_ids, $taxonomy);
+						}
 					}
 				}
 
@@ -458,7 +475,7 @@ class Bulk_Page_Duplicator_Core {
 		}
 
 		// All in One SEO Pack
-		if (class_exists('AIOSEO\\Plugin\\AIOSEO')) {
+		if (class_exists('AIOSEO\Plugin\AIOSEO')) {
 			$seo_plugins[] = [
 				'name' => 'All in One SEO Pack',
 				'prefix' => '_aioseo_'

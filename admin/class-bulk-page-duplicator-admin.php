@@ -21,6 +21,7 @@ class Bulk_Page_Duplicator_Admin {
 		add_action('wp_ajax_bpd_dry_run', array($this, 'process_dry_run'));
 		add_action('wp_ajax_bpd_save_preferences', array($this, 'save_preferences'));
 		add_action('wp_ajax_bpd_get_preferences', array($this, 'get_preferences'));
+		add_action('wp_ajax_bpd_get_taxonomies', array($this, 'get_taxonomies'));
 	}
 
 	/**
@@ -375,6 +376,63 @@ class Bulk_Page_Duplicator_Admin {
 		wp_send_json_success(array(
 			'title' => $template->post_title,
 			'slug'  => $template->post_name,
+		));
+	}
+
+	/**
+	 * AJAX handler to get taxonomies for a post type
+	 */
+	public function get_taxonomies() {
+		// Verify nonce
+		$nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+		if (empty($nonce) || !wp_verify_nonce($nonce, 'bulk_page_duplication')) {
+			wp_send_json_error(__('Security check failed', 'bulk-page-duplicator'));
+		}
+
+		// Check capability
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
+		}
+
+		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'post';
+
+		// Get taxonomies for the post type
+		$taxonomies = get_object_taxonomies($post_type, 'objects');
+		$result = array();
+
+		foreach ($taxonomies as $taxonomy) {
+			// Skip non-public taxonomies and post_format
+			if (!$taxonomy->public || $taxonomy->name === 'post_format') {
+				continue;
+			}
+
+			// Get terms for this taxonomy
+			$terms = get_terms(array(
+				'taxonomy'   => $taxonomy->name,
+				'hide_empty' => false,
+			));
+
+			$term_list = array();
+			if (!is_wp_error($terms)) {
+				foreach ($terms as $term) {
+					$term_list[] = array(
+						'id'   => $term->term_id,
+						'name' => $term->name,
+						'slug' => $term->slug,
+					);
+				}
+			}
+
+			$result[] = array(
+				'name'         => $taxonomy->name,
+				'label'        => $taxonomy->labels->name,
+				'hierarchical' => $taxonomy->hierarchical,
+				'terms'        => $term_list,
+			);
+		}
+
+		wp_send_json_success(array(
+			'taxonomies' => $result,
 		));
 	}
 }

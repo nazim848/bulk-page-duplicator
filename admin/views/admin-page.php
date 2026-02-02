@@ -112,6 +112,18 @@ $seo_plugins = $core->detect_seo_plugins();
 				<option value="publish"><?php esc_html_e('Published', 'bulk-page-duplicator'); ?></option>
 				<option value="draft"><?php esc_html_e('Draft', 'bulk-page-duplicator'); ?></option>
 			</select>
+			<div id="taxonomy-section" style="display: none;">
+				<h2><?php esc_html_e('Categories & Tags', 'bulk-page-duplicator'); ?></h2>
+				<p><?php esc_html_e('Assign taxonomy terms to all created items:', 'bulk-page-duplicator'); ?></p>
+				<div id="taxonomy-loading" style="display: none;">
+					<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>
+					<?php esc_html_e('Loading taxonomies...', 'bulk-page-duplicator'); ?>
+				</div>
+				<div id="taxonomy-list"></div>
+				<p class="description" id="taxonomy-help">
+					<?php esc_html_e('Select terms to assign to all duplicated items.', 'bulk-page-duplicator'); ?>
+				</p>
+			</div>
 			<h2><?php esc_html_e('Where to Replace Text', 'bulk-page-duplicator'); ?></h2>
 			<p><?php esc_html_e('Select where the text should be replaced:', 'bulk-page-duplicator'); ?></p>
 			<div class="bulk-page-dup-checkbox-group">

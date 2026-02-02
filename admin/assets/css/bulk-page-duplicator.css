@@ -577,6 +577,30 @@ tr.bpd-status-skip {
 	color: #2e7d32;
 }
 
+.selected-template-info .template-status.draft {
+	background: #fff3e0;
+	color: #e65100;
+}
+
+.selected-template-info .template-status.private {
+	background: #fce4ec;
+	color: #c2185b;
+}
+
+#clear-template {
+	margin-left: 10px;
+	padding: 0 8px;
+	min-height: 28px;
+	line-height: 26px;
+	font-size: 16px;
+	color: #a00;
+}
+
+#clear-template:hover {
+	color: #dc3232;
+	border-color: #dc3232;
+}
+
 /* Results log improvements */
 .results-summary {
 	display: flex;
@@ -602,30 +626,6 @@ tr.bpd-status-skip {
 .summary-success {
 	background: #ecf9ec;
 	color: #2e7d32;
-}
-
-.selected-template-info .template-status.draft {
-	background: #fff3e0;
-	color: #e65100;
-}
-
-.selected-template-info .template-status.private {
-	background: #fce4ec;
-	color: #c2185b;
-}
-
-#clear-template {
-	margin-left: 10px;
-	padding: 0 8px;
-	min-height: 28px;
-	line-height: 26px;
-	font-size: 16px;
-	color: #a00;
-}
-
-#clear-template:hover {
-	color: #dc3232;
-	border-color: #dc3232;
 }
 
 .summary-skipped {
@@ -678,4 +678,44 @@ tr.bpd-status-skip {
 #progress-eta {
 	color: #666;
 	font-weight: 500;
+}
+
+/* Taxonomy section styles */
+#taxonomy-section {
+	margin-bottom: 15px;
+}
+
+.taxonomy-group {
+	margin-bottom: 15px;
+	padding: 10px;
+	background: #f9f9f9;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+}
+
+.taxonomy-group h4 {
+	margin: 0 0 10px 0;
+	font-size: 13px;
+	color: #23282d;
+}
+
+.taxonomy-terms {
+	max-height: 150px;
+	overflow-y: auto;
+}
+
+.taxonomy-terms label {
+	display: block;
+	margin-bottom: 5px;
+	font-size: 13px;
+}
+
+.taxonomy-terms input[type="checkbox"] {
+	margin-right: 5px;
+}
+
+.taxonomy-empty {
+	color: #666;
+	font-style: italic;
+	font-size: 12px;
 }
