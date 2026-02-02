@@ -32,8 +32,10 @@ Yes, it is fully internationalized and ready for translation. The plugin include
 
 == Changelog ==
 = 1.1.0 =
-* Feature: Custom Post Type Support - Duplicate any public post type.
+* Feature: Custom Post Type Support - Duplicate any post type.
+* Feature: Multiple placeholder support - Now you can replace multiple texts.
 * Feature: CSV/TXT Import - Load replacement values in bulk from files.
+* Feature: Dry Run Mode - Preview what will be created before execution.
 * Feature: Enhanced Template Selector - Searchable dropdown with thumbnails and metadata.
 * Feature: Featured Image Support - Option to copy the featured image to duplicates.
 * Feature: Improved Results Log - Added summaries, status filtering, and CSV export.
