@@ -129,7 +129,6 @@
 	margin-bottom: 15px;
 }
 
-<<<<<<< HEAD
 /* Dry Run Modal Styles */
 .bpd-modal {
 	position: fixed;
@@ -560,7 +559,10 @@ tr.bpd-status-skip {
 }
 
 .selected-template-info .template-meta {
-=======
+	font-size: 12px;
+	color: #666;
+}
+
 /* History/Rollback section styles */
 .bulk-page-dup-history-container {
 	margin-top: 20px;
@@ -598,12 +600,10 @@ tr.bpd-status-skip {
 }
 
 .history-item-meta {
->>>>>>> feature/undo-rollback
 	font-size: 12px;
 	color: #666;
 }
 
-<<<<<<< HEAD
 .selected-template-info .template-status {
 	display: inline-block;
 	padding: 2px 8px;
