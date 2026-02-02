@@ -129,6 +129,7 @@
 	margin-bottom: 15px;
 }
 
+<<<<<<< HEAD
 /* Dry Run Modal Styles */
 .bpd-modal {
 	position: fixed;
@@ -559,10 +560,50 @@ tr.bpd-status-skip {
 }
 
 .selected-template-info .template-meta {
+=======
+/* History/Rollback section styles */
+.bulk-page-dup-history-container {
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid #eee;
+}
+
+.bulk-page-dup-history-item {
+	background: #f9f9f9;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+	padding: 12px;
+	margin-bottom: 10px;
+}
+
+.bulk-page-dup-history-item:last-child {
+	margin-bottom: 0;
+}
+
+.history-item-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 8px;
+}
+
+.history-item-info {
+	flex: 1;
+}
+
+.history-item-title {
+	font-weight: 600;
+	color: #23282d;
+	margin-bottom: 4px;
+}
+
+.history-item-meta {
+>>>>>>> feature/undo-rollback
 	font-size: 12px;
 	color: #666;
 }
 
+<<<<<<< HEAD
 .selected-template-info .template-status {
 	display: inline-block;
 	padding: 2px 8px;
@@ -718,4 +759,91 @@ tr.bpd-status-skip {
 	color: #666;
 	font-style: italic;
 	font-size: 12px;
+}
+
+/* History/Rollback section styles */
+.bulk-page-dup-history-container {
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid #eee;
+}
+
+.bulk-page-dup-history-item {
+	background: #f9f9f9;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+	padding: 12px;
+	margin-bottom: 10px;
+}
+
+.bulk-page-dup-history-item:last-child {
+	margin-bottom: 0;
+}
+
+.history-item-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 8px;
+}
+
+.history-item-info {
+	flex: 1;
+}
+
+.history-item-title {
+	font-weight: 600;
+	color: #23282d;
+	margin-bottom: 4px;
+}
+
+.history-item-meta {
+	font-size: 12px;
+	color: #666;
+}
+
+.history-item-meta span {
+	margin-right: 10px;
+}
+
+.history-item-count {
+	background: #0073aa;
+	color: #fff;
+	padding: 2px 8px;
+	border-radius: 10px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.history-item-count.partial {
+	background: #ffb900;
+	color: #23282d;
+}
+
+.history-item-count.none {
+	background: #dc3232;
+}
+
+.history-item-actions {
+	margin-top: 8px;
+}
+
+.history-item-actions .button {
+	margin-right: 5px;
+}
+
+.rollback-btn {
+	color: #a00 !important;
+	border-color: #a00 !important;
+}
+
+.rollback-btn:hover {
+	background: #a00 !important;
+	color: #fff !important;
+}
+
+.rollback-btn:disabled {
+	color: #a7aaad !important;
+	border-color: #dcdcde !important;
+	background: #f6f7f7 !important;
 }

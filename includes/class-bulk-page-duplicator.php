@@ -247,10 +247,163 @@ class Bulk_Page_Duplicator_Core {
 			}
 		}
 
+		// Store batch history for undo/rollback functionality
+		$created_ids = array_filter(array_map(function($r) {
+			return isset($r['status']) && $r['status'] === 'success' && isset($r['id']) ? $r['id'] : null;
+		}, $results));
+
+		if (!empty($created_ids)) {
+			$this->save_batch_history($template_id, $post_type, $created_ids, $batch_index);
+		}
+
 		wp_send_json_success([
 			'results' => $results,
 			'is_last_batch' => $is_last_batch
 		]);
+	}
+
+	/**
+	 * Save batch history for undo/rollback functionality
+	 *
+	 * @param int $template_id The template post ID
+	 * @param string $post_type The post type created
+	 * @param array $post_ids Array of created post IDs
+	 * @param int $batch_index Current batch index (0 for first batch)
+	 */
+	private function save_batch_history($template_id, $post_type, $post_ids, $batch_index) {
+		$history = get_option('bpd_batch_history', []);
+		$session_key = 'session_' . get_current_user_id() . '_' . date('Ymd_His');
+
+		// If batch_index is 0, create a new session entry
+		if ($batch_index === 0) {
+			$template = get_post($template_id);
+			$post_type_obj = get_post_type_object($post_type);
+
+			$session_key = 'session_' . get_current_user_id() . '_' . time();
+			$history[$session_key] = [
+				'timestamp' => time(),
+				'user_id' => get_current_user_id(),
+				'template_id' => $template_id,
+				'template_title' => $template ? $template->post_title : __('Unknown', 'bulk-page-duplicator'),
+				'post_type' => $post_type,
+				'post_type_label' => $post_type_obj ? $post_type_obj->labels->name : $post_type,
+				'post_ids' => $post_ids,
+			];
+
+			// Store the current session key for subsequent batches
+			set_transient('bpd_current_session_' . get_current_user_id(), $session_key, HOUR_IN_SECONDS);
+		} else {
+			// Get the current session key and append post IDs
+			$current_session = get_transient('bpd_current_session_' . get_current_user_id());
+			if ($current_session && isset($history[$current_session])) {
+				$history[$current_session]['post_ids'] = array_merge(
+					$history[$current_session]['post_ids'],
+					$post_ids
+				);
+			}
+		}
+
+		// Keep only the last 20 operations
+		if (count($history) > 20) {
+			$history = array_slice($history, -20, 20, true);
+		}
+
+		update_option('bpd_batch_history', $history);
+	}
+
+	/**
+	 * Get batch history for display
+	 *
+	 * @param int $limit Number of history items to return
+	 * @return array Array of history items
+	 */
+	public function get_batch_history($limit = 10) {
+		$history = get_option('bpd_batch_history', []);
+
+		// Sort by timestamp descending (most recent first)
+		uasort($history, function($a, $b) {
+			return $b['timestamp'] - $a['timestamp'];
+		});
+
+		// Limit results
+		$history = array_slice($history, 0, $limit, true);
+
+		// Format for display
+		$formatted = [];
+		foreach ($history as $key => $item) {
+			// Count how many posts still exist
+			$existing_count = 0;
+			foreach ($item['post_ids'] as $post_id) {
+				if (get_post($post_id)) {
+					$existing_count++;
+				}
+			}
+
+			$formatted[] = [
+				'key' => $key,
+				'timestamp' => $item['timestamp'],
+				'date' => date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $item['timestamp']),
+				'template_title' => $item['template_title'],
+				'post_type_label' => $item['post_type_label'],
+				'total_count' => count($item['post_ids']),
+				'existing_count' => $existing_count,
+				'can_rollback' => $existing_count > 0,
+			];
+		}
+
+		return $formatted;
+	}
+
+	/**
+	 * Rollback (delete) posts from a batch operation
+	 *
+	 * @param string $session_key The session key to rollback
+	 * @return array Result with success status and message
+	 */
+	public function rollback_batch($session_key) {
+		$history = get_option('bpd_batch_history', []);
+
+		if (!isset($history[$session_key])) {
+			return [
+				'success' => false,
+				'message' => __('Operation not found in history.', 'bulk-page-duplicator')
+			];
+		}
+
+		$item = $history[$session_key];
+		$deleted_count = 0;
+		$failed_count = 0;
+
+		foreach ($item['post_ids'] as $post_id) {
+			$post = get_post($post_id);
+			if ($post) {
+				// Force delete (bypass trash)
+				$result = wp_delete_post($post_id, true);
+				if ($result) {
+					$deleted_count++;
+				} else {
+					$failed_count++;
+				}
+			}
+		}
+
+		// Remove from history
+		unset($history[$session_key]);
+		update_option('bpd_batch_history', $history);
+
+		if ($failed_count > 0) {
+			return [
+				'success' => true,
+				// translators: %1$d: number of deleted posts, %2$d: number of failed deletions
+				'message' => sprintf(__('Deleted %1$d items. %2$d items could not be deleted.', 'bulk-page-duplicator'), $deleted_count, $failed_count)
+			];
+		}
+
+		return [
+			'success' => true,
+			// translators: %d: number of deleted posts
+			'message' => sprintf(__('Successfully deleted %d items.', 'bulk-page-duplicator'), $deleted_count)
+		];
 	}
 
 	/**
@@ -420,7 +573,7 @@ class Bulk_Page_Duplicator_Core {
 		if (function_exists('mb_convert_case')) {
 			$replacements[] = mb_convert_case($replace, MB_CASE_TITLE, 'UTF-8');
 		} else {
-			$replacements[] = ucwords(strtolower($replace), " \t\r\n\f\v-");
+			$replacements[] = ucwords(strtolower($replace), " 	\r\n\f\v-");
 		}
 
 		// Case 3: Exact match (as provided)

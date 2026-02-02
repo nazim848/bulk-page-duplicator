@@ -211,10 +211,26 @@ $seo_plugins = $core->detect_seo_plugins();
 				</div>
 				<div class="bulk-page-dup-log"></div>
 			</div>
+			<div class="bulk-page-dup-history-container">
+				<h3><?php esc_html_e('Recent Operations', 'bulk-page-duplicator'); ?></h3>
+				<p class="description"><?php esc_html_e('You can rollback (delete) pages created by recent operations.', 'bulk-page-duplicator'); ?></p>
+				<div id="history-loading" style="display: none;">
+					<span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>
+					<?php esc_html_e('Loading history...', 'bulk-page-duplicator'); ?>
+				</div>
+				<div id="history-list"></div>
+				<p id="history-empty" style="display: none; color: #666;">
+					<?php esc_html_e('No recent operations found.', 'bulk-page-duplicator'); ?>
+				</p>
+				<p style="margin-top: 10px;">
+					<button type="button" id="refresh-history" class="button button-secondary">
+						<?php esc_html_e('Refresh History', 'bulk-page-duplicator'); ?>
+					</button>
+				</p>
+			</div>
 		</div>
 	</div>
 </div>
-
 <!-- Dry Run Modal -->
 <div id="dry-run-modal" class="bpd-modal" style="display: none;">
 	<div class="bpd-modal-content">

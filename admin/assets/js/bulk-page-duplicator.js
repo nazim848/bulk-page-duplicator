@@ -1112,6 +1112,9 @@ jQuery(document).ready(function ($) {
 		// Reset timing variables
 		processingStartTime = null;
 		batchTimings = [];
+
+		// Refresh history after operation completes
+		loadHistory();
 	}
 
 	// Update results summary counts
@@ -1170,4 +1173,119 @@ jQuery(document).ready(function ($) {
 		link.click();
 		document.body.removeChild(link);
 	});
+
+	// === History/Rollback functionality ===
+
+	function loadHistory() {
+		const $loading = $("#history-loading");
+		const $list = $("#history-list");
+		const $empty = $("#history-empty");
+
+		$loading.show();
+		$list.empty();
+		$empty.hide();
+
+		$.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_get_history",
+				nonce: bulk_page_dup_ajax.nonce
+			},
+			success: function (response) {
+				$loading.hide();
+
+				if (response.success && response.data.history.length > 0) {
+					response.data.history.forEach(function (item) {
+						const countClass = item.existing_count === 0 ? 'none' : 
+							(item.existing_count < item.total_count ? 'partial' : '');
+						const countText = item.existing_count === item.total_count ? 
+							item.total_count + ' items' : 
+							item.existing_count + ' of ' + item.total_count + ' remain';
+
+						const html = `
+							<div class="bulk-page-dup-history-item" data-key="${item.key}">
+								<div class="history-item-header">
+									<div class="history-item-info">
+										<div class="history-item-title">Template: ${escapeHtml(item.template_title)}</div>
+										<div class="history-item-meta">
+											<span>${item.date}</span>
+											<span>${item.post_type_label}</span>
+										</div>
+									</div>
+									<span class="history-item-count ${countClass}">${countText}</span>
+								</div>
+								<div class="history-item-actions">
+									<button type="button" class="button button-small rollback-btn" 
+										${!item.can_rollback ? 'disabled' : ''} 
+										data-key="${item.key}" 
+										data-count="${item.existing_count}">
+										Rollback (Delete All)
+									</button>
+								</div>
+							</div>
+						`;
+						$list.append(html);
+					});
+				} else {
+					$empty.show();
+				}
+			},
+			error: function () {
+				$loading.hide();
+				$empty.text("Error loading history.").show();
+			}
+		});
+	}
+
+	// Handle rollback button click
+	$(document).on("click", ".rollback-btn", function () {
+		const $btn = $(this);
+		const sessionKey = $btn.data("key");
+		const count = $btn.data("count");
+
+		if (!confirm("Are you sure you want to delete " + count + " items? This action cannot be undone.")) {
+			return;
+		}
+
+		$btn.prop("disabled", true).text("Deleting...");
+
+		$.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_rollback",
+				nonce: bulk_page_dup_ajax.nonce,
+				session_key: sessionKey
+			},
+			success: function (response) {
+				if (response.success) {
+					// Remove the item from UI
+					$btn.closest(".bulk-page-dup-history-item").fadeOut(300, function () {
+						$(this).remove();
+						// Check if list is empty
+						if ($("#history-list .bulk-page-dup-history-item").length === 0) {
+							$("#history-empty").show();
+						}
+					});
+					alert(response.data.message);
+				} else {
+					$btn.prop("disabled", false).text("Rollback (Delete All)");
+					alert("Error: " + response.data);
+				}
+			},
+			error: function () {
+				$btn.prop("disabled", false).text("Rollback (Delete All)");
+				alert("An error occurred. Please try again.");
+			}
+		});
+	});
+
+	// Handle refresh history button
+	$("#refresh-history").on("click", function () {
+		loadHistory();
+	});
+
+	// Load history on page load
+	loadHistory();
 });
