@@ -2,7 +2,7 @@
 /*
 Plugin Name: Bulk Page Duplicator
 Description: Create multiple pages by duplicating an existing page and replacing specific text with different values.
-Version: 1.0.1
+Version: 1.1.0
 Author: Nazim Husain
 Author URI: https://nazimansari.com
 License: GPLv2 or later
@@ -32,7 +32,7 @@ if (!defined('WPINC')) {
 	die;
 }
 
-define('BULK_PAGE_DUPLICATOR_VERSION', '1.0.0');
+define('BULK_PAGE_DUPLICATOR_VERSION', '1.1.0');
 
 define('BULK_PAGE_DUPLICATOR_PATH', plugin_dir_path(__FILE__));
 define('BULK_PAGE_DUPLICATOR_URL', plugin_dir_url(__FILE__));
