@@ -1,16 +1,5 @@
 # Bulk Page Duplicator
 
--  Contributors: nazim848
--  Donate link: https://buymeacoffee.com/nazim848
--  Requires at least: 5.0
--  Tested up to: 6.9
--  Stable tag: 1.1.0
--  Requires PHP: 7.2
--  License: GPLv2 or later
--  License URI: https://www.gnu.org/licenses/gpl-3.0.html
-
-## Description
-
 Bulk Page Duplicator allows you to quickly create multiple pages by duplicating a template page and replacing a placeholder with a list of values. Supports Elementor, Beaver Builder, Bricks Page builders and major SEO plugins (Yoast, Rank Math, AIOSEO, SEOPress).
 
 ## Installation
