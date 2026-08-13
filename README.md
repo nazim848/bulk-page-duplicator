@@ -24,6 +24,10 @@ Yes, it is fully internationalized and ready for translation. The plugin include
 
 ## Changelog
 
+### 1.1.1
+
+- Security, data-integrity, rollback, compatibility, and large-site performance fixes.
+
 ### 1.1.0
 
 -  Feature: Custom Post Type Support - Duplicate any post type.

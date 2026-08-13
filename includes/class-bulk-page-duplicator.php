@@ -10,6 +10,13 @@ if (!defined('ABSPATH')) exit;
 
 class Bulk_Page_Duplicator_Core {
 	/**
+	 * Whether Elementor's global asset cache needs to be cleared after this batch.
+	 *
+	 * @var bool
+	 */
+	private $elementor_cache_needs_clear = false;
+
+	/**
 	 * Handle AJAX duplication request
 	 */
 	public function process_bulk_duplication() {
@@ -31,40 +38,69 @@ class Bulk_Page_Duplicator_Core {
 		// Values can now be arrays (for multiple placeholders) or strings
 		$batch_values = [];
 		if (isset($_POST['values'])) {
-			$raw_values = wp_unslash($_POST['values']);
+			$raw_values = map_deep(wp_unslash($_POST['values']), 'sanitize_text_field');
 			foreach ((array) $raw_values as $value_set) {
 				if (is_array($value_set)) {
-					$batch_values[] = array_map('sanitize_text_field', $value_set);
+					$batch_values[] = $value_set;
 				} else {
-					$batch_values[] = [sanitize_text_field($value_set)];
+					$batch_values[] = [$value_set];
 				}
 			}
 		}
-		$page_status = isset($_POST['status']) ? sanitize_text_field(wp_unslash($_POST['status'])) : 'draft';
-		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['replace_options'])) : [];
-		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page';
+		$page_status = isset($_POST['status']) ? sanitize_key(wp_unslash($_POST['status'])) : 'draft';
+		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_key', (array) wp_unslash($_POST['replace_options'])) : [];
+		$post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'page';
 		$parent_page = isset($_POST['parent_page']) ? sanitize_text_field(wp_unslash($_POST['parent_page'])) : '0';
-		$batch_index = isset($_POST['batch_index']) ? intval(wp_unslash($_POST['batch_index'])) : 0;
-		$batch_size = 10; // Process 10 items at a time
+		$batch_index = isset($_POST['batch_index']) ? absint(wp_unslash($_POST['batch_index'])) : 0;
+		$operation_id = isset($_POST['operation_id']) ? sanitize_key(wp_unslash($_POST['operation_id'])) : '';
+		$operation_complete = isset($_POST['operation_complete']) && 'true' === sanitize_text_field(wp_unslash($_POST['operation_complete']));
 
 		// Get taxonomy terms to assign
 		$taxonomy_terms = [];
 		if (isset($_POST['taxonomy_terms']) && is_array($_POST['taxonomy_terms'])) {
-			foreach (wp_unslash($_POST['taxonomy_terms']) as $taxonomy => $term_ids) {
-				$taxonomy_terms[sanitize_key($taxonomy)] = array_map('intval', (array) $term_ids);
+			$raw_taxonomy_terms = map_deep(wp_unslash($_POST['taxonomy_terms']), 'absint');
+			foreach ($raw_taxonomy_terms as $taxonomy => $term_ids) {
+				$taxonomy_terms[sanitize_key($taxonomy)] = array_map('absint', (array) $term_ids);
 			}
 		}
 
 		// Validate post type exists and is public
 		$post_type_obj = get_post_type_object($post_type);
-		if (!$post_type_obj || !$post_type_obj->public) {
+		if (!$post_type_obj || !$post_type_obj->public || 'attachment' === $post_type) {
 			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		$create_posts_cap = isset($post_type_obj->cap->create_posts) ? $post_type_obj->cap->create_posts : $post_type_obj->cap->edit_posts;
+		if (!current_user_can($create_posts_cap)) {
+			wp_send_json_error(__('You do not have permission to create this type of content.', 'bulk-page-duplicator'));
+		}
+
+		if (!in_array($page_status, array('draft', 'publish'), true)) {
+			wp_send_json_error(__('Invalid post status.', 'bulk-page-duplicator'));
+		}
+
+		if ('publish' === $page_status && !current_user_can($post_type_obj->cap->publish_posts)) {
+			wp_send_json_error(__('You do not have permission to publish this type of content.', 'bulk-page-duplicator'));
 		}
 
 		// Validate template post exists
 		$template_page = get_post($template_id);
-		if (!$template_page) {
+		if (!$template_page || $template_page->post_type !== $post_type) {
 			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
+		}
+
+		if (!current_user_can('edit_post', $template_id)) {
+			wp_send_json_error(__('You do not have permission to use this template.', 'bulk-page-duplicator'));
+		}
+
+		$post_parent = $this->validate_parent_page($parent_page, $template_page, $post_type_obj);
+		if (is_wp_error($post_parent)) {
+			wp_send_json_error($post_parent->get_error_message());
+		}
+
+		$taxonomy_terms = $this->validate_taxonomy_terms($taxonomy_terms, $post_type);
+		if (is_wp_error($taxonomy_terms)) {
+			wp_send_json_error($taxonomy_terms->get_error_message());
 		}
 
 		$results = [];
@@ -73,12 +109,6 @@ class Bulk_Page_Duplicator_Core {
 		if (empty($batch_values)) {
 			$is_last_batch = true;
 		} else {
-			// Get Elementor data if exists
-			$elementor_data = '';
-			if (in_array('elementor', $replace_options)) {
-				$elementor_data = get_post_meta($template_id, '_elementor_data', true);
-			}
-
 			// Process this batch
 			foreach ($batch_values as $value_set) {
 				// Skip empty values
@@ -116,8 +146,8 @@ class Bulk_Page_Duplicator_Core {
 					$content = $this->multi_replace($content, $placeholders, $value_set);
 				}
 
-				// Check if post with this slug already exists for the post type
-				$existing_post = get_page_by_path($slug, OBJECT, $post_type);
+				// Check if this slug already exists under the requested parent.
+				$existing_post = $this->get_post_by_slug($slug, $post_type, $post_parent);
 				if ($existing_post) {
 					$results[] = [
 						'value' => $display_value,
@@ -126,16 +156,6 @@ class Bulk_Page_Duplicator_Core {
 						'message' => sprintf(__('Item with slug "%s" already exists', 'bulk-page-duplicator'), $slug)
 					];
 					continue;
-				}
-
-				// Determine parent page
-				$post_parent = 0;
-				if ($post_type_obj->hierarchical) {
-					if ($parent_page === 'template') {
-						$post_parent = $template_page->post_parent;
-					} elseif (is_numeric($parent_page) && intval($parent_page) > 0) {
-						$post_parent = intval($parent_page);
-					}
 				}
 
 				// Create the duplicated post
@@ -160,6 +180,8 @@ class Bulk_Page_Duplicator_Core {
 					continue;
 				}
 
+				$inserted_slug = get_post_field('post_name', $new_post_id);
+
 				// Copy post meta
 				$this->copy_post_meta_multi($template_id, $new_post_id, $placeholders, $value_set, $replace_options);
 
@@ -172,10 +194,14 @@ class Bulk_Page_Duplicator_Core {
 				}
 
 				// Assign taxonomy terms
+				$post_warnings = [];
 				if (!empty($taxonomy_terms)) {
 					foreach ($taxonomy_terms as $taxonomy => $term_ids) {
-						if (!empty($term_ids) && taxonomy_exists($taxonomy)) {
-							wp_set_object_terms($new_post_id, $term_ids, $taxonomy);
+						if (!empty($term_ids)) {
+							$term_result = wp_set_object_terms($new_post_id, $term_ids, $taxonomy);
+							if (is_wp_error($term_result)) {
+								$post_warnings[] = $term_result->get_error_message();
+							}
 						}
 					}
 				}
@@ -195,15 +221,32 @@ class Bulk_Page_Duplicator_Core {
 					$this->process_bricks_builder_data($template_id, $new_post_id, $placeholders, $value_set);
 				}
 
+				/* translators: %s: title of the newly created item. */
+				$success_message = sprintf(__('Created: "%s"', 'bulk-page-duplicator'), $title);
+				if ($inserted_slug !== $slug) {
+					/* translators: %s: actual unique slug assigned by WordPress. */
+					$post_warnings[] = sprintf(__('WordPress assigned the unique slug "%s".', 'bulk-page-duplicator'), $inserted_slug);
+				}
+				if (!empty($post_warnings)) {
+					/* translators: %1$s: creation message, %2$s: warning details. */
+					$success_message = sprintf(__('%1$s Warning: %2$s', 'bulk-page-duplicator'), $success_message, implode(' ', $post_warnings));
+				}
+
 				$results[] = [
 					'value' => $display_value,
 					'status' => 'success',
 					// translators: %s: The title of the newly created item.
-					'message' => sprintf(__('Created: "%s"', 'bulk-page-duplicator'), $title),
+					'message' => $success_message,
 					'id' => $new_post_id,
-					'edit_url' => get_edit_post_link($new_post_id, '')
+					'slug' => $inserted_slug,
+					'edit_url' => esc_url_raw(get_edit_post_link($new_post_id, ''))
 				];
 			}
+		}
+
+		if ($this->elementor_cache_needs_clear && class_exists('\\Elementor\\Plugin')) {
+			\Elementor\Plugin::$instance->files_manager->clear_cache();
+			$this->elementor_cache_needs_clear = false;
 		}
 
 		// Store batch history for undo/rollback functionality
@@ -211,9 +254,7 @@ class Bulk_Page_Duplicator_Core {
 			return isset($r['status']) && $r['status'] === 'success' && isset($r['id']) ? $r['id'] : null;
 		}, $results));
 
-		if (!empty($created_ids)) {
-			$this->save_batch_history($template_id, $post_type, $created_ids, $batch_index);
-		}
+		$this->save_batch_history($template_id, $post_type, $created_ids, $batch_index, $operation_id, $operation_complete);
 
 		wp_send_json_success([
 			'results' => $results,
@@ -222,44 +263,138 @@ class Bulk_Page_Duplicator_Core {
 	}
 
 	/**
+	 * Validate and resolve a requested parent post.
+	 *
+	 * @param string  $parent_page   Requested parent value.
+	 * @param WP_Post $template_page Template post.
+	 * @param object  $post_type_obj Post type object.
+	 * @return int|WP_Error
+	 */
+	private function validate_parent_page($parent_page, $template_page, $post_type_obj) {
+		if (!$post_type_obj->hierarchical) {
+			return 0;
+		}
+
+		$post_parent = 'template' === $parent_page ? absint($template_page->post_parent) : absint($parent_page);
+		if (!$post_parent) {
+			return 0;
+		}
+
+		$parent = get_post($post_parent);
+		if (!$parent || $parent->post_type !== $post_type_obj->name) {
+			return new WP_Error('bpd_invalid_parent', __('Invalid parent item.', 'bulk-page-duplicator'));
+		}
+
+		if (!current_user_can('edit_post', $post_parent)) {
+			return new WP_Error('bpd_parent_permission', __('You do not have permission to use the selected parent.', 'bulk-page-duplicator'));
+		}
+
+		return $post_parent;
+	}
+
+	/**
+	 * Validate taxonomy and term assignments for a post type.
+	 *
+	 * @param array  $taxonomy_terms Submitted taxonomy terms.
+	 * @param string $post_type      Requested post type.
+	 * @return array|WP_Error
+	 */
+	private function validate_taxonomy_terms($taxonomy_terms, $post_type) {
+		$validated = [];
+
+		foreach ($taxonomy_terms as $taxonomy => $term_ids) {
+			$taxonomy_obj = get_taxonomy($taxonomy);
+			if (!$taxonomy_obj || !is_object_in_taxonomy($post_type, $taxonomy)) {
+				return new WP_Error('bpd_invalid_taxonomy', __('Invalid taxonomy selection.', 'bulk-page-duplicator'));
+			}
+
+			if (!current_user_can($taxonomy_obj->cap->assign_terms)) {
+				return new WP_Error('bpd_taxonomy_permission', __('You do not have permission to assign the selected terms.', 'bulk-page-duplicator'));
+			}
+
+			$validated[$taxonomy] = [];
+			foreach (array_unique(array_filter(array_map('absint', $term_ids))) as $term_id) {
+				if (!term_exists($term_id, $taxonomy)) {
+					return new WP_Error('bpd_invalid_term', __('One or more selected terms no longer exist.', 'bulk-page-duplicator'));
+				}
+				$validated[$taxonomy][] = $term_id;
+			}
+		}
+
+		return $validated;
+	}
+
+	/**
+	 * Find an existing post by slug and parent.
+	 *
+	 * @param string $slug        Post slug.
+	 * @param string $post_type   Post type.
+	 * @param int    $post_parent Parent post ID.
+	 * @return WP_Post|null
+	 */
+	public function get_post_by_slug($slug, $post_type, $post_parent = 0) {
+		$args = array(
+			'post_type'              => $post_type,
+			'name'                   => sanitize_title($slug),
+			'post_status'            => array('publish', 'draft', 'pending', 'private', 'future', 'trash'),
+			'posts_per_page'         => 1,
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		);
+
+		$post_type_obj = get_post_type_object($post_type);
+		if ($post_type_obj && $post_type_obj->hierarchical) {
+			$args['post_parent'] = absint($post_parent);
+		}
+
+		$posts = get_posts($args);
+		return !empty($posts) ? $posts[0] : null;
+	}
+
+	/**
 	 * Save batch history for undo/rollback functionality
 	 *
 	 * @param int $template_id The template post ID
 	 * @param string $post_type The post type created
 	 * @param array $post_ids Array of created post IDs
-	 * @param int $batch_index Current batch index (0 for first batch)
+	 * @param int    $batch_index  Current batch index (0 for first batch).
+	 * @param string $operation_id       Unique client-generated operation ID.
+	 * @param bool   $operation_complete Whether the operation sent its final batch.
 	 */
-	private function save_batch_history($template_id, $post_type, $post_ids, $batch_index) {
+	private function save_batch_history($template_id, $post_type, $post_ids, $batch_index, $operation_id = '', $operation_complete = false) {
 		$history = get_option('bpd_batch_history', []);
-		$session_key = 'session_' . get_current_user_id() . '_' . gmdate('Ymd_His');
+		$user_id = get_current_user_id();
 
-		// If batch_index is 0, create a new session entry
-		if ($batch_index === 0) {
+		if (empty($operation_id)) {
+			$operation_id = 'legacy-' . wp_generate_uuid4();
+		}
+
+		$session_key = 'session_' . $user_id . '_' . $operation_id;
+
+		// Create the operation on its first received batch, even if nothing was created.
+		if (!isset($history[$session_key])) {
 			$template = get_post($template_id);
 			$post_type_obj = get_post_type_object($post_type);
-
-			$session_key = 'session_' . get_current_user_id() . '_' . time();
 			$history[$session_key] = [
 				'timestamp' => time(),
-				'user_id' => get_current_user_id(),
+				'user_id' => $user_id,
 				'template_id' => $template_id,
 				'template_title' => $template ? $template->post_title : __('Unknown', 'bulk-page-duplicator'),
 				'post_type' => $post_type,
 				'post_type_label' => $post_type_obj ? $post_type_obj->labels->name : $post_type,
-				'post_ids' => $post_ids,
+				'post_ids' => array_values(array_map('absint', $post_ids)),
 			];
-
-			// Store the current session key for subsequent batches
-			set_transient('bpd_current_session_' . get_current_user_id(), $session_key, HOUR_IN_SECONDS);
 		} else {
-			// Get the current session key and append post IDs
-			$current_session = get_transient('bpd_current_session_' . get_current_user_id());
-			if ($current_session && isset($history[$current_session])) {
-				$history[$current_session]['post_ids'] = array_merge(
-					$history[$current_session]['post_ids'],
-					$post_ids
-				);
-			}
+			$history[$session_key]['post_ids'] = array_values(array_unique(array_merge(
+				$history[$session_key]['post_ids'],
+				array_map('absint', $post_ids)
+			)));
+		}
+
+		if ($operation_complete && empty($history[$session_key]['post_ids'])) {
+			unset($history[$session_key]);
 		}
 
 		// Keep only the last 20 operations
@@ -267,7 +402,7 @@ class Bulk_Page_Duplicator_Core {
 			$history = array_slice($history, -20, 20, true);
 		}
 
-		update_option('bpd_batch_history', $history);
+		update_option('bpd_batch_history', $history, false);
 	}
 
 	/**
@@ -278,6 +413,11 @@ class Bulk_Page_Duplicator_Core {
 	 */
 	public function get_batch_history($limit = 10) {
 		$history = get_option('bpd_batch_history', []);
+		$user_id = get_current_user_id();
+
+		$history = array_filter($history, function($item) use ($user_id) {
+			return isset($item['user_id'], $item['post_ids']) && (int) $item['user_id'] === $user_id && !empty($item['post_ids']);
+		});
 
 		// Sort by timestamp descending (most recent first)
 		uasort($history, function($a, $b) {
@@ -301,7 +441,7 @@ class Bulk_Page_Duplicator_Core {
 			$formatted[] = [
 				'key' => $key,
 				'timestamp' => $item['timestamp'],
-				'date' => wp_date(get_option('date_format') . ' ' . get_option('time_format'), $item['timestamp']),
+				'date' => get_date_from_gmt(gmdate('Y-m-d H:i:s', $item['timestamp']), get_option('date_format') . ' ' . get_option('time_format')),
 				'template_title' => $item['template_title'],
 				'post_type_label' => $item['post_type_label'],
 				'total_count' => count($item['post_ids']),
@@ -330,25 +470,43 @@ class Bulk_Page_Duplicator_Core {
 		}
 
 		$item = $history[$session_key];
+		if (!isset($item['user_id']) || (int) $item['user_id'] !== get_current_user_id()) {
+			return [
+				'success' => false,
+				'message' => __('You do not have permission to rollback this operation.', 'bulk-page-duplicator')
+			];
+		}
+
 		$deleted_count = 0;
 		$failed_count = 0;
+		$remaining_ids = [];
 
 		foreach ($item['post_ids'] as $post_id) {
 			$post = get_post($post_id);
 			if ($post) {
+				if (!current_user_can('delete_post', $post_id)) {
+					$failed_count++;
+					$remaining_ids[] = $post_id;
+					continue;
+				}
+
 				// Force delete (bypass trash)
 				$result = wp_delete_post($post_id, true);
 				if ($result) {
 					$deleted_count++;
 				} else {
 					$failed_count++;
+					$remaining_ids[] = $post_id;
 				}
 			}
 		}
 
-		// Remove from history
-		unset($history[$session_key]);
-		update_option('bpd_batch_history', $history);
+		if (empty($remaining_ids)) {
+			unset($history[$session_key]);
+		} else {
+			$history[$session_key]['post_ids'] = $remaining_ids;
+		}
+		update_option('bpd_batch_history', $history, false);
 
 		if ($failed_count > 0) {
 			return [
@@ -416,10 +574,8 @@ class Bulk_Page_Duplicator_Core {
 			// 4. Force regeneration of CSS
 			delete_post_meta($new_post_id, '_elementor_css');
 
-			// 5. Clear Elementor cache for this post
-			if (class_exists('\Elementor\Plugin')) {
-				\Elementor\Plugin::$instance->files_manager->clear_cache();
-			}
+			// 5. Defer Elementor's global cache clear until the batch is complete.
+			$this->elementor_cache_needs_clear = true;
 
 			// 6. Set post type to elementor
 			update_post_meta($new_post_id, '_elementor_edit_mode', 'builder');
@@ -621,7 +777,6 @@ class Bulk_Page_Duplicator_Core {
 			$page_builders[] = [
 				'name' => 'Elementor',
 				'id' => 'elementor',
-				'meta_key' => '_elementor_data'
 			];
 		}
 
@@ -630,7 +785,6 @@ class Bulk_Page_Duplicator_Core {
 			$page_builders[] = [
 				'name' => 'Beaver Builder',
 				'id' => 'beaver',
-				'meta_key' => '_fl_builder_data'
 			];
 		}
 
@@ -639,7 +793,6 @@ class Bulk_Page_Duplicator_Core {
 			$page_builders[] = [
 				'name' => 'Bricks Builder',
 				'id' => 'bricks',
-				'meta_key' => '_bricks_page_content_2'
 			];
 		}
 
@@ -685,15 +838,18 @@ class Bulk_Page_Duplicator_Core {
 		$seo_plugins = $this->detect_seo_plugins();
 
 		foreach ($post_meta as $key => $meta_values) {
-			// Skip _edit_lock and _edit_last
-			if (in_array($key, ['_edit_lock', '_edit_last'])) {
+			// Skip temporary editor data and handle the featured image separately.
+			if (in_array($key, ['_edit_lock', '_edit_last', '_thumbnail_id'], true)) {
 				continue;
 			}
 
-			// Skip _elementor_data as it's handled separately
-			if ($key === '_elementor_data') {
+			// Elementor data is transformed separately only when replacement is enabled.
+			if ($key === '_elementor_data' && in_array('elementor', $replace_options, true)) {
 				continue;
 			}
+
+			// Recreate this key exactly so multi-valued metadata retains its row structure.
+			delete_post_meta($to_id, $key);
 
 			// SEO meta data replacement
 			$is_seo_field = false;
@@ -718,7 +874,7 @@ class Bulk_Page_Duplicator_Core {
 						$decoded = json_decode($meta_value, true);
 						if (is_array($decoded)) {
 							$this->replace_in_array_recursive_multi($decoded, $placeholders, $values);
-							$meta_value = json_encode($decoded);
+							$meta_value = wp_json_encode($decoded);
 						}
 					}
 					// For simple string values
@@ -727,7 +883,7 @@ class Bulk_Page_Duplicator_Core {
 					}
 				}
 
-				update_post_meta($to_id, $key, maybe_unserialize($meta_value));
+					add_post_meta($to_id, $key, wp_slash(maybe_unserialize($meta_value)), false);
 			}
 		}
 	}

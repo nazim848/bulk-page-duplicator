@@ -2,7 +2,7 @@
 /*
 Plugin Name: Bulk Page Duplicator
 Description: Create multiple pages by duplicating an existing page and replacing specific text with different values.
-Version: 1.1.0
+Version: 1.1.1
 Author: Nazim Husain
 Author URI: https://nazimansari.com
 License: GPLv2 or later
@@ -10,7 +10,7 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: bulk-page-duplicator
 Domain Path: /languages
 Requires at least: 5.0
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.2
 
 Bulk Page Duplicator is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ if (!defined('WPINC')) {
 	die;
 }
 
-define('BULK_PAGE_DUPLICATOR_VERSION', '1.1.0');
+define('BULK_PAGE_DUPLICATOR_VERSION', '1.1.1');
 
 define('BULK_PAGE_DUPLICATOR_PATH', plugin_dir_path(__FILE__));
 define('BULK_PAGE_DUPLICATOR_URL', plugin_dir_url(__FILE__));

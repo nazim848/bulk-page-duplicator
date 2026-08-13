@@ -3,8 +3,8 @@ Contributors: nazim848
 Donate link: https://buymeacoffee.com/nazim848
 Tags: bulk duplicate, duplicate pages, page duplicator, custom post type, elementor
 Requires at least: 5.0
-Tested up to: 6.9
-Stable tag: 1.1.0
+Tested up to: 7.0
+Stable tag: 1.1.1
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -107,7 +107,7 @@ If placeholders are `London, UK`, each line must provide matching comma-separate
 
 == Compatibility ==
 * WordPress: 5.0+
-* Tested up to: 6.9
+* Tested up to: 7.0
 * PHP: 7.2+
 * Works with public post types (excluding attachments in selector).
 * Supports taxonomy assignment for the selected post type.
@@ -153,6 +153,13 @@ Yes. It supports metadata replacement for Yoast SEO, Rank Math, All in One SEO, 
 Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT file in `languages/`.
 
 == Changelog ==
+= 1.1.1 =
+* Hardened AJAX authorization and output handling.
+* Fixed rollback tracking for concurrent and multi-batch operations.
+* Preserved multi-valued metadata and optional featured image and Elementor behavior.
+* Improved large-site template, taxonomy, and dry-run performance.
+* Added complete uninstall cleanup and WordPress 5.0-compatible history dates.
+
 = 1.1.0 =
 * Added support for duplicating any public post type.
 * Added multiple placeholder replacement.
@@ -176,6 +183,9 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 * Initial release.
 
 == Upgrade Notice ==
+= 1.1.1 =
+Security, data-integrity, rollback, compatibility, and large-site performance fixes.
+
 = 1.1.0 =
 Major release with Dry Run preview, CSV import, rollback history, taxonomy assignment, and improved builder support.
 

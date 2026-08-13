@@ -48,7 +48,8 @@ class Bulk_Page_Duplicator_Admin {
 			return;
 		}
 		wp_enqueue_style('bulk-page-duplicator-css', plugin_dir_url(__FILE__) . 'assets/css/bulk-page-duplicator.css', array(), BULK_PAGE_DUPLICATOR_VERSION);
-		wp_enqueue_script('bulk-page-duplicator-js', plugin_dir_url(__FILE__) . 'assets/js/bulk-page-duplicator.js', array('jquery'), BULK_PAGE_DUPLICATOR_VERSION, true);
+		wp_enqueue_script('bulk-page-duplicator-js', plugin_dir_url(__FILE__) . 'assets/js/bulk-page-duplicator.js', array('jquery', 'wp-i18n'), BULK_PAGE_DUPLICATOR_VERSION, true);
+		wp_set_script_translations('bulk-page-duplicator-js', 'bulk-page-duplicator', BULK_PAGE_DUPLICATOR_PATH . 'languages');
 		
 		// Get saved user preferences
 		$user_prefs = $this->get_user_preferences();
@@ -94,27 +95,48 @@ class Bulk_Page_Duplicator_Admin {
 			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
 		}
 
-		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page';
+		$post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'page';
+		$search = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
+		$paged = isset($_POST['paged']) ? max(1, absint(wp_unslash($_POST['paged']))) : 1;
+		$per_page = isset($_POST['per_page']) ? absint(wp_unslash($_POST['per_page'])) : 50;
+		$per_page = min(100, max(1, $per_page));
+		$template_id = isset($_POST['template_id']) ? absint(wp_unslash($_POST['template_id'])) : 0;
 
 		// Validate post type exists and is public
 		$post_type_obj = get_post_type_object($post_type);
-		if (!$post_type_obj || !$post_type_obj->public) {
+		if (!$post_type_obj || !$post_type_obj->public || 'attachment' === $post_type) {
 			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		$create_posts_cap = isset($post_type_obj->cap->create_posts) ? $post_type_obj->cap->create_posts : $post_type_obj->cap->edit_posts;
+		if (!current_user_can($create_posts_cap)) {
+			wp_send_json_error(__('You do not have permission to create this type of content.', 'bulk-page-duplicator'));
 		}
 
 		// Get posts of the specified type
 		$args = array(
 			'post_type'      => $post_type,
-			'posts_per_page' => -1,
+			'posts_per_page' => $per_page,
+			'paged'          => $paged,
 			'orderby'        => 'title',
 			'order'          => 'ASC',
 			'post_status'    => array('publish', 'draft', 'private'),
+			's'              => $search,
 		);
 
-		$posts = get_posts($args);
+		if ($template_id) {
+			$args['post__in'] = array($template_id);
+			$args['s'] = '';
+		}
+
+		$query = new WP_Query($args);
+		$posts = $query->posts;
 		$options = array();
 
 		foreach ($posts as $post) {
+			if (!current_user_can('edit_post', $post->ID)) {
+				continue;
+			}
 			$status_label = '';
 			if ($post->post_status !== 'publish') {
 				$status_label = ' [' . ucfirst($post->post_status) . ']';
@@ -144,6 +166,8 @@ class Bulk_Page_Duplicator_Admin {
 			'posts' => $options,
 			'label' => $post_type_obj->labels->singular_name,
 			'is_hierarchical' => $post_type_obj->hierarchical,
+			'page' => $paged,
+			'has_more' => $paged < (int) $query->max_num_pages,
 		));
 	}
 
@@ -167,6 +191,7 @@ class Bulk_Page_Duplicator_Admin {
 			'replace_content' => true,
 			'replace_elementor' => true,
 			'replace_seo' => true,
+			'copy_featured_image' => true,
 		);
 
 		$saved = get_user_meta($user_id, 'bpd_preferences', true);
@@ -199,15 +224,16 @@ class Bulk_Page_Duplicator_Admin {
 
 		// Sanitize and save preferences
 		$preferences = array(
-			'post_type' => isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page',
+			'post_type' => isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'page',
 			'template_id' => isset($_POST['template_id']) ? intval(wp_unslash($_POST['template_id'])) : '',
-			'page_status' => isset($_POST['page_status']) ? sanitize_text_field(wp_unslash($_POST['page_status'])) : 'publish',
+			'page_status' => isset($_POST['page_status']) && 'draft' === sanitize_key(wp_unslash($_POST['page_status'])) ? 'draft' : 'publish',
 			'parent_page' => isset($_POST['parent_page']) ? sanitize_text_field(wp_unslash($_POST['parent_page'])) : '0',
-			'replace_title' => isset($_POST['replace_title']) && $_POST['replace_title'] === 'true',
-			'replace_slug' => isset($_POST['replace_slug']) && $_POST['replace_slug'] === 'true',
-			'replace_content' => isset($_POST['replace_content']) && $_POST['replace_content'] === 'true',
-			'replace_elementor' => isset($_POST['replace_elementor']) && $_POST['replace_elementor'] === 'true',
-			'replace_seo' => isset($_POST['replace_seo']) && $_POST['replace_seo'] === 'true',
+			'replace_title' => isset($_POST['replace_title']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_title'])),
+			'replace_slug' => isset($_POST['replace_slug']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_slug'])),
+			'replace_content' => isset($_POST['replace_content']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_content'])),
+			'replace_elementor' => isset($_POST['replace_elementor']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_elementor'])),
+			'replace_seo' => isset($_POST['replace_seo']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_seo'])),
+			'copy_featured_image' => isset($_POST['copy_featured_image']) && 'true' === sanitize_text_field(wp_unslash($_POST['copy_featured_image'])),
 		);
 
 		update_user_meta($user_id, 'bpd_preferences', $preferences);
@@ -253,28 +279,43 @@ class Bulk_Page_Duplicator_Admin {
 		$placeholders = isset($_POST['placeholders']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['placeholders'])) : [];
 		$batch_values = [];
 		if (isset($_POST['values'])) {
-			$raw_values = wp_unslash($_POST['values']);
+			$raw_values = map_deep(wp_unslash($_POST['values']), 'sanitize_text_field');
 			foreach ((array) $raw_values as $value_set) {
 				if (is_array($value_set)) {
-					$batch_values[] = array_map('sanitize_text_field', $value_set);
+					$batch_values[] = $value_set;
 				} else {
-					$batch_values[] = [sanitize_text_field($value_set)];
+					$batch_values[] = [$value_set];
 				}
 			}
 		}
-		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'page';
-		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_text_field', (array) wp_unslash($_POST['replace_options'])) : [];
+		$post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'page';
+		$replace_options = isset($_POST['replace_options']) ? array_map('sanitize_key', (array) wp_unslash($_POST['replace_options'])) : [];
+		$parent_page = isset($_POST['parent_page']) ? sanitize_text_field(wp_unslash($_POST['parent_page'])) : '0';
 
 		// Validate template post exists
 		$template_page = get_post($template_id);
-		if (!$template_page) {
+		if (!$template_page || $template_page->post_type !== $post_type) {
 			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
+		}
+
+		if (!current_user_can('edit_post', $template_id)) {
+			wp_send_json_error(__('You do not have permission to use this template.', 'bulk-page-duplicator'));
 		}
 
 		// Validate post type
 		$post_type_obj = get_post_type_object($post_type);
-		if (!$post_type_obj || !$post_type_obj->public) {
+		if (!$post_type_obj || !$post_type_obj->public || 'attachment' === $post_type) {
 			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		$create_posts_cap = isset($post_type_obj->cap->create_posts) ? $post_type_obj->cap->create_posts : $post_type_obj->cap->edit_posts;
+		if (!current_user_can($create_posts_cap)) {
+			wp_send_json_error(__('You do not have permission to create this type of content.', 'bulk-page-duplicator'));
+		}
+
+		$post_parent = $this->resolve_parent_page($parent_page, $template_page, $post_type_obj);
+		if (is_wp_error($post_parent)) {
+			wp_send_json_error($post_parent->get_error_message());
 		}
 
 		// Load core class for smart_replace
@@ -286,6 +327,7 @@ class Bulk_Page_Duplicator_Admin {
 		$preview_items = [];
 		$will_create = 0;
 		$will_skip = 0;
+		$seen_slugs = array();
 
 		foreach ($batch_values as $value_set) {
 			// Skip empty values
@@ -320,9 +362,11 @@ class Bulk_Page_Duplicator_Admin {
 				$slug = sanitize_title($new_slug);
 			}
 
-			// Check if post with this slug already exists
-			$existing_post = get_page_by_path($slug, OBJECT, $post_type);
-			$will_be_skipped = ($existing_post !== null);
+			// Check the database and values already generated in this preview batch.
+			$slug_key = $post_parent . ':' . $slug;
+			$existing_post = $core->get_post_by_slug($slug, $post_type, $post_parent);
+			$will_be_skipped = ($existing_post !== null) || isset($seen_slugs[$slug_key]);
+			$seen_slugs[$slug_key] = true;
 
 			if ($will_be_skipped) {
 				$will_skip++;
@@ -354,6 +398,36 @@ class Bulk_Page_Duplicator_Admin {
 	}
 
 	/**
+	 * Resolve and validate the parent selected for a hierarchical post type.
+	 *
+	 * @param string  $parent_page   Requested parent value.
+	 * @param WP_Post $template_page Template post.
+	 * @param object  $post_type_obj Post type object.
+	 * @return int|WP_Error
+	 */
+	private function resolve_parent_page($parent_page, $template_page, $post_type_obj) {
+		if (!$post_type_obj->hierarchical) {
+			return 0;
+		}
+
+		$post_parent = 'template' === $parent_page ? absint($template_page->post_parent) : absint($parent_page);
+		if (!$post_parent) {
+			return 0;
+		}
+
+		$parent = get_post($post_parent);
+		if (!$parent || $parent->post_type !== $post_type_obj->name) {
+			return new WP_Error('bpd_invalid_parent', __('Invalid parent item.', 'bulk-page-duplicator'));
+		}
+
+		if (!current_user_can('edit_post', $post_parent)) {
+			return new WP_Error('bpd_parent_permission', __('You do not have permission to use the selected parent.', 'bulk-page-duplicator'));
+		}
+
+		return $post_parent;
+	}
+
+	/**
 	 * AJAX handler to get template data for preview
 	 */
 	public function get_template_data() {
@@ -377,6 +451,10 @@ class Bulk_Page_Duplicator_Admin {
 		$template = get_post($template_id);
 		if (!$template) {
 			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
+		}
+
+		if (!current_user_can('edit_post', $template_id)) {
+			wp_send_json_error(__('You do not have permission to use this template.', 'bulk-page-duplicator'));
 		}
 
 		// Get Elementor data if exists
@@ -410,7 +488,20 @@ class Bulk_Page_Duplicator_Admin {
 			wp_send_json_error(__('You do not have permission to perform this action.', 'bulk-page-duplicator'));
 		}
 
-		$post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : 'post';
+		$post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'post';
+		$page = isset($_POST['paged']) ? max(1, absint(wp_unslash($_POST['paged']))) : 1;
+		$per_page = isset($_POST['per_page']) ? absint(wp_unslash($_POST['per_page'])) : 100;
+		$per_page = min(200, max(1, $per_page));
+		$post_type_obj = get_post_type_object($post_type);
+
+		if (!$post_type_obj || !$post_type_obj->public || 'attachment' === $post_type) {
+			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		$create_posts_cap = isset($post_type_obj->cap->create_posts) ? $post_type_obj->cap->create_posts : $post_type_obj->cap->edit_posts;
+		if (!current_user_can($create_posts_cap)) {
+			wp_send_json_error(__('You do not have permission to create this type of content.', 'bulk-page-duplicator'));
+		}
 
 		// Get taxonomies for the post type
 		$taxonomies = get_object_taxonomies($post_type, 'objects');
@@ -418,7 +509,7 @@ class Bulk_Page_Duplicator_Admin {
 
 		foreach ($taxonomies as $taxonomy) {
 			// Skip non-public taxonomies and post_format
-			if (!$taxonomy->public || $taxonomy->name === 'post_format') {
+			if (!$taxonomy->public || $taxonomy->name === 'post_format' || !current_user_can($taxonomy->cap->assign_terms)) {
 				continue;
 			}
 
@@ -426,10 +517,19 @@ class Bulk_Page_Duplicator_Admin {
 			$terms = get_terms(array(
 				'taxonomy'   => $taxonomy->name,
 				'hide_empty' => false,
+				'number'     => $per_page + 1,
+				'offset'     => ($page - 1) * $per_page,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
 			));
 
 			$term_list = array();
+			$has_more = false;
 			if (!is_wp_error($terms)) {
+				$has_more = count($terms) > $per_page;
+				if ($has_more) {
+					array_pop($terms);
+				}
 				foreach ($terms as $term) {
 					$term_list[] = array(
 						'id'   => $term->term_id,
@@ -444,11 +544,14 @@ class Bulk_Page_Duplicator_Admin {
 				'label'        => $taxonomy->labels->name,
 				'hierarchical' => $taxonomy->hierarchical,
 				'terms'        => $term_list,
+				'has_more'     => $has_more,
 			);
 		}
 
 		wp_send_json_success(array(
 			'taxonomies' => $result,
+			'page' => $page,
+			'has_more' => !empty(array_filter(wp_list_pluck($result, 'has_more'))),
 		));
 	}
 

@@ -1,24 +1,24 @@
-# Copyright (C) 2025 Nazim Husain
+# Copyright (C) 2026 Nazim Husain
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Bulk Page Duplicator 1.0.0\n"
+"Project-Id-Version: Bulk Page Duplicator 1.1.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/bulk-page-duplicator\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-05-22T10:51:39+00:00\n"
+"POT-Creation-Date: 2026-08-13T09:26:18+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.11.0\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: bulk-page-duplicator\n"
 
 #. Plugin Name of the plugin
 #: bulk-page-duplicator.php
-#: admin/class-bulk-page-duplicator-admin.php:26
-#: admin/class-bulk-page-duplicator-admin.php:27
-#: admin/views/admin-page.php:23
+#: admin/class-bulk-page-duplicator-admin.php:34
+#: admin/class-bulk-page-duplicator-admin.php:35
+#: admin/views/admin-page.php:29
 msgid "Bulk Page Duplicator"
 msgstr ""
 
@@ -37,152 +37,566 @@ msgstr ""
 msgid "https://nazimansari.com"
 msgstr ""
 
-#: admin/views/admin-page.php:26
-msgid "Select Template Page"
-msgstr ""
-
-#: admin/views/admin-page.php:27
-msgid "Choose the page you want to use as a template for duplication:"
-msgstr ""
-
-#: admin/views/admin-page.php:29
-msgid "Select a page"
-msgstr ""
-
-#: admin/views/admin-page.php:36
-msgid "Text to Replace"
-msgstr ""
-
-#: admin/views/admin-page.php:37
-msgid "Enter the placeholder text in your template that should be replaced with each value:"
-msgstr ""
-
-#: admin/views/admin-page.php:39
-msgid "Replacement Values"
-msgstr ""
-
-#: admin/views/admin-page.php:40
-msgid "Enter one value per line. Each value will create a new page:"
-msgstr ""
-
-#: admin/views/admin-page.php:42
-msgid "Status"
-msgstr ""
-
-#: admin/views/admin-page.php:43
-msgid "Select status for the created pages:"
-msgstr ""
-
-#: admin/views/admin-page.php:45
-msgid "Published"
-msgstr ""
-
-#: admin/views/admin-page.php:46
-msgid "Draft"
-msgstr ""
-
-#: admin/views/admin-page.php:48
-msgid "Where to Replace Text"
-msgstr ""
-
-#: admin/views/admin-page.php:49
-msgid "Select where the text should be replaced:"
-msgstr ""
-
-#: admin/views/admin-page.php:51
-msgid "Page Title"
-msgstr ""
-
-#: admin/views/admin-page.php:52
-msgid "Page Slug"
-msgstr ""
-
-#: admin/views/admin-page.php:53
-msgid "Page Content"
-msgstr ""
-
-#: admin/views/admin-page.php:54
-msgid "Elementor Data (if exists)"
-msgstr ""
-
-#: admin/views/admin-page.php:56
-msgid "SEO Meta Data"
-msgstr ""
-
-#: admin/views/admin-page.php:60
-msgid "Progress"
-msgstr ""
-
-#: admin/views/admin-page.php:68
-msgid "Start Duplication"
-msgstr ""
-
-#: admin/views/admin-page.php:69
-msgid "Cancel"
-msgstr ""
-
-#: admin/views/admin-page.php:73
-msgid "Instructions"
-msgstr ""
-
-#: admin/views/admin-page.php:75
-msgid "Select the page you want to duplicate."
-msgstr ""
-
-#: admin/views/admin-page.php:76
-msgid "Enter the placeholder text that exists in your template page."
-msgstr ""
-
-#: admin/views/admin-page.php:77
-msgid "Enter all the values you want to replace the placeholder with (one per line)."
-msgstr ""
-
-#: admin/views/admin-page.php:78
-msgid "Choose where the text should be replaced."
-msgstr ""
-
-#: admin/views/admin-page.php:79
-msgid "Click \"Start Duplication\" to begin the process."
-msgstr ""
-
-#: admin/views/admin-page.php:81
-msgid "Tips"
-msgstr ""
-
-#: admin/views/admin-page.php:83
-msgid "Make sure your template page contains the placeholder text in all areas you want to replace."
-msgstr ""
-
-#: admin/views/admin-page.php:84
-msgid "Large numbers of pages will be processed in batches to avoid timeout issues."
-msgstr ""
-
-#: admin/views/admin-page.php:85
-msgid "Processing will continue in the background - don't close the browser tab."
-msgstr ""
-
-#: admin/views/admin-page.php:88
-msgid "Results Log"
-msgstr ""
-
-#: includes/class-bulk-page-duplicator.php:19
+#: admin/class-bulk-page-duplicator-admin.php:90
+#: admin/class-bulk-page-duplicator-admin.php:212
+#: admin/class-bulk-page-duplicator-admin.php:251
+#: admin/class-bulk-page-duplicator-admin.php:269
+#: admin/class-bulk-page-duplicator-admin.php:437
+#: admin/class-bulk-page-duplicator-admin.php:483
+#: admin/class-bulk-page-duplicator-admin.php:565
+#: admin/class-bulk-page-duplicator-admin.php:591
+#: includes/class-bulk-page-duplicator.php:26
 msgid "Security check failed"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:24
+#: admin/class-bulk-page-duplicator-admin.php:95
+#: admin/class-bulk-page-duplicator-admin.php:217
+#: admin/class-bulk-page-duplicator-admin.php:256
+#: admin/class-bulk-page-duplicator-admin.php:274
+#: admin/class-bulk-page-duplicator-admin.php:442
+#: admin/class-bulk-page-duplicator-admin.php:488
+#: admin/class-bulk-page-duplicator-admin.php:570
+#: admin/class-bulk-page-duplicator-admin.php:596
+#: includes/class-bulk-page-duplicator.php:31
 msgid "You do not have permission to perform this action."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:39
-msgid "Template page not found"
+#: admin/class-bulk-page-duplicator-admin.php:108
+#: admin/class-bulk-page-duplicator-admin.php:308
+#: admin/class-bulk-page-duplicator-admin.php:498
+#: includes/class-bulk-page-duplicator.php:70
+msgid "Invalid post type"
 msgstr ""
 
-#. translators: %s: The page slug that already exists.
-#: includes/class-bulk-page-duplicator.php:84
-msgid "Page with slug \"%s\" already exists"
+#: admin/class-bulk-page-duplicator-admin.php:113
+#: admin/class-bulk-page-duplicator-admin.php:313
+#: admin/class-bulk-page-duplicator-admin.php:503
+#: includes/class-bulk-page-duplicator.php:75
+msgid "You do not have permission to create this type of content."
 msgstr ""
 
-#. translators: %s: The title of the newly created page.
-#: includes/class-bulk-page-duplicator.php:173
-msgid "Created page: \"%s\""
+#: admin/class-bulk-page-duplicator-admin.php:222
+msgid "User not logged in"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:241
+msgid "Preferences saved"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:298
+#: admin/class-bulk-page-duplicator-admin.php:453
+#: includes/class-bulk-page-duplicator.php:89
+msgid "Template not found"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:302
+#: admin/class-bulk-page-duplicator-admin.php:457
+#: includes/class-bulk-page-duplicator.php:93
+msgid "You do not have permission to use this template."
+msgstr ""
+
+#. translators: %s: page slug
+#: admin/class-bulk-page-duplicator-admin.php:384
+#, php-format
+msgid "Slug \"%s\" already exists"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:420
+#: includes/class-bulk-page-duplicator.php:285
+msgid "Invalid parent item."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:424
+#: includes/class-bulk-page-duplicator.php:289
+msgid "You do not have permission to use the selected parent."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:448
+msgid "No template selected"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:602
+msgid "No operation specified"
+msgstr ""
+
+#: admin/views/admin-page.php:32
+msgid "Post Type"
+msgstr ""
+
+#: admin/views/admin-page.php:33
+msgid "Select the type of content you want to duplicate:"
+msgstr ""
+
+#: admin/views/admin-page.php:41
+msgid "Select Template"
+msgstr ""
+
+#: admin/views/admin-page.php:42
+msgid "Choose the item you want to use as a template for duplication:"
+msgstr ""
+
+#: admin/views/admin-page.php:44
+msgid "Type to search templates..."
+msgstr ""
+
+#: admin/views/admin-page.php:51
+msgid "No image"
+msgstr ""
+
+#: admin/views/admin-page.php:64
+msgid "Loading templates..."
+msgstr ""
+
+#: admin/views/admin-page.php:66
+msgid "Placeholders"
+msgstr ""
+
+#: admin/views/admin-page.php:67
+msgid "Enter placeholder text(s) to replace. Use comma to separate multiple placeholders:"
+msgstr ""
+
+#: admin/views/admin-page.php:70
+msgid "Examples: \"London\" (single) or \"London, UK\" (multiple, comma-separated)"
+msgstr ""
+
+#: admin/views/admin-page.php:73
+msgid "Replacement Values"
+msgstr ""
+
+#: admin/views/admin-page.php:74
+msgid "Enter one value per line, or import from a CSV file:"
+msgstr ""
+
+#: admin/views/admin-page.php:76
+msgid "For multiple placeholders, separate values with commas (e.g., \"New York, USA\")"
+msgstr ""
+
+#: admin/views/admin-page.php:81
+msgid "Drag & drop a CSV file here, or"
+msgstr ""
+
+#: admin/views/admin-page.php:83
+msgid "Browse Files"
+msgstr ""
+
+#: admin/views/admin-page.php:86
+msgid "Supported: .csv and .txt files"
+msgstr ""
+
+#: admin/views/admin-page.php:92
+msgid "Remove"
+msgstr ""
+
+#: admin/views/admin-page.php:104
+msgid "Parent Page"
+msgstr ""
+
+#: admin/views/admin-page.php:105
+msgid "Optionally assign a parent for all created items:"
+msgstr ""
+
+#: admin/views/admin-page.php:107
+msgid "No parent (top level)"
+msgstr ""
+
+#: admin/views/admin-page.php:108
+msgid "Same as template"
+msgstr ""
+
+#: admin/views/admin-page.php:116
+#: admin/views/admin-page.php:302
+msgid "Status"
+msgstr ""
+
+#: admin/views/admin-page.php:117
+msgid "Select status for the created items:"
+msgstr ""
+
+#: admin/views/admin-page.php:119
+msgid "Published"
+msgstr ""
+
+#: admin/views/admin-page.php:120
+msgid "Draft"
+msgstr ""
+
+#: admin/views/admin-page.php:123
+msgid "Categories & Tags"
+msgstr ""
+
+#: admin/views/admin-page.php:124
+msgid "Assign taxonomy terms to all created items:"
+msgstr ""
+
+#: admin/views/admin-page.php:127
+msgid "Loading taxonomies..."
+msgstr ""
+
+#: admin/views/admin-page.php:131
+msgid "Select terms to assign to all duplicated items."
+msgstr ""
+
+#: admin/views/admin-page.php:134
+msgid "Where to Replace Text"
+msgstr ""
+
+#: admin/views/admin-page.php:135
+msgid "Select where the text should be replaced:"
+msgstr ""
+
+#: admin/views/admin-page.php:137
+msgid "Page Title"
+msgstr ""
+
+#: admin/views/admin-page.php:138
+msgid "Page Slug"
+msgstr ""
+
+#: admin/views/admin-page.php:139
+msgid "Page Content"
+msgstr ""
+
+#: admin/views/admin-page.php:141
+msgid "Data (if exists)"
+msgstr ""
+
+#: admin/views/admin-page.php:144
+msgid "SEO Meta Data"
+msgstr ""
+
+#: admin/views/admin-page.php:147
+msgid "Additional Options"
+msgstr ""
+
+#: admin/views/admin-page.php:149
+msgid "Copy Featured Image"
+msgstr ""
+
+#: admin/views/admin-page.php:150
+msgid "Copy the template's featured image to all duplicated items."
+msgstr ""
+
+#: admin/views/admin-page.php:153
+msgid "Progress"
+msgstr ""
+
+#: admin/views/admin-page.php:165
+msgid "Dry Run (Preview)"
+msgstr ""
+
+#: admin/views/admin-page.php:166
+msgid "Start Duplication"
+msgstr ""
+
+#: admin/views/admin-page.php:167
+msgid "Cancel"
+msgstr ""
+
+#: admin/views/admin-page.php:172
+msgid "Preview"
+msgstr ""
+
+#: admin/views/admin-page.php:173
+msgid "Preview of the first item that will be created:"
+msgstr ""
+
+#: admin/views/admin-page.php:176
+msgid "Title:"
+msgstr ""
+
+#: admin/views/admin-page.php:180
+msgid "Slug:"
+msgstr ""
+
+#: admin/views/admin-page.php:184
+msgid "Items to create:"
+msgstr ""
+
+#: admin/views/admin-page.php:189
+msgid "How It Works"
+msgstr ""
+
+#: admin/views/admin-page.php:191
+msgid "Create a template page with placeholder text (e.g., \"London\" for a city-based service page)."
+msgstr ""
+
+#: admin/views/admin-page.php:192
+msgid "Select your template and enter the placeholder text to find and replace."
+msgstr ""
+
+#: admin/views/admin-page.php:193
+msgid "Enter replacement values (one per line) - each creates a new page."
+msgstr ""
+
+#: admin/views/admin-page.php:194
+msgid "Choose which areas to apply replacements (title, content, page builder data, etc.)."
+msgstr ""
+
+#: admin/views/admin-page.php:195
+msgid "Click \"Start Duplication\" to create all pages automatically."
+msgstr ""
+
+#: admin/views/admin-page.php:198
+msgid "Multiple Placeholders"
+msgstr ""
+
+#: admin/views/admin-page.php:199
+msgid "You can use multiple placeholders separated by commas. For example:"
+msgstr ""
+
+#: admin/views/admin-page.php:201
+msgid "Placeholders: \"London, UK\" (two placeholders)"
+msgstr ""
+
+#: admin/views/admin-page.php:202
+msgid "Values: \"New York, USA\" and \"Paris, France\" (one per line)"
+msgstr ""
+
+#: admin/views/admin-page.php:203
+msgid "Result: \"London\" → \"New York\" and \"UK\" → \"USA\" in the first page"
+msgstr ""
+
+#: admin/views/admin-page.php:206
+msgid "Page Builder Support"
+msgstr ""
+
+#: admin/views/admin-page.php:207
+msgid "This plugin supports placeholder replacement in:"
+msgstr ""
+
+#: admin/views/admin-page.php:209
+msgid "Elementor"
+msgstr ""
+
+#: admin/views/admin-page.php:209
+msgid "All text widgets, headings, and content areas"
+msgstr ""
+
+#: admin/views/admin-page.php:210
+msgid "Beaver Builder"
+msgstr ""
+
+#: admin/views/admin-page.php:210
+msgid "Module settings and text content"
+msgstr ""
+
+#: admin/views/admin-page.php:211
+msgid "Bricks Builder"
+msgstr ""
+
+#: admin/views/admin-page.php:211
+msgid "Element settings and nested content"
+msgstr ""
+
+#: admin/views/admin-page.php:213
+msgid "Keep the page builder options checked even if you're unsure - the plugin will only process data if it exists."
+msgstr ""
+
+#: admin/views/admin-page.php:215
+msgid "Tips for Best Results"
+msgstr ""
+
+#: admin/views/admin-page.php:217
+msgid "Use unique placeholder text that won't accidentally match other content (e.g., \"CITYNAME\" instead of common words)."
+msgstr ""
+
+#: admin/views/admin-page.php:218
+msgid "The replacement is case-preserving: \"London\" → \"Paris\", \"LONDON\" → \"PARIS\", \"london\" → \"paris\"."
+msgstr ""
+
+#: admin/views/admin-page.php:219
+msgid "Pages with duplicate slugs will be skipped - check the results log for details."
+msgstr ""
+
+#: admin/views/admin-page.php:220
+msgid "Use \"Draft\" status first to review pages before publishing."
+msgstr ""
+
+#: admin/views/admin-page.php:221
+msgid "Large batches are processed automatically - don't close the browser tab during processing."
+msgstr ""
+
+#: admin/views/admin-page.php:224
+msgid "Common Use Cases"
+msgstr ""
+
+#: admin/views/admin-page.php:226
+msgid "Location-based service pages (e.g., \"Plumber in London\" → multiple cities)"
+msgstr ""
+
+#: admin/views/admin-page.php:227
+msgid "Product variations (e.g., \"Blue Widget\" → multiple colors)"
+msgstr ""
+
+#: admin/views/admin-page.php:228
+msgid "Team member profiles with consistent layouts"
+msgstr ""
+
+#: admin/views/admin-page.php:229
+msgid "Landing pages for different campaigns or audiences"
+msgstr ""
+
+#: admin/views/admin-page.php:232
+msgid "Results Log"
+msgstr ""
+
+#: admin/views/admin-page.php:234
+msgid "created"
+msgstr ""
+
+#: admin/views/admin-page.php:235
+msgid "skipped"
+msgstr ""
+
+#: admin/views/admin-page.php:236
+msgid "errors"
+msgstr ""
+
+#: admin/views/admin-page.php:240
+msgid "All"
+msgstr ""
+
+#: admin/views/admin-page.php:241
+msgid "Success"
+msgstr ""
+
+#: admin/views/admin-page.php:242
+msgid "Skipped"
+msgstr ""
+
+#: admin/views/admin-page.php:243
+msgid "Errors"
+msgstr ""
+
+#: admin/views/admin-page.php:246
+msgid "Export CSV"
+msgstr ""
+
+#: admin/views/admin-page.php:252
+msgid "Recent Operations"
+msgstr ""
+
+#: admin/views/admin-page.php:253
+msgid "You can rollback (delete) pages created by recent operations."
+msgstr ""
+
+#: admin/views/admin-page.php:256
+msgid "Loading history..."
+msgstr ""
+
+#: admin/views/admin-page.php:260
+msgid "No recent operations found."
+msgstr ""
+
+#: admin/views/admin-page.php:264
+msgid "Refresh History"
+msgstr ""
+
+#: admin/views/admin-page.php:275
+msgid "Dry Run Preview"
+msgstr ""
+
+#: admin/views/admin-page.php:276
+#: admin/views/admin-page.php:315
+msgid "Close"
+msgstr ""
+
+#: admin/views/admin-page.php:281
+msgid "Generating preview..."
+msgstr ""
+
+#: admin/views/admin-page.php:287
+msgid "Total"
+msgstr ""
+
+#: admin/views/admin-page.php:291
+msgid "Will Create"
+msgstr ""
+
+#: admin/views/admin-page.php:295
+msgid "Will Skip"
+msgstr ""
+
+#: admin/views/admin-page.php:303
+msgid "Value"
+msgstr ""
+
+#: admin/views/admin-page.php:304
+msgid "Title"
+msgstr ""
+
+#: admin/views/admin-page.php:305
+msgid "Slug"
+msgstr ""
+
+#: admin/views/admin-page.php:316
+msgid "Proceed with Duplication"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:79
+msgid "Invalid post status."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:83
+msgid "You do not have permission to publish this type of content."
+msgstr ""
+
+#. translators: %s: The slug that already exists.
+#: includes/class-bulk-page-duplicator.php:156
+#, php-format
+msgid "Item with slug \"%s\" already exists"
+msgstr ""
+
+#. translators: %s: title of the newly created item.
+#: includes/class-bulk-page-duplicator.php:225
+#, php-format
+msgid "Created: \"%s\""
+msgstr ""
+
+#. translators: %s: actual unique slug assigned by WordPress.
+#: includes/class-bulk-page-duplicator.php:228
+#, php-format
+msgid "WordPress assigned the unique slug \"%s\"."
+msgstr ""
+
+#. translators: %1$s: creation message, %2$s: warning details.
+#: includes/class-bulk-page-duplicator.php:232
+#, php-format
+msgid "%1$s Warning: %2$s"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:308
+msgid "Invalid taxonomy selection."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:312
+msgid "You do not have permission to assign the selected terms."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:318
+msgid "One or more selected terms no longer exist."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:384
+msgid "Unknown"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:468
+msgid "Operation not found in history."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:476
+msgid "You do not have permission to rollback this operation."
+msgstr ""
+
+#. translators: %1$d: number of deleted posts, %2$d: number of failed deletions
+#: includes/class-bulk-page-duplicator.php:515
+#, php-format
+msgid "Deleted %1$d items. %2$d items could not be deleted."
+msgstr ""
+
+#. translators: %d: number of deleted posts
+#: includes/class-bulk-page-duplicator.php:522
+#, php-format
+msgid "Successfully deleted %d items."
 msgstr ""
