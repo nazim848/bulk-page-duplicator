@@ -1,7 +1,7 @@
 === Bulk Page Duplicator ===
 Contributors: nazim848
 Donate link: https://buymeacoffee.com/nazim848
-Tags: bulk duplicate, duplicate pages, page duplicator, custom post type, elementor
+Tags: bulk duplicate, duplicate pages, page duplicator, clone, duplicate
 Requires at least: 5.0
 Tested up to: 7.0
 Stable tag: 1.1.1
