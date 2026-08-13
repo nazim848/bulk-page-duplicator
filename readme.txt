@@ -52,6 +52,7 @@ Bulk Page Duplicator helps you publish template-based content faster without man
 9. Review Results Log, filter statuses, export CSV, and use Recent Operations for rollback if needed.
 
 == Feature Highlights ==
+
 = Bulk generation core =
 * Batch duplication workflow for large value sets.
 * Supports pages, posts, and any public custom post type.
@@ -86,6 +87,7 @@ Bulk Page Duplicator helps you publish template-based content faster without man
 * User preferences persisted for faster repeat runs.
 
 == CSV/TXT Format Guide ==
+
 = Single placeholder =
 If placeholder is `London`, use one value per line:
 
@@ -128,6 +130,7 @@ If placeholders are `London, UK`, each line must provide matching comma-separate
 * Use Recent Operations to rollback quickly if required.
 
 == Frequently Asked Questions ==
+
 = Can I duplicate custom post types (CPTs)? =
 Yes. The plugin supports any public post type.
 
@@ -153,6 +156,7 @@ Yes. It supports metadata replacement for Yoast SEO, Rank Math, All in One SEO, 
 Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT file in `languages/`.
 
 == Changelog ==
+
 = 1.1.1 =
 * Hardened AJAX authorization and output handling.
 * Fixed rollback tracking for concurrent and multi-batch operations.
@@ -183,6 +187,7 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 * Initial release.
 
 == Upgrade Notice ==
+
 = 1.1.1 =
 Security, data-integrity, rollback, compatibility, and large-site performance fixes.
 
