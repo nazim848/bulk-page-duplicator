@@ -1,10 +1,10 @@
 # Bulk Page Duplicator
 
-Bulk Page Duplicator allows you to quickly create multiple pages by duplicating a template page and replacing a placeholder with a list of values. Supports Elementor, Beaver Builder, Bricks Page builders and major SEO plugins (Yoast, Rank Math, AIOSEO, SEOPress).
+Bulk Page Duplicator allows you to quickly create multiple pages by duplicating a template page and replacing a placeholder with a list of values. Supports the Elementor, Beaver Builder, and Bricks page builders and major SEO plugins (Yoast, Rank Math, AIOSEO, SEOPress).
 
 ## Installation
 
-1. Install plugin either via the WordPress.org plugin repository or by uploading to the website.
+1. Install the plugin from the WordPress.org plugin directory, or upload it to your site.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
 3. Go to Tools > Bulk Page Duplicator to use the plugin.
 
