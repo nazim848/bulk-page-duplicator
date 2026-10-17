@@ -194,6 +194,8 @@ class Bulk_Page_Duplicator_Core {
 	/**
 	 * Render the title, slug, content and excerpt of an item from its template.
 	 *
+	 * Thin wrapper over render_post_fields() using the generation form's options.
+	 *
 	 * @param WP_Post $template_page   Template post.
 	 * @param array   $placeholders    Placeholder strings.
 	 * @param array   $value_set       Replacement values.
@@ -201,42 +203,28 @@ class Bulk_Page_Duplicator_Core {
 	 * @return array Keys: title, slug, content, excerpt.
 	 */
 	public function render_item_fields($template_page, $placeholders, $value_set, $replace_options) {
-		// Create title - apply all placeholder replacements
-		$title = $template_page->post_title;
-		if (in_array('title', $replace_options)) {
-			$title = $this->multi_replace($title, $placeholders, $value_set);
-		}
-
-		$slug = $template_page->post_name;
-		if (in_array('slug', $replace_options)) {
-			$new_slug = $this->multi_replace($slug, $placeholders, $value_set);
-
-			// Also try replacing the slugified placeholders (for multi-word placeholders in slugs)
-			foreach ($placeholders as $index => $placeholder) {
-				$value = is_array($value_set) ? ($value_set[$index] ?? '') : $value_set;
-				$placeholder_slug = sanitize_title($placeholder);
-				if ($placeholder_slug !== strtolower($placeholder)) {
-					$value_slug = sanitize_title($value);
-					$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
-				}
-			}
-
-			$slug = sanitize_title($new_slug);
-		}
-
-		// Create content
-		$content = $template_page->post_content;
-		$excerpt = $template_page->post_excerpt;
-		if (in_array('content', $replace_options)) {
-			$content = $this->multi_replace($content, $placeholders, $value_set);
-			$excerpt = $this->multi_replace($excerpt, $placeholders, $value_set);
-		}
+		$fields = $this->render_post_fields($template_page, $placeholders, $value_set, $this->get_generation_replace_fields($replace_options));
 
 		return [
-			'title'   => $title,
-			'slug'    => $slug,
-			'content' => $content,
-			'excerpt' => $excerpt,
+			'title'   => $fields['post_title'],
+			'slug'    => $fields['post_name'],
+			'content' => $fields['post_content'],
+			'excerpt' => $fields['post_excerpt'],
+		];
+	}
+
+	/**
+	 * Render arguments for create_item() and update_item().
+	 *
+	 * @param array $context Context from prepare_generation_context().
+	 * @return array
+	 */
+	private function get_generation_render_args($context) {
+		return [
+			'extra_terms'     => $context['taxonomy_terms'],
+			'replace'         => $this->get_generation_replace_fields($context['replace_options']),
+			// Generation only adds a featured image; it never removes one.
+			'clear_thumbnail' => false,
 		];
 	}
 
@@ -260,9 +248,9 @@ class Bulk_Page_Duplicator_Core {
 		// For display purposes, use first value or joined values
 		$display_value = is_array($value_set) ? implode(', ', $value_set) : $value_set;
 
-		$fields = $this->render_item_fields($template_page, $placeholders, $value_set, $replace_options);
-		$title = $fields['title'];
-		$slug = $fields['slug'];
+		$post_fields = $this->render_post_fields($template_page, $placeholders, $value_set, $this->get_generation_replace_fields($replace_options));
+		$title = $post_fields['post_title'];
+		$slug = $post_fields['post_name'];
 
 		// Check if this slug already exists under the requested parent.
 		$existing_post = $this->get_post_by_slug($slug, $post_type, $post_parent);
@@ -277,11 +265,7 @@ class Bulk_Page_Duplicator_Core {
 		}
 
 		// Create the duplicated post
-		$new_post_id = wp_insert_post(wp_slash([
-			'post_title'     => $title,
-			'post_name'      => $slug,
-			'post_content'   => $fields['content'],
-			'post_excerpt'   => $fields['excerpt'],
+		$new_post_id = wp_insert_post(wp_slash(array_merge($post_fields, [
 			'post_status'    => $context['status'],
 			'post_type'      => $post_type,
 			'post_parent'    => $post_parent,
@@ -289,7 +273,7 @@ class Bulk_Page_Duplicator_Core {
 			'post_author'    => $template_page->post_author,
 			'comment_status' => $template_page->comment_status,
 			'ping_status'    => $template_page->ping_status,
-		]), true);
+		])), true);
 
 		if (is_wp_error($new_post_id)) {
 			return [
@@ -301,12 +285,19 @@ class Bulk_Page_Duplicator_Core {
 
 		$inserted_slug = get_post_field('post_name', $new_post_id);
 
-		$this->save_generation_meta($new_post_id, $template_id, $operation_id, $placeholders, $value_set);
+		$this->save_generation_meta($new_post_id, $template_id, $operation_id, $placeholders, $value_set, false, $context['taxonomy_terms']);
 		foreach ($extra_meta as $meta_key => $meta_value) {
 			update_post_meta($new_post_id, $meta_key, wp_slash($meta_value));
 		}
 
-		$post_warnings = $this->apply_template_data($context, $new_post_id, $value_set, $fields['content']);
+		// Metadata, builder data, SEO meta, featured image and terms (stores the output hash).
+		$post_warnings = [];
+		$render = $this->render_item($template_id, $new_post_id, $placeholders, $value_set, $this->get_generation_render_fields($replace_options), $this->get_generation_render_args($context));
+		if (is_wp_error($render)) {
+			$post_warnings[] = $render->get_error_message();
+		} else {
+			$post_warnings = $render['warnings'];
+		}
 
 		/* translators: %s: title of the newly created item. */
 		$success_message = sprintf(__('Created: "%s"', 'bulk-page-duplicator'), $title);
@@ -334,7 +325,8 @@ class Bulk_Page_Duplicator_Core {
 	 *
 	 * Title, slug (when slug replacement is enabled), content, excerpt, parent,
 	 * metadata, builder data, featured image and terms are rewritten. The
-	 * item's status, author and date are left untouched.
+	 * item's status, author and date are left untouched. The output hash is
+	 * refreshed, so template sync treats the result as not edited by hand.
 	 *
 	 * @param array  $context      Context from prepare_generation_context().
 	 * @param int    $post_id      Item to update.
@@ -362,36 +354,32 @@ class Bulk_Page_Duplicator_Core {
 			];
 		}
 
-		$fields = $this->render_item_fields($context['template'], $context['placeholders'], $value_set, $context['replace_options']);
-
-		$postarr = [
-			'ID'           => $post->ID,
-			'post_title'   => $fields['title'],
-			'post_content' => $fields['content'],
-			'post_excerpt' => $fields['excerpt'],
-			'post_parent'  => $context['post_parent'],
-		];
+		// Title, content and excerpt are always rewritten (copied unchanged when not replaced); the slug only when replaced.
+		$fields = array_merge(['title', 'content', 'excerpt'], $this->get_generation_render_fields($context['replace_options']));
 		if (in_array('slug', $context['replace_options'], true)) {
-			$postarr['post_name'] = $fields['slug'];
+			$fields[] = 'slug';
 		}
 
-		$updated = wp_update_post(wp_slash($postarr), true);
-		if (is_wp_error($updated)) {
+		$args = $this->get_generation_render_args($context);
+		$args['postarr'] = ['post_parent' => $context['post_parent']];
+
+		$render = $this->render_item($context['template_id'], $post->ID, $context['placeholders'], $value_set, $fields, $args);
+		if (is_wp_error($render)) {
 			return [
 				'value' => $display_value,
 				'status' => 'error',
-				'message' => $updated->get_error_message(),
+				'message' => $render->get_error_message(),
 			];
 		}
 
-		$this->save_generation_meta($post->ID, $context['template_id'], $operation_id, $context['placeholders'], $value_set, true);
-		$post_warnings = $this->apply_template_data($context, $post->ID, $value_set, $fields['content']);
+		$this->save_generation_meta($post->ID, $context['template_id'], $operation_id, $context['placeholders'], $value_set, true, $context['taxonomy_terms']);
 
+		$title = get_post_field('post_title', $post->ID);
 		/* translators: %s: title of the updated item. */
-		$message = sprintf(__('Updated: "%s"', 'bulk-page-duplicator'), $fields['title']);
-		if (!empty($post_warnings)) {
+		$message = sprintf(__('Updated: "%s"', 'bulk-page-duplicator'), $title);
+		if (!empty($render['warnings'])) {
 			/* translators: %1$s: update message, %2$s: warning details. */
-			$message = sprintf(__('%1$s Warning: %2$s', 'bulk-page-duplicator'), $message, implode(' ', $post_warnings));
+			$message = sprintf(__('%1$s Warning: %2$s', 'bulk-page-duplicator'), $message, implode(' ', $render['warnings']));
 		}
 
 		return [
@@ -405,63 +393,594 @@ class Bulk_Page_Duplicator_Core {
 	}
 
 	/**
-	 * Copy metadata, featured image, terms and builder data from the template.
+	 * Fields understood by render_item() and build_render_plan().
 	 *
-	 * @param array  $context   Context from prepare_generation_context().
-	 * @param int    $post_id   Target item ID.
-	 * @param array  $value_set Replacement values.
-	 * @param string $content   Rendered post content.
-	 * @return string[] Warning messages.
+	 * - title, slug, content, excerpt: post fields, with placeholders replaced.
+	 * - meta: copy every template meta key (generation only; SEO keys are replaced when "seo" is also set).
+	 * - seo: the template's SEO plugin meta, with placeholders replaced.
+	 * - elementor, beaver, bricks: page builder data, with placeholders replaced.
+	 * - page_template: the template's _wp_page_template.
+	 * - featured_image: the template's featured image (removed when the template has none).
+	 * - terms: the template's terms, per taxonomy in which the template has terms.
+	 *
+	 * @return string[]
 	 */
-	private function apply_template_data($context, $post_id, $value_set, $content) {
-		$template_id = $context['template_id'];
-		$post_type = $context['post_type'];
-		$placeholders = $context['placeholders'];
-		$replace_options = $context['replace_options'];
-		$post_warnings = [];
+	public function get_render_fields() {
+		return ['title', 'slug', 'content', 'excerpt', 'meta', 'seo', 'elementor', 'beaver', 'bricks', 'page_template', 'featured_image', 'terms'];
+	}
 
-		// Copy post meta
-		$this->copy_post_meta_multi($template_id, $post_id, $placeholders, $value_set, $replace_options);
+	/**
+	 * Map the generation form's replace options to render_post_fields() fields.
+	 *
+	 * @param string[] $replace_options Replace options from the generation form.
+	 * @return string[]
+	 */
+	public function get_generation_replace_fields($replace_options) {
+		$fields = array_values(array_intersect((array) $replace_options, ['title', 'slug', 'content']));
+		if (in_array('content', $fields, true)) {
+			$fields[] = 'excerpt';
+		}
+		return $fields;
+	}
 
-		// Copy featured image if option selected
-		if (in_array('featured_image', $replace_options)) {
-			$thumbnail_id = get_post_thumbnail_id($template_id);
-			if ($thumbnail_id) {
-				set_post_thumbnail($post_id, $thumbnail_id);
+	/**
+	 * Map the generation form's replace options to render_item() fields.
+	 *
+	 * @param string[] $replace_options Replace options from the generation form.
+	 * @return string[]
+	 */
+	public function get_generation_render_fields($replace_options) {
+		$fields = array_merge(['meta'], array_intersect((array) $replace_options, ['seo', 'elementor', 'beaver', 'bricks', 'featured_image']));
+		if (in_array('template_terms', (array) $replace_options, true)) {
+			$fields[] = 'terms';
+		}
+		return array_values($fields);
+	}
+
+	/**
+	 * Render an item's title, slug, content and excerpt from a template.
+	 *
+	 * Fields not listed in $replace are copied from the template unchanged.
+	 *
+	 * @param WP_Post  $template     Template post.
+	 * @param string[] $placeholders Placeholders.
+	 * @param array    $values       Replacement values, in placeholder order.
+	 * @param string[] $replace      Any of: title, slug, content, excerpt.
+	 * @return array post_title, post_name, post_content and post_excerpt.
+	 */
+	public function render_post_fields($template, $placeholders, $values, $replace) {
+		$placeholders = array_values((array) $placeholders);
+		$values = array_values((array) $values);
+		$replace = (array) $replace;
+
+		return [
+			'post_title'   => in_array('title', $replace, true) ? $this->multi_replace($template->post_title, $placeholders, $values) : $template->post_title,
+			'post_name'    => in_array('slug', $replace, true) ? $this->render_slug($template->post_name, $placeholders, $values) : $template->post_name,
+			'post_content' => in_array('content', $replace, true) ? $this->multi_replace($template->post_content, $placeholders, $values) : $template->post_content,
+			'post_excerpt' => in_array('excerpt', $replace, true) ? $this->multi_replace($template->post_excerpt, $placeholders, $values) : $template->post_excerpt,
+		];
+	}
+
+	/**
+	 * Render a slug, also replacing slugified multi-word placeholders.
+	 *
+	 * @param string   $slug         Template slug.
+	 * @param string[] $placeholders Placeholders.
+	 * @param array    $values       Replacement values, in placeholder order.
+	 * @return string
+	 */
+	public function render_slug($slug, $placeholders, $values) {
+		$placeholders = array_values((array) $placeholders);
+		$values = array_values((array) $values);
+		$new_slug = $this->multi_replace($slug, $placeholders, $values);
+
+		foreach ($placeholders as $index => $placeholder) {
+			$value = isset($values[$index]) ? $values[$index] : '';
+			$placeholder_slug = sanitize_title($placeholder);
+			if ($placeholder_slug !== strtolower($placeholder)) {
+				$new_slug = str_replace($placeholder_slug, sanitize_title($value), $new_slug);
 			}
 		}
 
-		// Assign the template's terms (if selected) plus any terms chosen in the form.
-		$terms_to_assign = in_array('template_terms', $replace_options, true) ? $this->get_post_term_ids($template_id, $post_type) : [];
-		foreach ($context['taxonomy_terms'] as $taxonomy => $term_ids) {
-			$existing_ids = isset($terms_to_assign[$taxonomy]) ? $terms_to_assign[$taxonomy] : [];
-			$terms_to_assign[$taxonomy] = array_values(array_unique(array_merge($existing_ids, $term_ids)));
+		return sanitize_title($new_slug);
+	}
+
+	/**
+	 * Render an existing item from a template and write the result.
+	 *
+	 * This is the single rendering path shared by generation and template sync.
+	 *
+	 * @param int      $template_id  Template post ID.
+	 * @param int      $post_id      Item to write to.
+	 * @param string[] $placeholders Placeholders.
+	 * @param array    $values       Replacement values, in placeholder order.
+	 * @param string[] $fields       Fields to render, see get_render_fields().
+	 * @param array    $args {
+	 *     Optional.
+	 *
+	 *     @type array      $extra_terms     Term IDs keyed by taxonomy, added to the template's terms.
+	 *     @type bool       $update_hash     Whether to store the output hash afterwards. Default true.
+	 *     @type array|null $replace         Fields among title, slug, content and excerpt to replace
+	 *                                       placeholders in. Others listed in $fields are copied from
+	 *                                       the template unchanged. Default null (replace in all).
+	 *     @type array      $postarr         Extra post columns to write, e.g. post_parent.
+	 *     @type bool       $clear_thumbnail Remove the item's featured image when the template has
+	 *                                       none (with featured_image). Default true.
+	 * }
+	 * @return array|WP_Error Array with 'changed' (field names that differed) and 'warnings'.
+	 */
+	public function render_item($template_id, $post_id, $placeholders, $values, $fields, $args = []) {
+		$plan = $this->build_render_plan($template_id, $post_id, $placeholders, $values, $fields, $args);
+		if (is_wp_error($plan)) {
+			return $plan;
 		}
-		foreach ($terms_to_assign as $taxonomy => $term_ids) {
-			if (!empty($term_ids)) {
-				$term_result = wp_set_object_terms($post_id, $term_ids, $taxonomy);
-				if (is_wp_error($term_result)) {
-					$post_warnings[] = $term_result->get_error_message();
+
+		$changed = $this->get_plan_changes($post_id, $plan);
+		$result = $this->apply_render_plan($post_id, $plan);
+		if (is_wp_error($result)) {
+			return $result;
+		}
+
+		$result['changed'] = $changed;
+		return $result;
+	}
+
+	/**
+	 * Work out what render_item() would write, without writing anything.
+	 *
+	 * @param int      $template_id  Template post ID.
+	 * @param int      $post_id      Item that will be written to.
+	 * @param string[] $placeholders Placeholders.
+	 * @param array    $values       Replacement values, in placeholder order.
+	 * @param string[] $fields       Fields to render, see get_render_fields().
+	 * @param array    $args         See render_item().
+	 * @return array|WP_Error Render plan.
+	 */
+	public function build_render_plan($template_id, $post_id, $placeholders, $values, $fields, $args = []) {
+		$template = get_post($template_id);
+		$post = get_post($post_id);
+		if (!$template || !$post) {
+			return new WP_Error('bpd_render_missing', __('The template or item no longer exists.', 'bulk-page-duplicator'));
+		}
+
+		$args = wp_parse_args($args, [
+			'extra_terms'     => [],
+			'update_hash'     => true,
+			'replace'         => null,
+			'postarr'         => [],
+			'clear_thumbnail' => true,
+		]);
+		$fields = array_values(array_intersect($this->get_render_fields(), (array) $fields));
+		$placeholders = array_values((array) $placeholders);
+		$values = array_values((array) $values);
+
+		$plan = [
+			'template_id'   => (int) $template->ID,
+			'placeholders'  => $placeholders,
+			'values'        => $values,
+			'fields'        => $fields,
+			'copy_all_meta' => in_array('meta', $fields, true),
+			'post'          => [],
+			'meta'          => [],
+			'delete_meta'   => [],
+			'thumbnail'     => null,
+			'terms'         => null,
+			'clear_caches'  => [],
+			'update_hash'   => (bool) $args['update_hash'],
+		];
+
+		$replace = null === $args['replace'] ? $fields : (array) $args['replace'];
+		$post_fields = $this->render_post_fields($template, $placeholders, $values, $replace);
+		foreach (['title' => 'post_title', 'slug' => 'post_name', 'content' => 'post_content', 'excerpt' => 'post_excerpt'] as $field => $column) {
+			if (in_array($field, $fields, true)) {
+				$plan['post'][$column] = ['field' => $field, 'value' => $post_fields[$column]];
+			}
+		}
+		foreach ((array) $args['postarr'] as $column => $value) {
+			$plan['post'][sanitize_key($column)] = ['field' => sanitize_key($column), 'value' => $value];
+		}
+
+		// SEO meta on its own; with "meta", copy_post_meta_multi() handles SEO keys.
+		if (in_array('seo', $fields, true) && !$plan['copy_all_meta']) {
+			$prefixes = wp_list_pluck($this->detect_seo_plugins(), 'prefix');
+			foreach (get_post_meta($template->ID) as $key => $raw_values) {
+				if (!$this->key_has_prefix($key, $prefixes)) {
+					continue;
+				}
+				$rendered = [];
+				foreach ($raw_values as $raw_value) {
+					$rendered[] = $this->render_meta_value($raw_value, $placeholders, $values);
+				}
+				$plan['meta'][$key] = ['field' => 'seo', 'values' => $rendered];
+			}
+		}
+
+		if (in_array('elementor', $fields, true)) {
+			$this->plan_elementor_data($plan, $template, $post);
+		}
+		if (in_array('beaver', $fields, true)) {
+			$this->plan_beaver_builder_data($plan, $template);
+		}
+		if (in_array('bricks', $fields, true)) {
+			$this->plan_bricks_builder_data($plan, $template);
+		}
+
+		if (in_array('page_template', $fields, true)) {
+			$page_template = get_post_meta($template->ID, '_wp_page_template', true);
+			$plan['meta']['_wp_page_template'] = ['field' => 'page_template', 'values' => '' !== $page_template ? [$page_template] : []];
+		}
+
+		if (in_array('featured_image', $fields, true)) {
+			$thumbnail_id = (int) get_post_thumbnail_id($template->ID);
+			if ($thumbnail_id || $args['clear_thumbnail']) {
+				$plan['thumbnail'] = $thumbnail_id;
+			}
+		}
+
+		$terms = in_array('terms', $fields, true) ? $this->get_post_term_ids($template->ID, $template->post_type) : [];
+		foreach ((array) $args['extra_terms'] as $taxonomy => $term_ids) {
+			$existing_ids = isset($terms[$taxonomy]) ? $terms[$taxonomy] : [];
+			$terms[$taxonomy] = array_values(array_unique(array_merge($existing_ids, array_map('absint', (array) $term_ids))));
+		}
+		$terms = array_filter($terms);
+		if (!empty($terms)) {
+			$plan['terms'] = $terms;
+		}
+
+		return $plan;
+	}
+
+	/**
+	 * List the fields whose stored value differs from a render plan.
+	 *
+	 * Copying all template meta (the "meta" field) is not compared.
+	 *
+	 * @param int   $post_id Item ID.
+	 * @param array $plan    Plan from build_render_plan().
+	 * @return string[] Field names.
+	 */
+	public function get_plan_changes($post_id, $plan) {
+		$post = get_post($post_id);
+		if (!$post) {
+			return [];
+		}
+
+		$changed = [];
+
+		foreach ($plan['post'] as $column => $entry) {
+			if ((string) $post->$column !== (string) $entry['value']) {
+				$changed[] = $entry['field'];
+			}
+		}
+
+		foreach ($plan['meta'] as $key => $entry) {
+			$current = array_map('maybe_serialize', get_post_meta($post_id, $key, false));
+			$target = array_map('maybe_serialize', $entry['values']);
+			if ($current !== $target) {
+				$changed[] = $entry['field'];
+			}
+		}
+
+		if (null !== $plan['thumbnail'] && (int) get_post_thumbnail_id($post_id) !== (int) $plan['thumbnail']) {
+			$changed[] = 'featured_image';
+		}
+
+		if (null !== $plan['terms']) {
+			foreach ($plan['terms'] as $taxonomy => $term_ids) {
+				$current = wp_get_object_terms($post_id, $taxonomy, ['fields' => 'ids']);
+				$current = is_wp_error($current) ? [] : array_map('absint', $current);
+				$target = array_map('absint', $term_ids);
+				sort($current);
+				sort($target);
+				if ($current !== $target) {
+					$changed[] = 'terms';
+					break;
 				}
 			}
 		}
 
-		// Apply Elementor data if exists and option selected
-		if (in_array('elementor', $replace_options)) {
-			$this->process_elementor_data($template_id, $post_id, $placeholders, $value_set, $content);
+		return array_values(array_unique($changed));
+	}
+
+	/**
+	 * Write a render plan to an item.
+	 *
+	 * @param int   $post_id Item ID.
+	 * @param array $plan    Plan from build_render_plan().
+	 * @return array|WP_Error Array with 'warnings'.
+	 */
+	public function apply_render_plan($post_id, $plan) {
+		$warnings = [];
+
+		if ($plan['copy_all_meta']) {
+			$this->copy_post_meta_multi($plan['template_id'], $post_id, $plan['placeholders'], $plan['values'], $plan['fields']);
 		}
 
-		// Apply Beaver Builder data if exists and option selected
-		if (in_array('beaver', $replace_options)) {
-			$this->process_beaver_builder_data($template_id, $post_id, $placeholders, $value_set);
+		if (!empty($plan['post'])) {
+			$postarr = ['ID' => $post_id];
+			foreach ($plan['post'] as $column => $entry) {
+				$postarr[$column] = $entry['value'];
+			}
+			$updated = wp_update_post(wp_slash($postarr), true);
+			if (is_wp_error($updated)) {
+				return $updated;
+			}
 		}
 
-		// Apply Bricks Builder data if exists and option selected
-		if (in_array('bricks', $replace_options)) {
-			$this->process_bricks_builder_data($template_id, $post_id, $placeholders, $value_set);
+		foreach ($plan['meta'] as $key => $entry) {
+			$this->write_meta_values($post_id, $key, $entry['values']);
 		}
 
-		return $post_warnings;
+		foreach ($plan['delete_meta'] as $key) {
+			delete_post_meta($post_id, $key);
+		}
+
+		if (null !== $plan['thumbnail']) {
+			if ($plan['thumbnail'] > 0) {
+				set_post_thumbnail($post_id, $plan['thumbnail']);
+			} else {
+				delete_post_thumbnail($post_id);
+			}
+		}
+
+		if (null !== $plan['terms']) {
+			foreach ($plan['terms'] as $taxonomy => $term_ids) {
+				$term_result = wp_set_object_terms($post_id, $term_ids, $taxonomy);
+				if (is_wp_error($term_result)) {
+					$warnings[] = $term_result->get_error_message();
+				}
+			}
+		}
+
+		if (in_array('elementor', $plan['clear_caches'], true)) {
+			// Defer Elementor's global cache clear until the batch is complete.
+			$this->elementor_cache_needs_clear = true;
+		}
+		if (in_array('beaver', $plan['clear_caches'], true) && class_exists('FLBuilderModel')) {
+			FLBuilderModel::delete_asset_cache($post_id);
+		}
+
+		if ($plan['update_hash']) {
+			$this->update_output_hash($post_id);
+		}
+
+		return ['warnings' => $warnings];
+	}
+
+	/**
+	 * Meta keys whose values make up the generated output hash, besides post_content.
+	 *
+	 * @return string[]
+	 */
+	public function get_output_hash_meta_keys() {
+		return ['_elementor_data', '_fl_builder_data', '_bricks_page_content_2'];
+	}
+
+	/**
+	 * Hash an item's content and builder data, used to detect manual edits.
+	 *
+	 * @param int $post_id Item ID.
+	 * @return string
+	 */
+	public function compute_output_hash($post_id) {
+		$parts = ['content' => (string) get_post_field('post_content', $post_id, 'raw')];
+		foreach ($this->get_output_hash_meta_keys() as $key) {
+			$parts[$key] = array_map('maybe_serialize', get_post_meta($post_id, $key, false));
+		}
+		return md5(serialize($parts)); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Only used as hash input.
+	}
+
+	/**
+	 * Store the current output hash of an item.
+	 *
+	 * @param int $post_id Item ID.
+	 */
+	public function update_output_hash($post_id) {
+		update_post_meta($post_id, '_bpd_output_hash', $this->compute_output_hash($post_id));
+	}
+
+	/**
+	 * Replace every value of a meta key, keeping multi-valued keys intact.
+	 *
+	 * @param int    $post_id Post ID (revisions are written to directly).
+	 * @param string $key     Meta key.
+	 * @param array  $values  Unslashed values. Empty deletes the key.
+	 */
+	public function write_meta_values($post_id, $key, $values) {
+		delete_metadata('post', $post_id, $key);
+		foreach ((array) $values as $value) {
+			add_metadata('post', $post_id, $key, $this->slash_meta_value($value));
+		}
+	}
+
+	/**
+	 * Slash a meta value, including strings inside objects (wp_slash() skips objects).
+	 *
+	 * @param mixed $value Value.
+	 * @return mixed
+	 */
+	private function slash_meta_value($value) {
+		if (is_string($value)) {
+			return addslashes($value);
+		}
+		if (is_array($value)) {
+			foreach ($value as $key => $item) {
+				$value[$key] = $this->slash_meta_value($item);
+			}
+			return $value;
+		}
+		if (is_object($value) && !($value instanceof __PHP_Incomplete_Class)) {
+			$copy = clone $value;
+			foreach (get_object_vars($copy) as $property => $item) {
+				$copy->$property = $this->slash_meta_value($item);
+			}
+			return $copy;
+		}
+		return $value;
+	}
+
+	/**
+	 * Whether a meta key starts with one of the given prefixes.
+	 *
+	 * @param string   $key      Meta key.
+	 * @param string[] $prefixes Prefixes.
+	 * @return bool
+	 */
+	private function key_has_prefix($key, $prefixes) {
+		foreach ($prefixes as $prefix) {
+			if (0 === strpos($key, $prefix)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Replace placeholders in a raw (possibly serialized or JSON) meta value.
+	 *
+	 * @param string   $raw_value    Raw meta value as stored.
+	 * @param string[] $placeholders Placeholders.
+	 * @param array    $values       Replacement values.
+	 * @return mixed Unserialized value.
+	 */
+	private function render_meta_value($raw_value, $placeholders, $values) {
+		if (is_serialized($raw_value)) {
+			$unserialized = maybe_unserialize($raw_value);
+			$this->replace_in_array_recursive_multi($unserialized, $placeholders, $values);
+			return $unserialized;
+		}
+
+		if ($this->is_json($raw_value)) {
+			$decoded = json_decode($raw_value, true);
+			if (is_array($decoded)) {
+				$this->replace_in_array_recursive_multi($decoded, $placeholders, $values);
+				return wp_json_encode($decoded);
+			}
+			return $raw_value;
+		}
+
+		return $this->multi_replace($raw_value, $placeholders, $values);
+	}
+
+	/**
+	 * Add Elementor data to a render plan.
+	 *
+	 * @param array   $plan     Render plan (modified).
+	 * @param WP_Post $template Template post.
+	 * @param WP_Post $post     Target item.
+	 */
+	private function plan_elementor_data(&$plan, $template, $post) {
+		if ('builder' !== get_post_meta($template->ID, '_elementor_edit_mode', true)) {
+			return;
+		}
+
+		$elementor_data = get_post_meta($template->ID, '_elementor_data', true);
+		if (!empty($elementor_data)) {
+			$plan['meta']['_elementor_data'] = ['field' => 'elementor', 'values' => [$this->multi_replace($elementor_data, $plan['placeholders'], $plan['values'])]];
+		}
+
+		$elementor_meta_keys = [
+			'_elementor_version',
+			'_elementor_template_type',
+			'_elementor_page_settings',
+			'_elementor_page_meta',
+			'_elementor_controls_usage',
+		];
+		foreach ($elementor_meta_keys as $meta_key) {
+			$meta_value = get_post_meta($template->ID, $meta_key, true);
+			if (!empty($meta_value)) {
+				$plan['meta'][$meta_key] = ['field' => 'elementor', 'values' => [$meta_value]];
+			}
+		}
+		$plan['meta']['_elementor_edit_mode'] = ['field' => 'elementor', 'values' => ['builder']];
+
+		// Force regeneration of CSS.
+		$plan['delete_meta'][] = '_elementor_css';
+		$plan['clear_caches'][] = 'elementor';
+
+		// Elementor items need some post content.
+		$content = isset($plan['post']['post_content']) ? $plan['post']['post_content']['value'] : $post->post_content;
+		if (empty($content)) {
+			$plan['post']['post_content'] = [
+				'field' => 'elementor',
+				'value' => '<!-- wp:shortcode -->[elementor-template id="' . (int) $post->ID . '"]<!-- /wp:shortcode -->',
+			];
+		}
+	}
+
+	/**
+	 * Add Beaver Builder data to a render plan.
+	 *
+	 * @param array   $plan     Render plan (modified).
+	 * @param WP_Post $template Template post.
+	 */
+	private function plan_beaver_builder_data(&$plan, $template) {
+		$fl_builder_data = get_post_meta($template->ID, '_fl_builder_data', true);
+		$fl_builder_draft = get_post_meta($template->ID, '_fl_builder_draft', true);
+
+		if (empty($fl_builder_data) && empty($fl_builder_draft)) {
+			return;
+		}
+
+		// Published and draft layout data.
+		if (!empty($fl_builder_data) && is_array($fl_builder_data)) {
+			$plan['meta']['_fl_builder_data'] = ['field' => 'beaver', 'values' => [$this->replace_in_beaver_builder_data($fl_builder_data, $plan['placeholders'], $plan['values'])]];
+		}
+		if (!empty($fl_builder_draft) && is_array($fl_builder_draft)) {
+			$plan['meta']['_fl_builder_draft'] = ['field' => 'beaver', 'values' => [$this->replace_in_beaver_builder_data($fl_builder_draft, $plan['placeholders'], $plan['values'])]];
+		}
+
+		foreach (['_fl_builder_enabled', '_fl_builder_data_settings', '_fl_builder_draft_settings'] as $meta_key) {
+			$meta_value = get_post_meta($template->ID, $meta_key, true);
+			if (!empty($meta_value)) {
+				$plan['meta'][$meta_key] = ['field' => 'beaver', 'values' => [$meta_value]];
+			}
+		}
+
+		$plan['clear_caches'][] = 'beaver';
+	}
+
+	/**
+	 * Add Bricks Builder data to a render plan.
+	 *
+	 * @param array   $plan     Render plan (modified).
+	 * @param WP_Post $template Template post.
+	 */
+	private function plan_bricks_builder_data(&$plan, $template) {
+		// Bricks stores data in _bricks_page_content_2, older versions in _bricks_page_content.
+		$bricks_data = get_post_meta($template->ID, '_bricks_page_content_2', true);
+		if (empty($bricks_data)) {
+			$bricks_data = get_post_meta($template->ID, '_bricks_page_content', true);
+		}
+		if (empty($bricks_data)) {
+			return;
+		}
+
+		// Bricks data can be JSON string or array.
+		if (is_string($bricks_data)) {
+			$bricks_data = json_decode($bricks_data, true);
+		}
+		if (!is_array($bricks_data)) {
+			return;
+		}
+
+		$plan['meta']['_bricks_page_content_2'] = ['field' => 'bricks', 'values' => [$this->replace_in_bricks_data($bricks_data, $plan['placeholders'], $plan['values'])]];
+
+		foreach (['_bricks_page_header_2', '_bricks_page_footer_2', '_bricks_page_settings', '_bricks_editor_mode'] as $meta_key) {
+			$meta_value = get_post_meta($template->ID, $meta_key, true);
+			if (empty($meta_value)) {
+				continue;
+			}
+			// Header and footer areas also get replacements.
+			if (is_array($meta_value) && (false !== strpos($meta_key, '_header') || false !== strpos($meta_key, '_footer'))) {
+				$meta_value = $this->replace_in_bricks_data($meta_value, $plan['placeholders'], $plan['values']);
+			}
+			$plan['meta'][$meta_key] = ['field' => 'bricks', 'values' => [$meta_value]];
+		}
+
+		// Clear Bricks asset cache.
+		$plan['delete_meta'][] = '_bricks_page_assets_css';
+		$plan['delete_meta'][] = '_bricks_page_assets_js';
 	}
 
 	/**
@@ -887,13 +1406,15 @@ class Bulk_Page_Duplicator_Core {
 	 * @param array  $placeholders Placeholders used.
 	 * @param array  $value_set    Replacement values used.
 	 * @param bool   $is_update    Whether an existing item was re-rendered.
+	 * @param array  $extra_terms  Term IDs chosen in the form, keyed by taxonomy.
 	 */
-	private function save_generation_meta($post_id, $template_id, $operation_id, $placeholders, $value_set, $is_update = false) {
+	private function save_generation_meta($post_id, $template_id, $operation_id, $placeholders, $value_set, $is_update = false, $extra_terms = []) {
 		$generation = [
 			'operation_id' => $operation_id,
 			'placeholders' => array_values($placeholders),
 			'values'       => array_values((array) $value_set),
 			'created'      => time(),
+			'terms'        => array_filter((array) $extra_terms),
 		];
 
 		if ($is_update) {
@@ -918,105 +1439,6 @@ class Bulk_Page_Duplicator_Core {
 	 */
 	public function multi_replace_public($text, $placeholders, $values) {
 		return $this->multi_replace($text, $placeholders, $values);
-	}
-
-	/**
-	 * Process Elementor data for a post
-	 */
-	private function process_elementor_data($template_id, $new_post_id, $placeholders, $value_set, $content) {
-		// First, ensure this is an Elementor post
-		$is_elementor_page = get_post_meta($template_id, '_elementor_edit_mode', true) === 'builder';
-
-		if ($is_elementor_page) {
-			// 1. Copy _elementor_data with placeholders replaced
-			$elementor_data = get_post_meta($template_id, '_elementor_data', true);
-			if (!empty($elementor_data)) {
-				$new_elementor_data = $this->multi_replace($elementor_data, $placeholders, $value_set);
-				update_post_meta($new_post_id, '_elementor_data', wp_slash($new_elementor_data));
-			}
-
-			// 2. Get ALL post meta (including Elementor-specific ones)
-			$all_meta = get_post_meta($template_id);
-
-			// 3. Copy specific Elementor meta fields
-			$elementor_meta_keys = [
-				'_elementor_edit_mode',
-				'_elementor_version',
-				'_elementor_template_type',
-				'_elementor_page_settings',
-				'_wp_page_template',
-				'_elementor_page_meta',
-				'_elementor_controls_usage'
-			];
-
-			foreach ($elementor_meta_keys as $meta_key) {
-				if (isset($all_meta[$meta_key]) && !empty($all_meta[$meta_key][0])) {
-					$meta_value = $all_meta[$meta_key][0];
-					update_post_meta($new_post_id, $meta_key, maybe_unserialize($meta_value));
-				}
-			}
-
-			// 4. Force regeneration of CSS
-			delete_post_meta($new_post_id, '_elementor_css');
-
-			// 5. Defer Elementor's global cache clear until the batch is complete.
-			$this->elementor_cache_needs_clear = true;
-
-			// 6. Set post type to elementor
-			update_post_meta($new_post_id, '_elementor_edit_mode', 'builder');
-		}
-
-		// 7. Ensure the post content is properly set for Elementor
-		if (empty($content) && $is_elementor_page) {
-			wp_update_post([
-				'ID' => $new_post_id,
-				'post_content' => '<!-- wp:shortcode -->[elementor-template id="' . $new_post_id . '"]<!-- /wp:shortcode -->'
-			]);
-		}
-	}
-
-	/**
-	 * Process Beaver Builder data for a post
-	 */
-	private function process_beaver_builder_data($template_id, $new_post_id, $placeholders, $value_set) {
-		// Check if this is a Beaver Builder post
-		$fl_builder_data = get_post_meta($template_id, '_fl_builder_data', true);
-		$fl_builder_draft = get_post_meta($template_id, '_fl_builder_draft', true);
-
-		if (empty($fl_builder_data) && empty($fl_builder_draft)) {
-			return;
-		}
-
-		// Process published layout data
-		if (!empty($fl_builder_data) && is_array($fl_builder_data)) {
-			$new_data = $this->replace_in_beaver_builder_data($fl_builder_data, $placeholders, $value_set);
-			update_post_meta($new_post_id, '_fl_builder_data', $new_data);
-		}
-
-		// Process draft layout data
-		if (!empty($fl_builder_draft) && is_array($fl_builder_draft)) {
-			$new_draft = $this->replace_in_beaver_builder_data($fl_builder_draft, $placeholders, $value_set);
-			update_post_meta($new_post_id, '_fl_builder_draft', $new_draft);
-		}
-
-		// Copy other Beaver Builder meta
-		$bb_meta_keys = [
-			'_fl_builder_enabled',
-			'_fl_builder_data_settings',
-			'_fl_builder_draft_settings'
-		];
-
-		foreach ($bb_meta_keys as $meta_key) {
-			$meta_value = get_post_meta($template_id, $meta_key, true);
-			if (!empty($meta_value)) {
-				update_post_meta($new_post_id, $meta_key, $meta_value);
-			}
-		}
-
-		// Clear Beaver Builder cache
-		if (class_exists('FLBuilderModel')) {
-			FLBuilderModel::delete_asset_cache($new_post_id);
-		}
 	}
 
 	/**
@@ -1049,65 +1471,6 @@ class Bulk_Page_Duplicator_Core {
 		}
 
 		return $data;
-	}
-
-	/**
-	 * Process Bricks Builder data for a post
-	 */
-	private function process_bricks_builder_data($template_id, $new_post_id, $placeholders, $value_set) {
-		// Bricks stores data in _bricks_page_content_2 meta key
-		$bricks_data = get_post_meta($template_id, '_bricks_page_content_2', true);
-
-		if (empty($bricks_data)) {
-			// Try the older meta key format
-			$bricks_data = get_post_meta($template_id, '_bricks_page_content', true);
-		}
-
-		if (empty($bricks_data)) {
-			return;
-		}
-
-		// Bricks data can be JSON string or array
-		if (is_string($bricks_data)) {
-			$bricks_data = json_decode($bricks_data, true);
-		}
-
-		if (!is_array($bricks_data)) {
-			return;
-		}
-
-		// Process the Bricks data
-		$new_data = $this->replace_in_bricks_data($bricks_data, $placeholders, $value_set);
-
-		// Save the updated data
-		update_post_meta($new_post_id, '_bricks_page_content_2', $new_data);
-
-		// Copy other Bricks meta
-		$bricks_meta_keys = [
-			'_bricks_page_header_2',
-			'_bricks_page_footer_2',
-			'_bricks_page_settings',
-			'_bricks_editor_mode'
-		];
-
-		foreach ($bricks_meta_keys as $meta_key) {
-			$meta_value = get_post_meta($template_id, $meta_key, true);
-			if (!empty($meta_value)) {
-				// For content areas, also apply replacements
-				if (strpos($meta_key, '_content') !== false || strpos($meta_key, '_header') !== false || strpos($meta_key, '_footer') !== false) {
-					if (is_array($meta_value)) {
-						$meta_value = $this->replace_in_bricks_data($meta_value, $placeholders, $value_set);
-					}
-				}
-				update_post_meta($new_post_id, $meta_key, $meta_value);
-			}
-		}
-
-		// Clear Bricks cache if available
-		if (class_exists('Bricks\Assets')) {
-			delete_post_meta($new_post_id, '_bricks_page_assets_css');
-			delete_post_meta($new_post_id, '_bricks_page_assets_js');
-		}
 	}
 
 	/**
@@ -1251,29 +1614,14 @@ class Bulk_Page_Duplicator_Core {
 			}
 
 			foreach ($meta_values as $meta_value) {
-				// Handle serialized data for SEO fields
-				if ($is_seo_field && in_array('seo', $replace_options)) {
-					// For serialized data
-					if (is_serialized($meta_value)) {
-						$unserialized = maybe_unserialize($meta_value);
-						$this->replace_in_array_recursive_multi($unserialized, $placeholders, $values);
-						$meta_value = maybe_serialize($unserialized);
-					}
-					// For JSON data (common in newer SEO plugins)
-					else if ($this->is_json($meta_value)) {
-						$decoded = json_decode($meta_value, true);
-						if (is_array($decoded)) {
-							$this->replace_in_array_recursive_multi($decoded, $placeholders, $values);
-							$meta_value = wp_json_encode($decoded);
-						}
-					}
-					// For simple string values
-					else {
-						$meta_value = $this->multi_replace($meta_value, $placeholders, $values);
-					}
+				// Replace placeholders in SEO fields (serialized, JSON or plain values).
+				if ($is_seo_field && in_array('seo', $replace_options, true)) {
+					$meta_value = $this->render_meta_value($meta_value, $placeholders, $values);
+				} else {
+					$meta_value = maybe_unserialize($meta_value);
 				}
 
-					add_post_meta($to_id, $key, wp_slash(maybe_unserialize($meta_value)), false);
+				add_post_meta($to_id, $key, $this->slash_meta_value($meta_value), false);
 			}
 		}
 	}

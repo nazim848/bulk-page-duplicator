@@ -342,7 +342,7 @@ class Bulk_Page_Duplicator_Admin {
 			wp_send_json_error($post_parent->get_error_message());
 		}
 
-		// Load core class for smart_replace
+		// Load core class for rendering
 		if (!class_exists('Bulk_Page_Duplicator_Core')) {
 			require_once dirname(dirname(__FILE__)) . '/includes/class-bulk-page-duplicator.php';
 		}
@@ -362,29 +362,10 @@ class Bulk_Page_Duplicator_Admin {
 			// For display purposes
 			$display_value = is_array($value_set) ? implode(', ', $value_set) : $value_set;
 
-			// Generate title
-			$title = $template_page->post_title;
-			if (in_array('title', $replace_options)) {
-				$title = $core->multi_replace_public($title, $placeholders, $value_set);
-			}
-
-			// Generate slug
-			$slug = $template_page->post_name;
-			if (in_array('slug', $replace_options)) {
-				$new_slug = $core->multi_replace_public($slug, $placeholders, $value_set);
-
-				// Also replace slugified placeholders
-				foreach ($placeholders as $index => $placeholder) {
-					$value = is_array($value_set) ? ($value_set[$index] ?? '') : $value_set;
-					$placeholder_slug = sanitize_title($placeholder);
-					if ($placeholder_slug !== strtolower($placeholder)) {
-						$value_slug = sanitize_title($value);
-						$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
-					}
-				}
-
-				$slug = sanitize_title($new_slug);
-			}
+			// Render title and slug through the same path as generation.
+			$fields = $core->render_item_fields($template_page, $placeholders, $value_set, $replace_options);
+			$title = $fields['title'];
+			$slug = $fields['slug'];
 
 			// Check the database and values already generated in this preview batch.
 			$slug_key = $post_parent . ':' . $slug;
