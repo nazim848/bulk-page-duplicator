@@ -39,9 +39,17 @@ define('BULK_PAGE_DUPLICATOR_URL', plugin_dir_url(__FILE__));
 
 // Load core class
 require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator.php';
+// Saved generators (private post type, registered on every request).
+require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-generators.php';
+$bulk_page_duplicator_generators = new Bulk_Page_Duplicator_Generators();
+$bulk_page_duplicator_generators->init();
 // Load admin class if in admin
 if (is_admin()) {
 	require_once BULK_PAGE_DUPLICATOR_PATH . 'admin/class-bulk-page-duplicator-admin.php';
 	$bulk_page_duplicator_admin = new Bulk_Page_Duplicator_Admin();
 	$bulk_page_duplicator_admin->init();
+
+	require_once BULK_PAGE_DUPLICATOR_PATH . 'admin/class-bulk-page-duplicator-generators-admin.php';
+	$bulk_page_duplicator_generators_admin = new Bulk_Page_Duplicator_Generators_Admin($bulk_page_duplicator_generators);
+	$bulk_page_duplicator_generators_admin->init();
 }
