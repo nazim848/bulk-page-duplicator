@@ -633,7 +633,14 @@ class Bulk_Page_Duplicator_Core {
 	 * @return string[]
 	 */
 	public function get_duplicable_post_types() {
-		$post_types = array_values(array_diff(get_post_types(['public' => true]), ['attachment']));
+		$excluded = ['attachment'];
+
+		// WooCommerce ships its own product duplicator that handles SKUs and lookup tables.
+		if (class_exists('WooCommerce')) {
+			$excluded[] = 'product';
+		}
+
+		$post_types = array_values(array_diff(get_post_types(['public' => true]), $excluded));
 
 		/**
 		 * Filter the post types that show Duplicate links.

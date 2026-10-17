@@ -24,6 +24,11 @@ Yes, it is fully internationalized and ready for translation. The plugin include
 
 ## Changelog
 
+### 1.2.0
+
+- One-click and bulk "Duplicate" actions in post lists, the admin bar and both editors.
+- Bulk duplication copies the template's excerpt, menu order and (optionally) terms.
+
 ### 1.1.1
 
 - Security, data-integrity, rollback, compatibility, and large-site performance fixes.
