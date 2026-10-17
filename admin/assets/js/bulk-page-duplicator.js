@@ -1,4 +1,7 @@
 jQuery(document).ready(function ($) {
+	const __ = wp.i18n.__;
+	const _n = wp.i18n._n;
+	const sprintf = wp.i18n.sprintf;
 	let isProcessing = false;
 	let cancelRequested = false;
 	let templateData = null; // Cache for template title/slug
@@ -8,6 +11,17 @@ jQuery(document).ready(function ($) {
 	let processingStartTime = null; // Track when processing started
 	let batchTimings = []; // Track timing for each batch to estimate remaining time
 	let savePreferencesTimeout = null; // Debounce timer for saving preferences
+	let templateSearchTimeout = null;
+	let templateRequest = null;
+	let currentOperationId = null;
+
+	function createOperationId() {
+		if (window.crypto && typeof window.crypto.randomUUID === "function") {
+			return window.crypto.randomUUID();
+		}
+
+		return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+	}
 
 	// Load saved user preferences on page load
 	function loadUserPreferences() {
@@ -32,6 +46,7 @@ jQuery(document).ready(function ($) {
 		$("#replace-content").prop("checked", prefs.replace_content !== false);
 		$("#replace-elementor").prop("checked", prefs.replace_elementor !== false);
 		$("#replace-seo").prop("checked", prefs.replace_seo !== false);
+		$("#copy-featured-image").prop("checked", prefs.copy_featured_image !== false);
 
 		// Set template and parent after templates are loaded (delayed)
 		if (prefs.template_id || prefs.parent_page) {
@@ -70,7 +85,8 @@ jQuery(document).ready(function ($) {
 					replace_slug: $("#replace-slug").is(":checked").toString(),
 					replace_content: $("#replace-content").is(":checked").toString(),
 					replace_elementor: $("#replace-elementor").is(":checked").toString(),
-					replace_seo: $("#replace-seo").is(":checked").toString()
+					replace_seo: $("#replace-seo").is(":checked").toString(),
+					copy_featured_image: $("#copy-featured-image").is(":checked").toString()
 				}
 			});
 		}, 1000); // Save after 1 second of inactivity
@@ -84,7 +100,7 @@ jQuery(document).ready(function ($) {
 		});
 
 		// Save on checkbox changes
-		$("#replace-title, #replace-slug, #replace-content, #replace-elementor, #replace-seo").on("change", function() {
+		$("#replace-title, #replace-slug, #replace-content, #replace-elementor, #replace-seo, #copy-featured-image").on("change", function() {
 			saveUserPreferences();
 		});
 	}
@@ -95,8 +111,6 @@ jQuery(document).ready(function ($) {
 			Notification.requestPermission();
 		}
 	}
-	requestNotificationPermission();
-
 	// Show browser notification
 	function showNotification(title, body) {
 		if ("Notification" in window && Notification.permission === "granted") {
@@ -112,22 +126,31 @@ jQuery(document).ready(function ($) {
 	// Format time in human readable format
 	function formatTime(seconds) {
 		if (seconds < 60) {
-			return Math.round(seconds) + " seconds";
+			const roundedSeconds = Math.round(seconds);
+			return sprintf(_n("%d second", "%d seconds", roundedSeconds, "bulk-page-duplicator"), roundedSeconds);
 		} else if (seconds < 3600) {
 			const mins = Math.floor(seconds / 60);
 			const secs = Math.round(seconds % 60);
-			return mins + " min" + (mins > 1 ? "s" : "") + (secs > 0 ? " " + secs + "s" : "");
+			let output = sprintf(_n("%d min", "%d mins", mins, "bulk-page-duplicator"), mins);
+			if (secs > 0) {
+				output += " " + sprintf(_n("%d sec", "%d secs", secs, "bulk-page-duplicator"), secs);
+			}
+			return output;
 		} else {
 			const hours = Math.floor(seconds / 3600);
 			const mins = Math.round((seconds % 3600) / 60);
-			return hours + " hour" + (hours > 1 ? "s" : "") + (mins > 0 ? " " + mins + " min" : "");
+			let output = sprintf(_n("%d hour", "%d hours", hours, "bulk-page-duplicator"), hours);
+			if (mins > 0) {
+				output += " " + sprintf(_n("%d min", "%d mins", mins, "bulk-page-duplicator"), mins);
+			}
+			return output;
 		}
 	}
 
 	// Calculate estimated time remaining
 	function calculateETA(processedCount, totalCount) {
 		if (batchTimings.length === 0 || processedCount === 0) {
-			return "Calculating...";
+			return __("Calculating...", "bulk-page-duplicator");
 		}
 
 		// Calculate average time per item based on recent batches
@@ -176,6 +199,7 @@ jQuery(document).ready(function ($) {
 		if ($("#replace-title").is(":checked")) replaceOptions.push("title");
 		if ($("#replace-slug").is(":checked")) replaceOptions.push("slug");
 		if ($("#replace-content").is(":checked")) replaceOptions.push("content");
+		if ($("#copy-featured-image").is(":checked")) replaceOptions.push("featured_image");
 		// Dynamically get page builder options
 		$("input[id^='replace-']:checked").each(function () {
 			const id = $(this).attr("id").replace("replace-", "");
@@ -291,7 +315,20 @@ jQuery(document).ready(function ($) {
 	// Select a template
 	function selectTemplate(templateId) {
 		const template = availableTemplates.find(t => t.id == templateId);
-		if (!template) return;
+		if (!template) {
+			requestTemplates($("#post-type").val(), "", {
+				templateId: templateId,
+				onSuccess: function (posts) {
+					if (posts.length > 0) {
+						availableTemplates = availableTemplates.concat(posts.filter(function (post) {
+							return !availableTemplates.some(existing => existing.id == post.id);
+						}));
+						selectTemplate(templateId);
+					}
+				}
+			});
+			return;
+		}
 
 		$('#template-page').val(templateId).trigger('change');
 		$('#template-search').val('').hide();
@@ -307,7 +344,7 @@ jQuery(document).ready(function ($) {
 		}
 		$('#template-title').text(template.title + ' (ID: ' + template.id + ')');
 		$('#template-status').text(template.status_label).attr('class', 'template-status ' + template.status);
-		$('#template-modified').text('Modified: ' + template.modified);
+		$('#template-modified').text(sprintf(__("Modified: %s", "bulk-page-duplicator"), template.modified));
 		$('#selected-template-info').show();
 
 		// Fetch full template data for preview
@@ -329,6 +366,51 @@ jQuery(document).ready(function ($) {
 		});
 	}
 
+	function requestTemplates(postType, search, options = {}) {
+		const isAbortable = options.abortPrevious !== false;
+		if (templateRequest && isAbortable) {
+			templateRequest.abort();
+		}
+
+		const request = $.ajax({
+			url: bulk_page_dup_ajax.ajax_url,
+			type: "POST",
+			data: {
+				action: "bpd_get_posts_by_type",
+				nonce: bulk_page_dup_ajax.nonce,
+				post_type: postType,
+				search: search || "",
+				paged: options.page || 1,
+				per_page: options.perPage || 50,
+				template_id: options.templateId || 0
+			},
+			success: function (response) {
+				if (response.success && typeof options.onSuccess === "function") {
+					options.onSuccess(response.data.posts, response.data);
+				} else if (!response.success && typeof options.onError === "function") {
+					options.onError(response.data);
+				}
+			},
+			error: function (xhr, status) {
+				if (status !== "abort" && typeof options.onError === "function") {
+					options.onError();
+				}
+			},
+			complete: function () {
+				if (isAbortable && templateRequest === request) {
+					templateRequest = null;
+				}
+				if (typeof options.onComplete === "function") {
+					options.onComplete();
+				}
+			}
+		});
+
+		if (isAbortable) {
+			templateRequest = request;
+		}
+	}
+
 	// Clear template selection
 	$('#clear-template').on('click', function() {
 		$('#template-page').val('').trigger('change');
@@ -342,9 +424,15 @@ jQuery(document).ready(function ($) {
 	// Handle search input
 	$('#template-search').on('input', function() {
 		const query = $(this).val();
-		if (availableTemplates.length > 0) {
-			renderTemplateDropdown(query);
-		}
+		clearTimeout(templateSearchTimeout);
+		templateSearchTimeout = setTimeout(function () {
+			requestTemplates($("#post-type").val(), query, {
+				onSuccess: function (posts) {
+					availableTemplates = posts;
+					renderTemplateDropdown("");
+				}
+			});
+		}, 250);
 	});
 
 	// Handle focus on search
@@ -436,8 +524,8 @@ jQuery(document).ready(function ($) {
 		if (notFound.length > 0) {
 			$input.addClass("has-warning");
 			$validation.addClass("warning").html(
-				'<strong>Warning:</strong> Placeholder"' + notFound.join('", "') + '" not found in template content. ' +
-				'Make sure it exists in the title, slug, or content.'
+				'<strong>Warning:</strong> Placeholder "' + escapeHtml(notFound.join('", "')) + '" not found in template content. ' +
+				__("Make sure it exists in the title, slug, or content.", "bulk-page-duplicator")
 			).show();
 		} else {
 			$input.addClass("has-success");
@@ -470,7 +558,7 @@ jQuery(document).ready(function ($) {
 		const warnings = [];
 
 		// Show count
-		$count.text(lines.length + " item" + (lines.length !== 1 ? "s" : "") + " to create");
+		$count.text(sprintf(_n("%d item to create", "%d items to create", lines.length, "bulk-page-duplicator"), lines.length));
 		$info.show();
 
 		// Check for duplicates
@@ -486,8 +574,14 @@ jQuery(document).ready(function ($) {
 		});
 
 		if (duplicates.length > 0) {
-			warnings.push('Duplicate values found: "' + duplicates.slice(0, 3).join('", "') + '"' + 
-				(duplicates.length > 3 ? ' and ' + (duplicates.length - 3) + ' more' : ''));
+			let duplicateMessage = sprintf(
+				__('Duplicate values found: "%s"', "bulk-page-duplicator"),
+				duplicates.slice(0, 3).join('", "')
+			);
+			if (duplicates.length > 3) {
+				duplicateMessage += " " + sprintf(__("and %d more", "bulk-page-duplicator"), duplicates.length - 3);
+			}
+			warnings.push(duplicateMessage);
 		}
 
 		// Check for long slugs (>50 chars could cause issues)
@@ -497,7 +591,7 @@ jQuery(document).ready(function ($) {
 		});
 
 		if (longValues.length > 0) {
-			$slugWarning.text(longValues.length + " value(s) may create long slugs (>50 chars)").show();
+			$slugWarning.text(sprintf(_n("%d value may create a long slug (>50 chars)", "%d values may create long slugs (>50 chars)", longValues.length, "bulk-page-duplicator"), longValues.length)).show();
 		}
 
 		// Check for empty lines in middle of text
@@ -506,13 +600,13 @@ jQuery(document).ready(function ($) {
 		});
 
 		if (hasEmptyInMiddle) {
-			warnings.push('Empty lines found between values (they will be skipped)');
+			warnings.push(__("Empty lines found between values (they will be skipped)", "bulk-page-duplicator"));
 		}
 
 		if (warnings.length > 0) {
 			$textarea.addClass("has-warning");
 			$validation.addClass("warning").html(
-				'<strong>Warning:</strong> ' + warnings.join('. ') + '.'
+				'<strong>Warning:</strong> ' + escapeHtml(warnings.join('. ')) + '.'
 			).show();
 		}
 	}
@@ -542,49 +636,24 @@ jQuery(document).ready(function ($) {
 		availableTemplates = [];
 
 		// Show loading state
-		$('#template-search').prop('disabled', true).attr('placeholder', 'Loading templates...');
+		$('#template-search').prop('disabled', true).attr('placeholder', __("Loading templates...", "bulk-page-duplicator"));
 		$loading.show();
 
-		$.ajax({
-			url: bulk_page_dup_ajax.ajax_url,
-			type: "POST",
-			data: {
-				action: "bpd_get_posts_by_type",
-				nonce: bulk_page_dup_ajax.nonce,
-				post_type: postType
-			},
-			success: function (response) {
-				if (response.success) {
-					// Store templates for search
-					availableTemplates = response.data.posts;
-
-					// Update parent page dropdown if hierarchical
-					if (response.data.is_hierarchical) {
-						$parentSection.show();
-						$parentSelect.empty();
-						$parentSelect.append(
-							'<option value="0">No parent (top level)</option>'
-						);
-						$parentSelect.append(
-							'<option value="template">Same as template</option>'
-						);
-						response.data.posts.forEach(function (post) {
-							$parentSelect.append(
-								'<option value="' + post.id + '">' + escapeHtml(post.title) + '</option>'
-							);
-						});
-					} else {
-						$parentSection.hide();
-					}
+		requestTemplates(postType, "", {
+			onSuccess: function (posts, data) {
+				availableTemplates = posts;
+				if (data.is_hierarchical) {
+					$parentSection.show();
+					loadParentOptions(postType, 1, true);
 				} else {
-					alert("Error loading templates: " + response.data);
+					$parentSection.hide();
 				}
 			},
-			error: function () {
-				alert("Error loading templates. Please try again.");
+			onError: function (message) {
+				alert(message || __("Error loading templates. Please try again.", "bulk-page-duplicator"));
 			},
-			complete: function () {
-				$('#template-search').prop('disabled', false).attr('placeholder', 'Type to search templates...');
+			onComplete: function () {
+				$('#template-search').prop('disabled', false).attr('placeholder', __("Type to search templates...", "bulk-page-duplicator"));
 				$loading.hide();
 			}
 		});
@@ -593,14 +662,39 @@ jQuery(document).ready(function ($) {
 		loadTaxonomies(postType);
 	});
 
+	function loadParentOptions(postType, page, reset) {
+		const $parentSelect = $("#parent-page");
+		if (reset) {
+			$parentSelect.empty();
+			$parentSelect.append($("<option>", { value: "0", text: __("No parent (top level)", "bulk-page-duplicator") }));
+			$parentSelect.append($("<option>", { value: "template", text: __("Same as template", "bulk-page-duplicator") }));
+		}
+
+		requestTemplates(postType, "", {
+			page: page,
+			perPage: 100,
+			abortPrevious: false,
+			onSuccess: function (posts, data) {
+				posts.forEach(function (post) {
+					$parentSelect.append($("<option>", { value: post.id, text: post.title }));
+				});
+				if (data.has_more) {
+					loadParentOptions(postType, page + 1, false);
+				}
+			}
+		});
+	}
+
 	// Function to load taxonomies for a post type
-	function loadTaxonomies(postType) {
+	function loadTaxonomies(postType, page = 1) {
 		const $section = $("#taxonomy-section");
 		const $loading = $("#taxonomy-loading");
 		const $list = $("#taxonomy-list");
 
 		$loading.show();
-		$list.empty();
+		if (page === 1) {
+			$list.empty();
+		}
 
 		$.ajax({
 			url: bulk_page_dup_ajax.ajax_url,
@@ -608,43 +702,47 @@ jQuery(document).ready(function ($) {
 			data: {
 				action: "bpd_get_taxonomies",
 				nonce: bulk_page_dup_ajax.nonce,
-				post_type: postType
+				post_type: postType,
+				paged: page,
+				per_page: 100
 			},
 			success: function (response) {
-				$loading.hide();
-
 				if (response.success && response.data.taxonomies.length > 0) {
 					$section.show();
 
 					response.data.taxonomies.forEach(function (taxonomy) {
-						let termsHtml = '';
-
-						if (taxonomy.terms.length > 0) {
-							taxonomy.terms.forEach(function (term) {
-								termsHtml += `
-									<label>
-										<input type="checkbox" class="taxonomy-term" 
-											data-taxonomy="${taxonomy.name}" 
-											value="${term.id}">
-										${escapeHtml(term.name)}
-									</label>
-								`;
-							});
-						} else {
-							termsHtml = '<p class="taxonomy-empty">No terms available</p>';
+						let $group = $list.find('.taxonomy-group[data-taxonomy="' + taxonomy.name + '"]');
+						if ($group.length === 0) {
+							$group = $("<div>", { class: "taxonomy-group" }).attr("data-taxonomy", taxonomy.name);
+							$group.append($("<h4>").text(taxonomy.label));
+							$group.append($("<div>", { class: "taxonomy-terms" }));
+							$list.append($group);
 						}
 
-						const html = `
-							<div class="taxonomy-group" data-taxonomy="${taxonomy.name}">
-								<h4>${escapeHtml(taxonomy.label)}</h4>
-								<div class="taxonomy-terms">
-									${termsHtml}
-								</div>
-							</div>
-						`;
-						$list.append(html);
+						const $terms = $group.find(".taxonomy-terms");
+						taxonomy.terms.forEach(function (term) {
+							const $label = $("<label>");
+							$label.append($("<input>", {
+								type: "checkbox",
+								class: "taxonomy-term",
+								value: term.id
+							}).attr("data-taxonomy", taxonomy.name));
+							$label.append(document.createTextNode(" " + term.name));
+							$terms.append($label);
+						});
+
+						if (page === 1 && taxonomy.terms.length === 0) {
+							$terms.append($("<p>", { class: "taxonomy-empty", text: __("No terms available", "bulk-page-duplicator") }));
+						}
 					});
+
+					if (response.data.has_more) {
+						loadTaxonomies(postType, page + 1);
+					} else {
+						$loading.hide();
+					}
 				} else {
+					$loading.hide();
 					$section.hide();
 				}
 			},
@@ -660,24 +758,18 @@ jQuery(document).ready(function ($) {
 		const postType = $('#post-type').val();
 		const $loading = $('#template-loading');
 
-		$('#template-search').prop('disabled', true).attr('placeholder', 'Loading templates...');
+		$('#template-search').prop('disabled', true).attr('placeholder', __("Loading templates...", "bulk-page-duplicator"));
 		$loading.show();
 
-		$.ajax({
-			url: bulk_page_dup_ajax.ajax_url,
-			type: "POST",
-			data: {
-				action: "bpd_get_posts_by_type",
-				nonce: bulk_page_dup_ajax.nonce,
-				post_type: postType
-			},
-			success: function (response) {
-				if (response.success) {
-					availableTemplates = response.data.posts;
+		requestTemplates(postType, "", {
+			onSuccess: function (posts, data) {
+				availableTemplates = posts;
+				if (data.is_hierarchical) {
+					loadParentOptions(postType, 1, true);
 				}
 			},
-			complete: function () {
-				$('#template-search').prop('disabled', false).attr('placeholder', 'Type to search templates...');
+			onComplete: function () {
+				$('#template-search').prop('disabled', false).attr('placeholder', __("Type to search templates...", "bulk-page-duplicator"));
 				$loading.hide();
 			}
 		});
@@ -732,7 +824,7 @@ jQuery(document).ready(function ($) {
 		const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
 
 		if (!validTypes.includes(file.type) && !hasValidExtension) {
-			alert("Please upload a CSV or TXT file.");
+			alert(__("Please upload a CSV or TXT file.", "bulk-page-duplicator"));
 			return;
 		}
 
@@ -742,7 +834,7 @@ jQuery(document).ready(function ($) {
 			const lines = parseCSV(content);
 
 			if (lines.length === 0) {
-				alert("The file appears to be empty.");
+				alert(__("The file appears to be empty.", "bulk-page-duplicator"));
 				return;
 			}
 
@@ -751,7 +843,7 @@ jQuery(document).ready(function ($) {
 
 			// Show preview
 			$csvFileName.text(file.name);
-			$csvRowCount.text(lines.length + " values loaded");
+			$csvRowCount.text(sprintf(_n("%d value loaded", "%d values loaded", lines.length, "bulk-page-duplicator"), lines.length));
 			$dropZone.hide();
 			$csvPreview.show();
 
@@ -802,7 +894,7 @@ jQuery(document).ready(function ($) {
 		// If user manually edits, hide CSV preview
 		if ($csvPreview.is(":visible")) {
 			const lines = $(this).val().split("\n").filter(v => v.trim() !== "");
-			$csvRowCount.text(lines.length + " values");
+			$csvRowCount.text(sprintf(_n("%d value", "%d values", lines.length, "bulk-page-duplicator"), lines.length));
 		}
 	});
 	// ===== End CSV Import =====
@@ -825,17 +917,17 @@ jQuery(document).ready(function ($) {
 			.filter(val => val.trim() !== "");
 
 		if (!templateId) {
-			alert("Please select a template.");
+			alert(__("Please select a template.", "bulk-page-duplicator"));
 			return;
 		}
 
 		if (placeholders.length === 0) {
-			alert("Please enter at least one placeholder.");
+			alert(__("Please enter at least one placeholder.", "bulk-page-duplicator"));
 			return;
 		}
 
 		if (rawValues.length === 0) {
-			alert("Please enter at least one replacement value.");
+			alert(__("Please enter at least one replacement value.", "bulk-page-duplicator"));
 			return;
 		}
 
@@ -860,33 +952,73 @@ jQuery(document).ready(function ($) {
 		$("#dry-run-loading").show();
 		$("#dry-run-results").hide();
 
-		// Make AJAX request for dry run
+		processDryRunBatches({
+			templateId: templateId,
+			placeholders: placeholders,
+			values: values,
+			postType: $("#post-type").val(),
+			parentPage: $("#parent-page").val() || "0",
+			replaceOptions: replaceOptions
+		}, 0, []);
+	});
+
+	function processDryRunBatches(config, startIndex, items) {
+		const batchSize = 100;
+		const currentBatch = config.values.slice(startIndex, startIndex + batchSize);
+
 		$.ajax({
 			url: bulk_page_dup_ajax.ajax_url,
 			type: "POST",
 			data: {
 				action: "bpd_dry_run",
 				nonce: bulk_page_dup_ajax.nonce,
-				template_id: templateId,
-				placeholders: placeholders,
-				values: values,
-				post_type: $("#post-type").val(),
-				replace_options: replaceOptions
+				template_id: config.templateId,
+				placeholders: config.placeholders,
+				values: currentBatch,
+				post_type: config.postType,
+				parent_page: config.parentPage,
+				replace_options: config.replaceOptions
 			},
 			success: function (response) {
-				if (response.success) {
-					displayDryRunResults(response.data);
-				} else {
-					alert("Error: " + response.data);
+				if (!response.success) {
+					alert(sprintf(__("Error: %s", "bulk-page-duplicator"), response.data));
 					$("#dry-run-modal").hide();
+					return;
 				}
+
+				items = items.concat(response.data.items);
+				const nextIndex = startIndex + currentBatch.length;
+				if (nextIndex < config.values.length) {
+					processDryRunBatches(config, nextIndex, items);
+					return;
+				}
+
+				const seenSlugs = new Set();
+				items.forEach(function (item) {
+					if (item.status === "create" && seenSlugs.has(item.slug)) {
+						item.status = "skip";
+						item.reason = sprintf(__("Slug \"%s\" is duplicated in these values", "bulk-page-duplicator"), item.slug);
+					}
+					if (item.status === "create") {
+						seenSlugs.add(item.slug);
+					}
+				});
+
+				displayDryRunResults({
+					items: items,
+					summary: {
+						total: items.length,
+						will_create: items.filter(item => item.status === "create").length,
+						will_skip: items.filter(item => item.status !== "create").length
+					}
+				});
 			},
 			error: function () {
-				alert("Error performing dry run. Please try again.");
+				alert(__("Error performing dry run. Please try again.", "bulk-page-duplicator"));
 				$("#dry-run-modal").hide();
 			}
 		});
-	});
+	}
 
 	// Display dry run results in modal
 	function displayDryRunResults(data) {
@@ -902,7 +1034,7 @@ jQuery(document).ready(function ($) {
 		data.items.forEach(function (item) {
 			const statusClass = item.status === 'create' ? 'bpd-status-create' : 'bpd-status-skip';
 			const statusIcon = item.status === 'create' ? '✓' : '⚠';
-			const statusText = item.status === 'create' ? 'Create' : 'Skip';
+			const statusText = item.status === 'create' ? __("Create", "bulk-page-duplicator") : __("Skip", "bulk-page-duplicator");
 
 			let row = '<tr class="' + statusClass + '">';
 			row += '<td><span class="bpd-status-badge bpd-status-' + item.status + '">' + statusIcon + ' ' + statusText + '</span></td>';
@@ -924,9 +1056,11 @@ jQuery(document).ready(function ($) {
 
 		// Disable proceed button if nothing to create
 		if (data.summary.will_create === 0) {
-			$("#dry-run-proceed").prop("disabled", true).text("Nothing to create");
+			$("#dry-run-proceed").prop("disabled", true).text(__("Nothing to create", "bulk-page-duplicator"));
 		} else {
-			$("#dry-run-proceed").prop("disabled", false).text("Proceed with Duplication (" + data.summary.will_create + " items)");
+			$("#dry-run-proceed").prop("disabled", false).text(
+				sprintf(__("Proceed with Duplication (%d items)", "bulk-page-duplicator"), data.summary.will_create)
+			);
 		}
 	}
 
@@ -957,6 +1091,7 @@ jQuery(document).ready(function ($) {
 
 	$("#start-duplication").on("click", function (e) {
 		e.preventDefault();
+		requestNotificationPermission();
 
 		// Validate inputs
 		const templateId = $("#template-page").val();
@@ -972,17 +1107,17 @@ jQuery(document).ready(function ($) {
 			.filter(val => val.trim() !== "");
 
 		if (!templateId) {
-			alert("Please select a template.");
+			alert(__("Please select a template.", "bulk-page-duplicator"));
 			return;
 		}
 
 		if (placeholders.length === 0) {
-			alert("Please enter at least one placeholder.");
+			alert(__("Please enter at least one placeholder.", "bulk-page-duplicator"));
 			return;
 		}
 
 		if (rawValues.length === 0) {
-			alert("Please enter at least one replacement value.");
+			alert(__("Please enter at least one replacement value.", "bulk-page-duplicator"));
 			return;
 		}
 
@@ -1001,11 +1136,11 @@ jQuery(document).ready(function ($) {
 			const invalidLines = values.filter(v => v.length !== placeholders.length);
 			if (invalidLines.length > 0) {
 				alert(
-					"Each line must have " +
-						placeholders.length +
-					" comma-separated values (one for each placeholder).\n\n" +
-					"Placeholders: " +
+					sprintf(
+						__("Each line must have %1$d comma-separated values (one for each placeholder).\n\nPlaceholders: %2$s", "bulk-page-duplicator"),
+						placeholders.length,
 						placeholders.join(", ")
+					)
 				);
 				return;
 			}
@@ -1015,7 +1150,7 @@ jQuery(document).ready(function ($) {
 		if (
 			values.length > 50 &&
 			!confirm(
-				"You are about to create " + values.length + " pages. Continue?"
+				sprintf(__("You are about to create %d pages. Continue?", "bulk-page-duplicator"), values.length)
 			)
 		) {
 			return;
@@ -1038,6 +1173,7 @@ jQuery(document).ready(function ($) {
 		// Initialize UI for processing
 		isProcessing = true;
 		cancelRequested = false;
+		currentOperationId = createOperationId();
 		resultsData = []; // Reset results
 		processingStartTime = Date.now();
 		batchTimings = [];
@@ -1073,8 +1209,8 @@ jQuery(document).ready(function ($) {
 	$("#cancel-duplication").on("click", function (e) {
 		e.preventDefault();
 		cancelRequested = true;
-		$(this).text("Cancelling...");
-		$(".bulk-page-dup-status-text").text("Cancelling the operation...");
+		$(this).text(__("Cancelling...", "bulk-page-duplicator"));
+		$(".bulk-page-dup-status-text").text(__("Cancelling the operation...", "bulk-page-duplicator"));
 	});
 
 	function processBatch(
@@ -1091,7 +1227,7 @@ jQuery(document).ready(function ($) {
 		const batchStartTime = Date.now();
 
 		if (cancelRequested) {
-			finishProcessing("Operation cancelled by user.");
+			finishProcessing(__("Operation cancelled by user.", "bulk-page-duplicator"));
 			return;
 		}
 
@@ -1105,11 +1241,11 @@ jQuery(document).ready(function ($) {
 		$(".bulk-page-dup-progress-text").text(
 			progress + "% (" + processedValues + " of " + totalValues + ")"
 		);
-		$(".bulk-page-dup-status-text").text("Processing pages...");
+		$(".bulk-page-dup-status-text").text(__("Processing pages...", "bulk-page-duplicator"));
 
 		// Update ETA
 		const eta = calculateETA(processedValues, totalValues);
-		$("#progress-eta").text(processedValues > 0 ? "Estimated time remaining: " + eta : "");
+		$("#progress-eta").text(processedValues > 0 ? sprintf(__("Estimated time remaining: %s", "bulk-page-duplicator"), eta) : "");
 
 		// Get current batch of values
 		const batchSize = 10;
@@ -1120,12 +1256,12 @@ jQuery(document).ready(function ($) {
 		// Show current item being processed
 		if (currentBatch.length > 0) {
 			const currentItemName = Array.isArray(currentBatch[0]) ? currentBatch[0][0] : currentBatch[0];
-			$("#progress-current-item").text("Processing: " + currentItemName + "...");
+			$("#progress-current-item").text(sprintf(__("Processing: %s...", "bulk-page-duplicator"), currentItemName));
 		}
 
 		// If we've processed all values, finish
 		if (startIndex >= totalValues) {
-			finishProcessing("All pages have been processed successfully!");
+			finishProcessing(__("All pages have been processed successfully!", "bulk-page-duplicator"));
 			return;
 		}
 
@@ -1141,10 +1277,12 @@ jQuery(document).ready(function ($) {
 				values: currentBatch,
 				status: status,
 				replace_options: replaceOptions,
-				post_type: postType,
-				parent_page: parentPage,
-				taxonomy_terms: taxonomyTerms,
-				batch_index: batchIndex
+					post_type: postType,
+					parent_page: parentPage,
+					taxonomy_terms: taxonomyTerms,
+					batch_index: batchIndex,
+					operation_id: currentOperationId,
+					operation_complete: endIndex >= totalValues ? "true" : "false"
 			},
 			success: function (response) {
 				if (response.success) {
@@ -1154,23 +1292,25 @@ jQuery(document).ready(function ($) {
 							// Store result for filtering/export
 							resultsData.push(result);
 
-							let logClass = "bulk-page-dup-log-" + result.status;
-							let message = result.value + ": " + result.message;
+							const allowedStatuses = ["success", "skipped", "error"];
+							const safeStatus = allowedStatuses.includes(result.status) ? result.status : "error";
+							const $entry = $("<div>", {
+								class: "bulk-page-dup-log-entry bulk-page-dup-log-" + safeStatus
+							}).attr("data-status", safeStatus);
+							$entry.text(String(result.value || "") + ": " + String(result.message || ""));
 
 							if (result.edit_url) {
-								message +=
-									' (<a href="' +
-										result.edit_url +
-										'" target="_blank">Edit</a>)';
+								$entry.append(document.createTextNode(" ("));
+								$entry.append($("<a>", {
+									href: result.edit_url,
+									target: "_blank",
+									rel: "noopener noreferrer",
+									text: __("Edit", "bulk-page-duplicator")
+								}));
+								$entry.append(document.createTextNode(")"));
 							}
 
-							$(".bulk-page-dup-log").prepend(
-								'<div class="bulk-page-dup-log-entry ' +
-										logClass +
-										'" data-status="' + result.status + '">' +
-										message +
-										"</div>"
-							);
+							$(".bulk-page-dup-log").prepend($entry);
 						});
 
 						// Update summary counts
@@ -1188,7 +1328,7 @@ jQuery(document).ready(function ($) {
 					// If this is the last batch or operation was cancelled, finish
 					if (response.data.is_last_batch || cancelRequested) {
 						finishProcessing(
-							"All pages have been processed successfully!"
+							__("All pages have been processed successfully!", "bulk-page-duplicator")
 						);
 					} else {
 						// Process next batch
@@ -1206,21 +1346,19 @@ jQuery(document).ready(function ($) {
 					}
 				} else {
 					// Handle error
-					$(".bulk-page-dup-log").prepend(
-						'<div class="bulk-page-dup-log-entry bulk-page-dup-log-error">Error: ' +
-							response.data +
-							"</div>"
-					);
-					finishProcessing("An error occurred during processing.");
+					$("<div>", {
+						class: "bulk-page-dup-log-entry bulk-page-dup-log-error",
+						text: sprintf(__("Error: %s", "bulk-page-duplicator"), String(response.data || ""))
+					}).prependTo(".bulk-page-dup-log");
+					finishProcessing(__("An error occurred during processing.", "bulk-page-duplicator"));
 				}
 			},
 			error: function (xhr, status, error) {
-				$(".bulk-page-dup-log").prepend(
-					'<div class="bulk-page-dup-log-entry bulk-page-dup-log-error">AJAX Error: ' +
-						error +
-						"</div>"
-				);
-				finishProcessing("An error occurred during processing.");
+				$("<div>", {
+					class: "bulk-page-dup-log-entry bulk-page-dup-log-error",
+					text: sprintf(__("AJAX Error: %s", "bulk-page-duplicator"), String(error || ""))
+				}).prependTo(".bulk-page-dup-log");
+				finishProcessing(__("An error occurred during processing.", "bulk-page-duplicator"));
 			}
 		});
 	}
@@ -1236,17 +1374,19 @@ jQuery(document).ready(function ($) {
 		// Calculate total time taken
 		if (processingStartTime && !cancelRequested) {
 			const totalTime = (Date.now() - processingStartTime) / 1000;
-			$(".bulk-page-dup-status-text").text(message + " (Completed in " + formatTime(totalTime) + ")");
+			$(".bulk-page-dup-status-text").text(
+				sprintf(__("%1$s (Completed in %2$s)", "bulk-page-duplicator"), message, formatTime(totalTime))
+			);
 
 			// Show browser notification
 			showNotification(
-				"Bulk Page Duplicator",
-				"Duplication complete! " + formatTime(totalTime)
+				__("Bulk Page Duplicator", "bulk-page-duplicator"),
+				sprintf(__("Duplication complete! %s", "bulk-page-duplicator"), formatTime(totalTime))
 			);
 		}
 
 		if (cancelRequested) {
-			$("#cancel-duplication").text("Cancel");
+			$("#cancel-duplication").text(__("Cancel", "bulk-page-duplicator"));
 		}
 
 		// Show summary
@@ -1290,17 +1430,30 @@ jQuery(document).ready(function ($) {
 	// Export results to CSV
 	$("#export-results").on("click", function() {
 		if (resultsData.length === 0) {
-			alert("No results to export.");
+			alert(__("No results to export.", "bulk-page-duplicator"));
 			return;
 		}
 
-		// Build CSV content
-		const headers = ["Value", "Status", "Message", "Edit URL"];
+		function csvCell(value) {
+			let text = String(value || "");
+			if (/^[\s]*[=+\-@]/.test(text)) {
+				text = "'" + text;
+			}
+			return '"' + text.replace(/"/g, '""') + '"';
+		}
+
+		// Build CSV content while preventing spreadsheet formula execution.
+		const headers = [
+			__("Value", "bulk-page-duplicator"),
+			__("Status", "bulk-page-duplicator"),
+			__("Message", "bulk-page-duplicator"),
+			__("Edit URL", "bulk-page-duplicator")
+		];
 		const rows = resultsData.map(r => [
-			'"' + (r.value || '').replace(/"/g, '""') + '"',
-			r.status,
-			'"' + (r.message || '').replace(/"/g, '""') + '"',
-			r.edit_url || ''
+			csvCell(r.value),
+			csvCell(r.status),
+			csvCell(r.message),
+			csvCell(r.edit_url)
 		]);
 
 		const csv = [headers.join(",")].concat(rows.map(r => r.join(","))).join("\n");
@@ -1315,6 +1468,7 @@ jQuery(document).ready(function ($) {
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
 	});
 
 	// === History/Rollback functionality ===
@@ -1342,33 +1496,34 @@ jQuery(document).ready(function ($) {
 					response.data.history.forEach(function (item) {
 						const countClass = item.existing_count === 0 ? 'none' : 
 							(item.existing_count < item.total_count ? 'partial' : '');
-						const countText = item.existing_count === item.total_count ? 
-							item.total_count + ' items' : 
-							item.existing_count + ' of ' + item.total_count + ' remain';
+						const countText = item.existing_count === item.total_count
+							? sprintf(_n("%d item", "%d items", item.total_count, "bulk-page-duplicator"), item.total_count)
+							: sprintf(__("%1$d of %2$d remain", "bulk-page-duplicator"), item.existing_count, item.total_count);
 
-						const html = `
-							<div class="bulk-page-dup-history-item" data-key="${item.key}">
-								<div class="history-item-header">
-									<div class="history-item-info">
-										<div class="history-item-title">Template: ${escapeHtml(item.template_title)}</div>
-										<div class="history-item-meta">
-											<span>${item.date}</span>
-											<span>${item.post_type_label}</span>
-										</div>
-									</div>
-									<span class="history-item-count ${countClass}">${countText}</span>
-								</div>
-								<div class="history-item-actions">
-									<button type="button" class="button button-small rollback-btn" 
-										${!item.can_rollback ? 'disabled' : ''} 
-										data-key="${item.key}" 
-										data-count="${item.existing_count}">
-										Rollback (Delete All)
-									</button>
-								</div>
-							</div>
-						`;
-						$list.append(html);
+						const $item = $("<div>", { class: "bulk-page-dup-history-item" }).attr("data-key", item.key);
+						const $header = $("<div>", { class: "history-item-header" });
+						const $info = $("<div>", { class: "history-item-info" });
+						$info.append($("<div>", {
+							class: "history-item-title",
+							text: sprintf(__("Template: %s", "bulk-page-duplicator"), item.template_title)
+						}));
+						const $meta = $("<div>", { class: "history-item-meta" });
+						$meta.append($("<span>", { text: item.date }));
+						$meta.append($("<span>", { text: item.post_type_label }));
+						$info.append($meta);
+						$header.append($info);
+						$header.append($("<span>", { class: "history-item-count " + countClass, text: countText }));
+						$item.append($header);
+
+						const $actions = $("<div>", { class: "history-item-actions" });
+						$actions.append($("<button>", {
+							type: "button",
+							class: "button button-small rollback-btn",
+							disabled: !item.can_rollback,
+							text: __("Rollback (Delete All)", "bulk-page-duplicator")
+						}).attr("data-key", item.key).attr("data-count", item.existing_count));
+						$item.append($actions);
+						$list.append($item);
 					});
 				} else {
 					$empty.show();
@@ -1376,7 +1531,7 @@ jQuery(document).ready(function ($) {
 			},
 			error: function () {
 				$loading.hide();
-				$empty.text("Error loading history.").show();
+				$empty.text(__("Error loading history.", "bulk-page-duplicator")).show();
 			}
 		});
 	}
@@ -1387,11 +1542,11 @@ jQuery(document).ready(function ($) {
 		const sessionKey = $btn.data("key");
 		const count = $btn.data("count");
 
-		if (!confirm("Are you sure you want to delete " + count + " items? This action cannot be undone.")) {
+		if (!confirm(sprintf(__("Are you sure you want to delete %d items? This action cannot be undone.", "bulk-page-duplicator"), count))) {
 			return;
 		}
 
-		$btn.prop("disabled", true).text("Deleting...");
+		$btn.prop("disabled", true).text(__("Deleting...", "bulk-page-duplicator"));
 
 		$.ajax({
 			url: bulk_page_dup_ajax.ajax_url,
@@ -1413,13 +1568,13 @@ jQuery(document).ready(function ($) {
 					});
 					alert(response.data.message);
 				} else {
-					$btn.prop("disabled", false).text("Rollback (Delete All)");
-					alert("Error: " + response.data);
+					$btn.prop("disabled", false).text(__("Rollback (Delete All)", "bulk-page-duplicator"));
+					alert(sprintf(__("Error: %s", "bulk-page-duplicator"), response.data));
 				}
 			},
 			error: function () {
-				$btn.prop("disabled", false).text("Rollback (Delete All)");
-				alert("An error occurred. Please try again.");
+				$btn.prop("disabled", false).text(__("Rollback (Delete All)", "bulk-page-duplicator"));
+				alert(__("An error occurred. Please try again.", "bulk-page-duplicator"));
 			}
 		});
 	});
