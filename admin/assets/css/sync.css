@@ -1,0 +1,68 @@
+/* Template Sync screen */
+.bpd-sync-template-header h2 {
+	margin-bottom: 4px;
+}
+
+.bpd-sync-count a {
+	margin-left: 8px;
+}
+
+.bpd-sync-container .bulk-page-dup-checkbox-group .description {
+	margin: -4px 0 10px 24px;
+}
+
+.bpd-sync-risky {
+	padding: 10px 12px 2px;
+	border-left: 4px solid #dba617;
+	background: #fcf9e8;
+}
+
+.bpd-sync-container .bpd-dry-run-summary {
+	gap: 10px;
+	margin-bottom: 15px;
+}
+
+.bpd-sync-container .bpd-summary-item {
+	padding: 12px 8px;
+}
+
+.bpd-sync-container .bpd-summary-count {
+	font-size: 24px;
+}
+
+.bpd-summary-error {
+	background: #fcf0f1;
+	border: 1px solid #f0b8bd;
+}
+
+.bpd-summary-error .bpd-summary-count {
+	color: #b32d2e;
+}
+
+.bpd-sync-filters {
+	margin: 10px 0;
+}
+
+.bpd-sync-filter.active {
+	background: #2271b1;
+	border-color: #2271b1;
+	color: #fff;
+}
+
+.bpd-sync-table .bpd-sync-id {
+	color: #646970;
+}
+
+.bpd-sync-table .bpd-sync-state-error {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+.bpd-sync-table .bpd-sync-changes {
+	color: #50575e;
+}
+
+.bpd-sync-table .bpd-sync-generator {
+	color: #646970;
+	font-size: 12px;
+}

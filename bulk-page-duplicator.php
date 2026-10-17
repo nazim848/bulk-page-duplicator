@@ -46,6 +46,10 @@ $bulk_page_duplicator_quick_duplicate->init();
 require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-generators.php';
 $bulk_page_duplicator_generators = new Bulk_Page_Duplicator_Generators();
 $bulk_page_duplicator_generators->init();
+// Load template sync (revision restore runs outside the sync screen too)
+require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-sync.php';
+$bulk_page_duplicator_sync = new Bulk_Page_Duplicator_Sync();
+$bulk_page_duplicator_sync->init();
 // Load admin class if in admin
 if (is_admin()) {
 	require_once BULK_PAGE_DUPLICATOR_PATH . 'admin/class-bulk-page-duplicator-admin.php';
@@ -55,4 +59,8 @@ if (is_admin()) {
 	require_once BULK_PAGE_DUPLICATOR_PATH . 'admin/class-bulk-page-duplicator-generators-admin.php';
 	$bulk_page_duplicator_generators_admin = new Bulk_Page_Duplicator_Generators_Admin($bulk_page_duplicator_generators);
 	$bulk_page_duplicator_generators_admin->init();
+
+	require_once BULK_PAGE_DUPLICATOR_PATH . 'admin/class-bulk-page-duplicator-sync-admin.php';
+	$bulk_page_duplicator_sync_admin = new Bulk_Page_Duplicator_Sync_Admin($bulk_page_duplicator_sync);
+	$bulk_page_duplicator_sync_admin->init();
 }

@@ -27,6 +27,7 @@ $bulk_page_duplicator_page_builders = $bulk_page_duplicator_core->detect_page_bu
 ?>
 <div class="wrap">
 	<h1><?php esc_html_e('Bulk Page Duplicator', 'bulk-page-duplicator'); ?></h1>
+	<p><a href="<?php echo esc_url(admin_url('tools.php?page=bpd-template-sync')); ?>"><?php esc_html_e('Changed a template? Sync the changes to the items generated from it.', 'bulk-page-duplicator'); ?></a></p>
 	<div class="bulk-page-dup-container">
 		<div class="bulk-page-dup-panel">
 			<h2><?php esc_html_e('Post Type', 'bulk-page-duplicator'); ?></h2>

@@ -341,10 +341,20 @@ class Bulk_Page_Duplicator_Sync {
 	 */
 	private function result_row($post_id, $post = null) {
 		$title = $post ? get_the_title($post) : '';
+
+		// Items managed by a saved generator take their values from its rows.
+		$generator_title = '';
+		$generator_id = $post ? absint(get_post_meta($post->ID, '_bpd_generator_id', true)) : 0;
+		$generator = $generator_id ? get_post($generator_id) : null;
+		if ($generator && 'bpd_generator' === $generator->post_type) {
+			$generator_title = '' !== $generator->post_title ? $generator->post_title : __('(no title)', 'bulk-page-duplicator');
+		}
+
 		return array(
-			'id'       => absint($post_id),
-			'title'    => '' !== $title ? $title : __('(no title)', 'bulk-page-duplicator'),
-			'edit_url' => $post ? esc_url_raw((string) get_edit_post_link($post->ID, '')) : '',
+			'id'        => absint($post_id),
+			'title'     => '' !== $title ? $title : __('(no title)', 'bulk-page-duplicator'),
+			'edit_url'  => $post ? esc_url_raw((string) get_edit_post_link($post->ID, '')) : '',
+			'generator' => $generator_title,
 		);
 	}
 
