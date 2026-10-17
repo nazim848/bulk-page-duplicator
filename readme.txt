@@ -4,7 +4,7 @@ Donate link: https://buymeacoffee.com/nazim848
 Tags: bulk duplicate, duplicate pages, page duplicator, clone, duplicate
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,6 +21,8 @@ Bulk Page Duplicator helps you publish template-based content faster without man
 * SEO workflows that need metadata copied and replaced across many items.
 
 = What you can do =
+* Duplicate any single page, post or custom post type in one click from the list screen, admin bar or editor.
+* Duplicate several selected items at once with the "Duplicate" bulk action.
 * Duplicate any public post type (including custom post types).
 * Replace one or multiple placeholders across title, slug, and content.
 * Import replacement values from `.csv` or `.txt`, or paste values line by line.
@@ -157,6 +159,15 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 
 == Changelog ==
 
+= 1.2.0 =
+* Added one-click "Duplicate" links to post and page lists, the admin bar, the classic editor and the block editor.
+* Added a "Duplicate" bulk action to post and page lists.
+* Added a "Bulk Duplicate" row action that opens the bulk tool with that item selected as the template.
+* Bulk duplication now copies the template's excerpt (with placeholder replacement) and menu order.
+* Added a "Copy Template Terms" option to copy the template's categories, tags and other terms.
+* Generated items now record their template and replacement values for upcoming management features.
+* Added an "Open" link on the Plugins screen.
+
 = 1.1.1 =
 * Hardened AJAX authorization and output handling.
 * Fixed rollback tracking for concurrent and multi-batch operations.
@@ -187,6 +198,9 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+Adds one-click and bulk "Duplicate" actions, and copies template excerpts, menu order and terms.
 
 = 1.1.1 =
 Security, data-integrity, rollback, compatibility, and large-site performance fixes.

@@ -118,6 +118,11 @@ rsync -a --delete "${PLUGIN_DIR}/" "${SVN_TRUNK}/" \
 	--exclude='.cursor' \
 	--exclude='.cursorignore' \
 	--exclude='.gitignore' \
+	--exclude='.gitattributes' \
+	--exclude='.github' \
+	--exclude='.claude' \
+	--exclude='AGENTS.md' \
+	--exclude='CLAUDE.md' \
 	--exclude='deploy.sh' \
 	--exclude='node_modules' \
 	--exclude='vendor' \

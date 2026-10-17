@@ -2,23 +2,24 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Bulk Page Duplicator 1.1.1\n"
+"Project-Id-Version: Bulk Page Duplicator 1.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/bulk-page-duplicator\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-13T09:26:18+00:00\n"
+"POT-Creation-Date: 2026-10-17T19:17:31+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: bulk-page-duplicator\n"
 
 #. Plugin Name of the plugin
 #: bulk-page-duplicator.php
-#: admin/class-bulk-page-duplicator-admin.php:34
 #: admin/class-bulk-page-duplicator-admin.php:35
+#: admin/class-bulk-page-duplicator-admin.php:36
 #: admin/views/admin-page.php:29
+#: admin/assets/js/bulk-page-duplicator.js:1386
 msgid "Bulk Page Duplicator"
 msgstr ""
 
@@ -37,85 +38,89 @@ msgstr ""
 msgid "https://nazimansari.com"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:90
-#: admin/class-bulk-page-duplicator-admin.php:212
-#: admin/class-bulk-page-duplicator-admin.php:251
-#: admin/class-bulk-page-duplicator-admin.php:269
-#: admin/class-bulk-page-duplicator-admin.php:437
-#: admin/class-bulk-page-duplicator-admin.php:483
-#: admin/class-bulk-page-duplicator-admin.php:565
-#: admin/class-bulk-page-duplicator-admin.php:591
+#: admin/class-bulk-page-duplicator-admin.php:51
+msgid "Open"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-admin.php:112
+#: admin/class-bulk-page-duplicator-admin.php:235
+#: admin/class-bulk-page-duplicator-admin.php:275
+#: admin/class-bulk-page-duplicator-admin.php:293
+#: admin/class-bulk-page-duplicator-admin.php:461
+#: admin/class-bulk-page-duplicator-admin.php:507
+#: admin/class-bulk-page-duplicator-admin.php:589
+#: admin/class-bulk-page-duplicator-admin.php:615
 #: includes/class-bulk-page-duplicator.php:26
 msgid "Security check failed"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:95
-#: admin/class-bulk-page-duplicator-admin.php:217
-#: admin/class-bulk-page-duplicator-admin.php:256
-#: admin/class-bulk-page-duplicator-admin.php:274
-#: admin/class-bulk-page-duplicator-admin.php:442
-#: admin/class-bulk-page-duplicator-admin.php:488
-#: admin/class-bulk-page-duplicator-admin.php:570
-#: admin/class-bulk-page-duplicator-admin.php:596
+#: admin/class-bulk-page-duplicator-admin.php:117
+#: admin/class-bulk-page-duplicator-admin.php:240
+#: admin/class-bulk-page-duplicator-admin.php:280
+#: admin/class-bulk-page-duplicator-admin.php:298
+#: admin/class-bulk-page-duplicator-admin.php:466
+#: admin/class-bulk-page-duplicator-admin.php:512
+#: admin/class-bulk-page-duplicator-admin.php:594
+#: admin/class-bulk-page-duplicator-admin.php:620
 #: includes/class-bulk-page-duplicator.php:31
 msgid "You do not have permission to perform this action."
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:108
-#: admin/class-bulk-page-duplicator-admin.php:308
-#: admin/class-bulk-page-duplicator-admin.php:498
+#: admin/class-bulk-page-duplicator-admin.php:130
+#: admin/class-bulk-page-duplicator-admin.php:332
+#: admin/class-bulk-page-duplicator-admin.php:522
 #: includes/class-bulk-page-duplicator.php:70
 msgid "Invalid post type"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:113
-#: admin/class-bulk-page-duplicator-admin.php:313
-#: admin/class-bulk-page-duplicator-admin.php:503
+#: admin/class-bulk-page-duplicator-admin.php:135
+#: admin/class-bulk-page-duplicator-admin.php:337
+#: admin/class-bulk-page-duplicator-admin.php:527
 #: includes/class-bulk-page-duplicator.php:75
 msgid "You do not have permission to create this type of content."
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:222
+#: admin/class-bulk-page-duplicator-admin.php:245
 msgid "User not logged in"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:241
+#: admin/class-bulk-page-duplicator-admin.php:265
 msgid "Preferences saved"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:298
-#: admin/class-bulk-page-duplicator-admin.php:453
+#: admin/class-bulk-page-duplicator-admin.php:322
+#: admin/class-bulk-page-duplicator-admin.php:477
 #: includes/class-bulk-page-duplicator.php:89
 msgid "Template not found"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:302
-#: admin/class-bulk-page-duplicator-admin.php:457
+#: admin/class-bulk-page-duplicator-admin.php:326
+#: admin/class-bulk-page-duplicator-admin.php:481
 #: includes/class-bulk-page-duplicator.php:93
 msgid "You do not have permission to use this template."
 msgstr ""
 
 #. translators: %s: page slug
-#: admin/class-bulk-page-duplicator-admin.php:384
+#: admin/class-bulk-page-duplicator-admin.php:408
 #, php-format
 msgid "Slug \"%s\" already exists"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:420
-#: includes/class-bulk-page-duplicator.php:285
+#: admin/class-bulk-page-duplicator-admin.php:444
+#: includes/class-bulk-page-duplicator.php:294
 msgid "Invalid parent item."
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:424
-#: includes/class-bulk-page-duplicator.php:289
+#: admin/class-bulk-page-duplicator-admin.php:448
+#: includes/class-bulk-page-duplicator.php:298
 msgid "You do not have permission to use the selected parent."
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:448
+#: admin/class-bulk-page-duplicator-admin.php:472
 msgid "No template selected"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:602
+#: admin/class-bulk-page-duplicator-admin.php:626
 msgid "No operation specified"
 msgstr ""
 
@@ -136,6 +141,8 @@ msgid "Choose the item you want to use as a template for duplication:"
 msgstr ""
 
 #: admin/views/admin-page.php:44
+#: admin/assets/js/bulk-page-duplicator.js:659
+#: admin/assets/js/bulk-page-duplicator.js:775
 msgid "Type to search templates..."
 msgstr ""
 
@@ -144,6 +151,8 @@ msgid "No image"
 msgstr ""
 
 #: admin/views/admin-page.php:64
+#: admin/assets/js/bulk-page-duplicator.js:642
+#: admin/assets/js/bulk-page-duplicator.js:764
 msgid "Loading templates..."
 msgstr ""
 
@@ -196,15 +205,18 @@ msgid "Optionally assign a parent for all created items:"
 msgstr ""
 
 #: admin/views/admin-page.php:107
+#: admin/assets/js/bulk-page-duplicator.js:672
 msgid "No parent (top level)"
 msgstr ""
 
 #: admin/views/admin-page.php:108
+#: admin/assets/js/bulk-page-duplicator.js:673
 msgid "Same as template"
 msgstr ""
 
 #: admin/views/admin-page.php:116
-#: admin/views/admin-page.php:302
+#: admin/views/admin-page.php:304
+#: admin/assets/js/bulk-page-duplicator.js:1451
 msgid "Status"
 msgstr ""
 
@@ -276,261 +288,322 @@ msgstr ""
 msgid "Copy the template's featured image to all duplicated items."
 msgstr ""
 
-#: admin/views/admin-page.php:153
+#: admin/views/admin-page.php:151
+msgid "Copy Template Terms"
+msgstr ""
+
+#: admin/views/admin-page.php:152
+msgid "Copy the template's categories, tags and other terms. Terms selected above are added to them."
+msgstr ""
+
+#: admin/views/admin-page.php:155
 msgid "Progress"
 msgstr ""
 
-#: admin/views/admin-page.php:165
+#: admin/views/admin-page.php:167
 msgid "Dry Run (Preview)"
 msgstr ""
 
-#: admin/views/admin-page.php:166
+#: admin/views/admin-page.php:168
 msgid "Start Duplication"
 msgstr ""
 
-#: admin/views/admin-page.php:167
+#: admin/views/admin-page.php:169
+#: admin/assets/js/bulk-page-duplicator.js:1392
 msgid "Cancel"
 msgstr ""
 
-#: admin/views/admin-page.php:172
+#: admin/views/admin-page.php:174
 msgid "Preview"
 msgstr ""
 
-#: admin/views/admin-page.php:173
+#: admin/views/admin-page.php:175
 msgid "Preview of the first item that will be created:"
 msgstr ""
 
-#: admin/views/admin-page.php:176
+#: admin/views/admin-page.php:178
 msgid "Title:"
 msgstr ""
 
-#: admin/views/admin-page.php:180
+#: admin/views/admin-page.php:182
 msgid "Slug:"
 msgstr ""
 
-#: admin/views/admin-page.php:184
+#: admin/views/admin-page.php:186
 msgid "Items to create:"
 msgstr ""
 
-#: admin/views/admin-page.php:189
+#: admin/views/admin-page.php:191
 msgid "How It Works"
 msgstr ""
 
-#: admin/views/admin-page.php:191
+#: admin/views/admin-page.php:193
 msgid "Create a template page with placeholder text (e.g., \"London\" for a city-based service page)."
 msgstr ""
 
-#: admin/views/admin-page.php:192
+#: admin/views/admin-page.php:194
 msgid "Select your template and enter the placeholder text to find and replace."
 msgstr ""
 
-#: admin/views/admin-page.php:193
+#: admin/views/admin-page.php:195
 msgid "Enter replacement values (one per line) - each creates a new page."
 msgstr ""
 
-#: admin/views/admin-page.php:194
+#: admin/views/admin-page.php:196
 msgid "Choose which areas to apply replacements (title, content, page builder data, etc.)."
 msgstr ""
 
-#: admin/views/admin-page.php:195
+#: admin/views/admin-page.php:197
 msgid "Click \"Start Duplication\" to create all pages automatically."
 msgstr ""
 
-#: admin/views/admin-page.php:198
+#: admin/views/admin-page.php:200
 msgid "Multiple Placeholders"
 msgstr ""
 
-#: admin/views/admin-page.php:199
+#: admin/views/admin-page.php:201
 msgid "You can use multiple placeholders separated by commas. For example:"
 msgstr ""
 
-#: admin/views/admin-page.php:201
+#: admin/views/admin-page.php:203
 msgid "Placeholders: \"London, UK\" (two placeholders)"
 msgstr ""
 
-#: admin/views/admin-page.php:202
+#: admin/views/admin-page.php:204
 msgid "Values: \"New York, USA\" and \"Paris, France\" (one per line)"
 msgstr ""
 
-#: admin/views/admin-page.php:203
+#: admin/views/admin-page.php:205
 msgid "Result: \"London\" → \"New York\" and \"UK\" → \"USA\" in the first page"
 msgstr ""
 
-#: admin/views/admin-page.php:206
+#: admin/views/admin-page.php:208
 msgid "Page Builder Support"
 msgstr ""
 
-#: admin/views/admin-page.php:207
+#: admin/views/admin-page.php:209
 msgid "This plugin supports placeholder replacement in:"
 msgstr ""
 
-#: admin/views/admin-page.php:209
+#: admin/views/admin-page.php:211
 msgid "Elementor"
 msgstr ""
 
-#: admin/views/admin-page.php:209
+#: admin/views/admin-page.php:211
 msgid "All text widgets, headings, and content areas"
 msgstr ""
 
-#: admin/views/admin-page.php:210
+#: admin/views/admin-page.php:212
 msgid "Beaver Builder"
 msgstr ""
 
-#: admin/views/admin-page.php:210
+#: admin/views/admin-page.php:212
 msgid "Module settings and text content"
 msgstr ""
 
-#: admin/views/admin-page.php:211
+#: admin/views/admin-page.php:213
 msgid "Bricks Builder"
 msgstr ""
 
-#: admin/views/admin-page.php:211
+#: admin/views/admin-page.php:213
 msgid "Element settings and nested content"
 msgstr ""
 
-#: admin/views/admin-page.php:213
+#: admin/views/admin-page.php:215
 msgid "Keep the page builder options checked even if you're unsure - the plugin will only process data if it exists."
 msgstr ""
 
-#: admin/views/admin-page.php:215
+#: admin/views/admin-page.php:217
 msgid "Tips for Best Results"
 msgstr ""
 
-#: admin/views/admin-page.php:217
+#: admin/views/admin-page.php:219
 msgid "Use unique placeholder text that won't accidentally match other content (e.g., \"CITYNAME\" instead of common words)."
 msgstr ""
 
-#: admin/views/admin-page.php:218
+#: admin/views/admin-page.php:220
 msgid "The replacement is case-preserving: \"London\" → \"Paris\", \"LONDON\" → \"PARIS\", \"london\" → \"paris\"."
 msgstr ""
 
-#: admin/views/admin-page.php:219
+#: admin/views/admin-page.php:221
 msgid "Pages with duplicate slugs will be skipped - check the results log for details."
 msgstr ""
 
-#: admin/views/admin-page.php:220
+#: admin/views/admin-page.php:222
 msgid "Use \"Draft\" status first to review pages before publishing."
 msgstr ""
 
-#: admin/views/admin-page.php:221
+#: admin/views/admin-page.php:223
 msgid "Large batches are processed automatically - don't close the browser tab during processing."
 msgstr ""
 
-#: admin/views/admin-page.php:224
+#: admin/views/admin-page.php:226
 msgid "Common Use Cases"
 msgstr ""
 
-#: admin/views/admin-page.php:226
+#: admin/views/admin-page.php:228
 msgid "Location-based service pages (e.g., \"Plumber in London\" → multiple cities)"
 msgstr ""
 
-#: admin/views/admin-page.php:227
+#: admin/views/admin-page.php:229
 msgid "Product variations (e.g., \"Blue Widget\" → multiple colors)"
 msgstr ""
 
-#: admin/views/admin-page.php:228
+#: admin/views/admin-page.php:230
 msgid "Team member profiles with consistent layouts"
 msgstr ""
 
-#: admin/views/admin-page.php:229
+#: admin/views/admin-page.php:231
 msgid "Landing pages for different campaigns or audiences"
 msgstr ""
 
-#: admin/views/admin-page.php:232
+#: admin/views/admin-page.php:234
 msgid "Results Log"
 msgstr ""
 
-#: admin/views/admin-page.php:234
+#: admin/views/admin-page.php:236
 msgid "created"
 msgstr ""
 
-#: admin/views/admin-page.php:235
+#: admin/views/admin-page.php:237
 msgid "skipped"
 msgstr ""
 
-#: admin/views/admin-page.php:236
+#: admin/views/admin-page.php:238
 msgid "errors"
 msgstr ""
 
-#: admin/views/admin-page.php:240
+#: admin/views/admin-page.php:242
 msgid "All"
 msgstr ""
 
-#: admin/views/admin-page.php:241
+#: admin/views/admin-page.php:243
 msgid "Success"
 msgstr ""
 
-#: admin/views/admin-page.php:242
+#: admin/views/admin-page.php:244
 msgid "Skipped"
 msgstr ""
 
-#: admin/views/admin-page.php:243
+#: admin/views/admin-page.php:245
 msgid "Errors"
 msgstr ""
 
-#: admin/views/admin-page.php:246
+#: admin/views/admin-page.php:248
 msgid "Export CSV"
 msgstr ""
 
-#: admin/views/admin-page.php:252
+#: admin/views/admin-page.php:254
 msgid "Recent Operations"
 msgstr ""
 
-#: admin/views/admin-page.php:253
+#: admin/views/admin-page.php:255
 msgid "You can rollback (delete) pages created by recent operations."
 msgstr ""
 
-#: admin/views/admin-page.php:256
+#: admin/views/admin-page.php:258
 msgid "Loading history..."
 msgstr ""
 
-#: admin/views/admin-page.php:260
+#: admin/views/admin-page.php:262
 msgid "No recent operations found."
 msgstr ""
 
-#: admin/views/admin-page.php:264
+#: admin/views/admin-page.php:266
 msgid "Refresh History"
 msgstr ""
 
-#: admin/views/admin-page.php:275
+#: admin/views/admin-page.php:277
 msgid "Dry Run Preview"
 msgstr ""
 
-#: admin/views/admin-page.php:276
-#: admin/views/admin-page.php:315
+#: admin/views/admin-page.php:278
+#: admin/views/admin-page.php:317
 msgid "Close"
 msgstr ""
 
-#: admin/views/admin-page.php:281
+#: admin/views/admin-page.php:283
 msgid "Generating preview..."
 msgstr ""
 
-#: admin/views/admin-page.php:287
+#: admin/views/admin-page.php:289
 msgid "Total"
 msgstr ""
 
-#: admin/views/admin-page.php:291
+#: admin/views/admin-page.php:293
 msgid "Will Create"
 msgstr ""
 
-#: admin/views/admin-page.php:295
+#: admin/views/admin-page.php:297
 msgid "Will Skip"
 msgstr ""
 
-#: admin/views/admin-page.php:303
+#: admin/views/admin-page.php:305
+#: admin/assets/js/bulk-page-duplicator.js:1450
 msgid "Value"
 msgstr ""
 
-#: admin/views/admin-page.php:304
+#: admin/views/admin-page.php:306
 msgid "Title"
 msgstr ""
 
-#: admin/views/admin-page.php:305
+#: admin/views/admin-page.php:307
 msgid "Slug"
 msgstr ""
 
-#: admin/views/admin-page.php:316
+#: admin/views/admin-page.php:318
 msgid "Proceed with Duplication"
+msgstr ""
+
+#. translators: %s: item title.
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:93
+#, php-format
+msgid "Duplicate &#8220;%s&#8221;"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:94
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:160
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:247
+msgid "Duplicate"
+msgstr ""
+
+#. translators: %s: item title.
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:102
+#, php-format
+msgid "Use &#8220;%s&#8221; as a bulk duplication template"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:103
+msgid "Bulk Duplicate"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:119
+msgid "Duplicate failed"
+msgstr ""
+
+#. translators: %d: number of items duplicated.
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:210
+#, php-format
+msgid "%d item duplicated as a draft."
+msgid_plural "%d items duplicated as drafts."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:212
+msgid "Edit the copy"
+msgstr ""
+
+#. translators: %d: number of items that could not be duplicated.
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:219
+#, php-format
+msgid "%d item could not be duplicated."
+msgid_plural "%d items could not be duplicated."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-bulk-page-duplicator-quick-duplicate.php:265
+#: admin/assets/js/editor-duplicate.js:22
+msgid "Duplicate as new draft"
 msgstr ""
 
 #: includes/class-bulk-page-duplicator.php:79
@@ -542,61 +615,343 @@ msgid "You do not have permission to publish this type of content."
 msgstr ""
 
 #. translators: %s: The slug that already exists.
-#: includes/class-bulk-page-duplicator.php:156
+#: includes/class-bulk-page-duplicator.php:158
 #, php-format
 msgid "Item with slug \"%s\" already exists"
 msgstr ""
 
 #. translators: %s: title of the newly created item.
-#: includes/class-bulk-page-duplicator.php:225
+#: includes/class-bulk-page-duplicator.php:234
 #, php-format
 msgid "Created: \"%s\""
 msgstr ""
 
 #. translators: %s: actual unique slug assigned by WordPress.
-#: includes/class-bulk-page-duplicator.php:228
+#: includes/class-bulk-page-duplicator.php:237
 #, php-format
 msgid "WordPress assigned the unique slug \"%s\"."
 msgstr ""
 
 #. translators: %1$s: creation message, %2$s: warning details.
-#: includes/class-bulk-page-duplicator.php:232
+#: includes/class-bulk-page-duplicator.php:241
 #, php-format
 msgid "%1$s Warning: %2$s"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:308
+#: includes/class-bulk-page-duplicator.php:317
 msgid "Invalid taxonomy selection."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:312
+#: includes/class-bulk-page-duplicator.php:321
 msgid "You do not have permission to assign the selected terms."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:318
+#: includes/class-bulk-page-duplicator.php:327
 msgid "One or more selected terms no longer exist."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:384
+#: includes/class-bulk-page-duplicator.php:393
 msgid "Unknown"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:468
+#: includes/class-bulk-page-duplicator.php:477
 msgid "Operation not found in history."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:476
+#: includes/class-bulk-page-duplicator.php:485
 msgid "You do not have permission to rollback this operation."
 msgstr ""
 
 #. translators: %1$d: number of deleted posts, %2$d: number of failed deletions
-#: includes/class-bulk-page-duplicator.php:515
+#: includes/class-bulk-page-duplicator.php:524
 #, php-format
 msgid "Deleted %1$d items. %2$d items could not be deleted."
 msgstr ""
 
 #. translators: %d: number of deleted posts
-#: includes/class-bulk-page-duplicator.php:522
+#: includes/class-bulk-page-duplicator.php:531
 #, php-format
 msgid "Successfully deleted %d items."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:544
+msgid "The item to duplicate was not found."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:548
+msgid "You do not have permission to duplicate this item."
+msgstr ""
+
+#. translators: %s: title of the item being duplicated.
+#: includes/class-bulk-page-duplicator.php:552
+#, php-format
+msgid "%s (Copy)"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:132
+#, js-format
+msgid "%d second"
+msgid_plural "%d seconds"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:136
+#: admin/assets/js/bulk-page-duplicator.js:146
+#, js-format
+msgid "%d min"
+msgid_plural "%d mins"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:138
+#, js-format
+msgid "%d sec"
+msgid_plural "%d secs"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:144
+#, js-format
+msgid "%d hour"
+msgid_plural "%d hours"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:155
+msgid "Calculating..."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:350
+#, js-format
+msgid "Modified: %s"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:531
+msgid "Make sure it exists in the title, slug, or content."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:564
+#, js-format
+msgid "%d item to create"
+msgid_plural "%d items to create"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:581
+#, js-format
+msgid "Duplicate values found: \"%s\""
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:585
+#, js-format
+msgid "and %d more"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:597
+#, js-format
+msgid "%d value may create a long slug (>50 chars)"
+msgid_plural "%d values may create long slugs (>50 chars)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:606
+msgid "Empty lines found between values (they will be skipped)"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:656
+msgid "Error loading templates. Please try again."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:738
+msgid "No terms available"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:830
+msgid "Please upload a CSV or TXT file."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:840
+msgid "The file appears to be empty."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:849
+#, js-format
+msgid "%d value loaded"
+msgid_plural "%d values loaded"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:900
+#, js-format
+msgid "%d value"
+msgid_plural "%d values"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:923
+#: admin/assets/js/bulk-page-duplicator.js:1113
+msgid "Please select a template."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:928
+#: admin/assets/js/bulk-page-duplicator.js:1118
+msgid "Please enter at least one placeholder."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:933
+#: admin/assets/js/bulk-page-duplicator.js:1123
+msgid "Please enter at least one replacement value."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:987
+#: admin/assets/js/bulk-page-duplicator.js:1354
+#: admin/assets/js/bulk-page-duplicator.js:1575
+#, js-format
+msgid "Error: %s"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1003
+#, js-format
+msgid "Slug \"%s\" is duplicated in these values"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1020
+msgid "Error performing dry run. Please try again."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1040
+msgid "Create"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1040
+msgid "Skip"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1062
+msgid "Nothing to create"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1065
+#, js-format
+msgid "Proceed with Duplication (%d items)"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1143
+#, js-format
+msgid ""
+"Each line must have %1$d comma-separated values (one for each placeholder).\n"
+"\n"
+"Placeholders: %2$s"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1156
+#, js-format
+msgid "You are about to create %d pages. Continue?"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1215
+msgid "Cancelling..."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1216
+msgid "Cancelling the operation..."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1233
+msgid "Operation cancelled by user."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1247
+msgid "Processing pages..."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1251
+#, js-format
+msgid "Estimated time remaining: %s"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1262
+#, js-format
+msgid "Processing: %s..."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1267
+#: admin/assets/js/bulk-page-duplicator.js:1334
+msgid "All pages have been processed successfully!"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1311
+msgid "Edit"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1356
+#: admin/assets/js/bulk-page-duplicator.js:1364
+msgid "An error occurred during processing."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1362
+#, js-format
+msgid "AJAX Error: %s"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1381
+#, js-format
+msgid "%1$s (Completed in %2$s)"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1387
+#, js-format
+msgid "Duplication complete! %s"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1436
+msgid "No results to export."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1452
+msgid "Message"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1453
+msgid "Edit URL"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1503
+#, js-format
+msgid "%d item"
+msgid_plural "%d items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1504
+#, js-format
+msgid "%1$d of %2$d remain"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1511
+#, js-format
+msgid "Template: %s"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1526
+#: admin/assets/js/bulk-page-duplicator.js:1574
+#: admin/assets/js/bulk-page-duplicator.js:1579
+msgid "Rollback (Delete All)"
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1537
+msgid "Error loading history."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1548
+#, js-format
+msgid "Are you sure you want to delete %d items? This action cannot be undone."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1552
+msgid "Deleting..."
+msgstr ""
+
+#: admin/assets/js/bulk-page-duplicator.js:1580
+msgid "An error occurred. Please try again."
 msgstr ""

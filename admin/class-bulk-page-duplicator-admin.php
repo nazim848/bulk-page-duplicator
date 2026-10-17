@@ -14,6 +14,7 @@ class Bulk_Page_Duplicator_Admin {
 	 */
 	public function init() {
 		add_action('admin_menu', array($this, 'add_admin_menu'));
+		add_filter('plugin_action_links_' . plugin_basename(BULK_PAGE_DUPLICATOR_PATH . 'bulk-page-duplicator.php'), array($this, 'add_action_links'));
 		add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
 		add_action('wp_ajax_process_bulk_duplication', array($this, 'process_bulk_duplication'));
 		add_action('wp_ajax_bpd_get_posts_by_type', array($this, 'get_posts_by_type'));
@@ -40,6 +41,20 @@ class Bulk_Page_Duplicator_Admin {
 	}
 
 	/**
+	 * Link to the tool from the Plugins screen.
+	 *
+	 * @param array $links Plugin action links.
+	 * @return array
+	 */
+	public function add_action_links($links) {
+		if (current_user_can('manage_options')) {
+			array_unshift($links, sprintf('<a href="%1$s">%2$s</a>', esc_url(admin_url('tools.php?page=bulk-page-duplicator')), esc_html__('Open', 'bulk-page-duplicator')));
+		}
+
+		return $links;
+	}
+
+	/**
 	 * Enqueue admin scripts and styles
 	 * @param string $hook
 	 */
@@ -53,6 +68,13 @@ class Bulk_Page_Duplicator_Admin {
 		
 		// Get saved user preferences
 		$user_prefs = $this->get_user_preferences();
+
+		// A "Bulk Duplicate" row action preselects its item as the template.
+		$requested_template = isset($_GET['template']) ? get_post(absint(wp_unslash($_GET['template']))) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only preselects a form value.
+		if ($requested_template && current_user_can('edit_post', $requested_template->ID)) {
+			$user_prefs['post_type'] = $requested_template->post_type;
+			$user_prefs['template_id'] = $requested_template->ID;
+		}
 		
 		wp_localize_script('bulk-page-duplicator-js', 'bulk_page_dup_ajax', array(
 			'ajax_url' => admin_url('admin-ajax.php'),

@@ -2,7 +2,7 @@
 /*
 Plugin Name: Bulk Page Duplicator
 Description: Create multiple pages by duplicating an existing page and replacing specific text with different values.
-Version: 1.1.1
+Version: 1.2.0
 Author: Nazim Husain
 Author URI: https://nazimansari.com
 License: GPLv2 or later
@@ -32,13 +32,16 @@ if (!defined('WPINC')) {
 	die;
 }
 
-define('BULK_PAGE_DUPLICATOR_VERSION', '1.1.1');
+define('BULK_PAGE_DUPLICATOR_VERSION', '1.2.0');
 
 define('BULK_PAGE_DUPLICATOR_PATH', plugin_dir_path(__FILE__));
 define('BULK_PAGE_DUPLICATOR_URL', plugin_dir_url(__FILE__));
 
 // Load core class
 require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator.php';
+require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-quick-duplicate.php';
+$bulk_page_duplicator_quick_duplicate = new Bulk_Page_Duplicator_Quick_Duplicate();
+$bulk_page_duplicator_quick_duplicate->init();
 // Saved generators (private post type, registered on every request).
 require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-generators.php';
 $bulk_page_duplicator_generators = new Bulk_Page_Duplicator_Generators();
