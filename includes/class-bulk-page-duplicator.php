@@ -64,43 +64,17 @@ class Bulk_Page_Duplicator_Core {
 			}
 		}
 
-		// Validate post type exists and is public
-		$post_type_obj = get_post_type_object($post_type);
-		if (!$post_type_obj || !$post_type_obj->public || 'attachment' === $post_type) {
-			wp_send_json_error(__('Invalid post type', 'bulk-page-duplicator'));
-		}
-
-		$create_posts_cap = isset($post_type_obj->cap->create_posts) ? $post_type_obj->cap->create_posts : $post_type_obj->cap->edit_posts;
-		if (!current_user_can($create_posts_cap)) {
-			wp_send_json_error(__('You do not have permission to create this type of content.', 'bulk-page-duplicator'));
-		}
-
-		if (!in_array($page_status, array('draft', 'publish'), true)) {
-			wp_send_json_error(__('Invalid post status.', 'bulk-page-duplicator'));
-		}
-
-		if ('publish' === $page_status && !current_user_can($post_type_obj->cap->publish_posts)) {
-			wp_send_json_error(__('You do not have permission to publish this type of content.', 'bulk-page-duplicator'));
-		}
-
-		// Validate template post exists
-		$template_page = get_post($template_id);
-		if (!$template_page || $template_page->post_type !== $post_type) {
-			wp_send_json_error(__('Template not found', 'bulk-page-duplicator'));
-		}
-
-		if (!current_user_can('edit_post', $template_id)) {
-			wp_send_json_error(__('You do not have permission to use this template.', 'bulk-page-duplicator'));
-		}
-
-		$post_parent = $this->validate_parent_page($parent_page, $template_page, $post_type_obj);
-		if (is_wp_error($post_parent)) {
-			wp_send_json_error($post_parent->get_error_message());
-		}
-
-		$taxonomy_terms = $this->validate_taxonomy_terms($taxonomy_terms, $post_type);
-		if (is_wp_error($taxonomy_terms)) {
-			wp_send_json_error($taxonomy_terms->get_error_message());
+		$context = $this->prepare_generation_context([
+			'template_id'     => $template_id,
+			'post_type'       => $post_type,
+			'status'          => $page_status,
+			'parent_page'     => $parent_page,
+			'placeholders'    => $placeholders,
+			'replace_options' => $replace_options,
+			'taxonomy_terms'  => $taxonomy_terms,
+		]);
+		if (is_wp_error($context)) {
+			wp_send_json_error($context->get_error_message());
 		}
 
 		$results = [];
@@ -114,149 +88,11 @@ class Bulk_Page_Duplicator_Core {
 				// Skip empty values
 				if (empty($value_set) || (is_array($value_set) && empty(array_filter($value_set)))) continue;
 
-				// For display purposes, use first value or joined values
-				$display_value = is_array($value_set) ? implode(', ', $value_set) : $value_set;
-
-				// Create title - apply all placeholder replacements
-				$title = $template_page->post_title;
-				if (in_array('title', $replace_options)) {
-					$title = $this->multi_replace($title, $placeholders, $value_set);
-				}
-
-				$slug = $template_page->post_name;
-				if (in_array('slug', $replace_options)) {
-					$new_slug = $this->multi_replace($slug, $placeholders, $value_set);
-
-					// Also try replacing the slugified placeholders (for multi-word placeholders in slugs)
-					foreach ($placeholders as $index => $placeholder) {
-						$value = is_array($value_set) ? ($value_set[$index] ?? '') : $value_set;
-						$placeholder_slug = sanitize_title($placeholder);
-						if ($placeholder_slug !== strtolower($placeholder)) {
-							$value_slug = sanitize_title($value);
-							$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
-						}
-					}
-
-					$slug = sanitize_title($new_slug);
-				}
-
-				// Create content
-				$content = $template_page->post_content;
-				$excerpt = $template_page->post_excerpt;
-				if (in_array('content', $replace_options)) {
-					$content = $this->multi_replace($content, $placeholders, $value_set);
-					$excerpt = $this->multi_replace($excerpt, $placeholders, $value_set);
-				}
-
-				// Check if this slug already exists under the requested parent.
-				$existing_post = $this->get_post_by_slug($slug, $post_type, $post_parent);
-				if ($existing_post) {
-					$results[] = [
-						'value' => $display_value,
-						'status' => 'skipped',
-						// translators: %s: The slug that already exists.
-						'message' => sprintf(__('Item with slug "%s" already exists', 'bulk-page-duplicator'), $slug)
-					];
-					continue;
-				}
-
-				// Create the duplicated post
-				$new_post_id = wp_insert_post([
-					'post_title'     => $title,
-					'post_name'      => $slug,
-					'post_content'   => $content,
-					'post_excerpt'   => $excerpt,
-					'post_status'    => $page_status,
-					'post_type'      => $post_type,
-					'post_parent'    => $post_parent,
-					'menu_order'     => $template_page->menu_order,
-					'post_author'    => $template_page->post_author,
-					'comment_status' => $template_page->comment_status,
-					'ping_status'    => $template_page->ping_status,
-				]);
-
-				if (is_wp_error($new_post_id)) {
-					$results[] = [
-						'value' => $display_value,
-						'status' => 'error',
-						'message' => $new_post_id->get_error_message()
-					];
-					continue;
-				}
-
-				$inserted_slug = get_post_field('post_name', $new_post_id);
-
-				// Copy post meta
-				$this->copy_post_meta_multi($template_id, $new_post_id, $placeholders, $value_set, $replace_options);
-
-				// Copy featured image if option selected
-				if (in_array('featured_image', $replace_options)) {
-					$thumbnail_id = get_post_thumbnail_id($template_id);
-					if ($thumbnail_id) {
-						set_post_thumbnail($new_post_id, $thumbnail_id);
-					}
-				}
-
-				// Assign the template's terms (if selected) plus any terms chosen in the form.
-				$post_warnings = [];
-				$terms_to_assign = in_array('template_terms', $replace_options, true) ? $this->get_post_term_ids($template_id, $post_type) : [];
-				foreach ($taxonomy_terms as $taxonomy => $term_ids) {
-					$existing_ids = isset($terms_to_assign[$taxonomy]) ? $terms_to_assign[$taxonomy] : [];
-					$terms_to_assign[$taxonomy] = array_values(array_unique(array_merge($existing_ids, $term_ids)));
-				}
-				foreach ($terms_to_assign as $taxonomy => $term_ids) {
-					if (!empty($term_ids)) {
-						$term_result = wp_set_object_terms($new_post_id, $term_ids, $taxonomy);
-						if (is_wp_error($term_result)) {
-							$post_warnings[] = $term_result->get_error_message();
-						}
-					}
-				}
-
-				$this->save_generation_meta($new_post_id, $template_id, $operation_id, $placeholders, $value_set);
-
-				// Apply Elementor data if exists and option selected
-				if (in_array('elementor', $replace_options)) {
-					$this->process_elementor_data($template_id, $new_post_id, $placeholders, $value_set, $content);
-				}
-
-				// Apply Beaver Builder data if exists and option selected
-				if (in_array('beaver', $replace_options)) {
-					$this->process_beaver_builder_data($template_id, $new_post_id, $placeholders, $value_set);
-				}
-
-				// Apply Bricks Builder data if exists and option selected
-				if (in_array('bricks', $replace_options)) {
-					$this->process_bricks_builder_data($template_id, $new_post_id, $placeholders, $value_set);
-				}
-
-				/* translators: %s: title of the newly created item. */
-				$success_message = sprintf(__('Created: "%s"', 'bulk-page-duplicator'), $title);
-				if ($inserted_slug !== $slug) {
-					/* translators: %s: actual unique slug assigned by WordPress. */
-					$post_warnings[] = sprintf(__('WordPress assigned the unique slug "%s".', 'bulk-page-duplicator'), $inserted_slug);
-				}
-				if (!empty($post_warnings)) {
-					/* translators: %1$s: creation message, %2$s: warning details. */
-					$success_message = sprintf(__('%1$s Warning: %2$s', 'bulk-page-duplicator'), $success_message, implode(' ', $post_warnings));
-				}
-
-				$results[] = [
-					'value' => $display_value,
-					'status' => 'success',
-					// translators: %s: The title of the newly created item.
-					'message' => $success_message,
-					'id' => $new_post_id,
-					'slug' => $inserted_slug,
-					'edit_url' => esc_url_raw(get_edit_post_link($new_post_id, ''))
-				];
+				$results[] = $this->create_item($context, $value_set, $operation_id);
 			}
 		}
 
-		if ($this->elementor_cache_needs_clear && class_exists('\\Elementor\\Plugin')) {
-			\Elementor\Plugin::$instance->files_manager->clear_cache();
-			$this->elementor_cache_needs_clear = false;
-		}
+		$this->flush_builder_caches();
 
 		// Store batch history for undo/rollback functionality
 		$created_ids = array_filter(array_map(function($r) {
@@ -269,6 +105,373 @@ class Bulk_Page_Duplicator_Core {
 			'results' => $results,
 			'is_last_batch' => $is_last_batch
 		]);
+	}
+
+	/**
+	 * Validate the settings shared by every item of a generation run.
+	 *
+	 * Checks the post type, status, template, parent and taxonomy terms against
+	 * the current user's capabilities and returns a context array consumed by
+	 * create_item() and update_item().
+	 *
+	 * @param array $args {
+	 *     @type int    $template_id     Template post ID.
+	 *     @type string $post_type       Post type to create.
+	 *     @type string $status          'draft' or 'publish'.
+	 *     @type string $parent_page     Parent ID, '0' or 'template'.
+	 *     @type array  $placeholders    Placeholder strings.
+	 *     @type array  $replace_options Replace/copy option keys.
+	 *     @type array  $taxonomy_terms  Term IDs keyed by taxonomy.
+	 * }
+	 * @return array|WP_Error
+	 */
+	public function prepare_generation_context($args) {
+		$args = wp_parse_args($args, [
+			'template_id'     => 0,
+			'post_type'       => 'page',
+			'status'          => 'draft',
+			'parent_page'     => '0',
+			'placeholders'    => [],
+			'replace_options' => [],
+			'taxonomy_terms'  => [],
+		]);
+
+		$template_id = absint($args['template_id']);
+		$post_type = sanitize_key($args['post_type']);
+		$page_status = sanitize_key($args['status']);
+
+		// Validate post type exists and is public
+		$post_type_obj = get_post_type_object($post_type);
+		if (!$post_type_obj || !$post_type_obj->public || 'attachment' === $post_type) {
+			return new WP_Error('bpd_invalid_post_type', __('Invalid post type', 'bulk-page-duplicator'));
+		}
+
+		$create_posts_cap = isset($post_type_obj->cap->create_posts) ? $post_type_obj->cap->create_posts : $post_type_obj->cap->edit_posts;
+		if (!current_user_can($create_posts_cap)) {
+			return new WP_Error('bpd_create_permission', __('You do not have permission to create this type of content.', 'bulk-page-duplicator'));
+		}
+
+		if (!in_array($page_status, array('draft', 'publish'), true)) {
+			return new WP_Error('bpd_invalid_status', __('Invalid post status.', 'bulk-page-duplicator'));
+		}
+
+		if ('publish' === $page_status && !current_user_can($post_type_obj->cap->publish_posts)) {
+			return new WP_Error('bpd_publish_permission', __('You do not have permission to publish this type of content.', 'bulk-page-duplicator'));
+		}
+
+		// Validate template post exists
+		$template_page = get_post($template_id);
+		if (!$template_page || $template_page->post_type !== $post_type) {
+			return new WP_Error('bpd_invalid_template', __('Template not found', 'bulk-page-duplicator'));
+		}
+
+		if (!current_user_can('edit_post', $template_id)) {
+			return new WP_Error('bpd_template_permission', __('You do not have permission to use this template.', 'bulk-page-duplicator'));
+		}
+
+		$post_parent = $this->validate_parent_page((string) $args['parent_page'], $template_page, $post_type_obj);
+		if (is_wp_error($post_parent)) {
+			return $post_parent;
+		}
+
+		$taxonomy_terms = $this->validate_taxonomy_terms((array) $args['taxonomy_terms'], $post_type);
+		if (is_wp_error($taxonomy_terms)) {
+			return $taxonomy_terms;
+		}
+
+		return [
+			'template'        => $template_page,
+			'template_id'     => $template_id,
+			'post_type'       => $post_type,
+			'status'          => $page_status,
+			'post_parent'     => $post_parent,
+			'placeholders'    => array_values((array) $args['placeholders']),
+			'replace_options' => array_values((array) $args['replace_options']),
+			'taxonomy_terms'  => $taxonomy_terms,
+		];
+	}
+
+	/**
+	 * Render the title, slug, content and excerpt of an item from its template.
+	 *
+	 * @param WP_Post $template_page   Template post.
+	 * @param array   $placeholders    Placeholder strings.
+	 * @param array   $value_set       Replacement values.
+	 * @param array   $replace_options Replace option keys.
+	 * @return array Keys: title, slug, content, excerpt.
+	 */
+	public function render_item_fields($template_page, $placeholders, $value_set, $replace_options) {
+		// Create title - apply all placeholder replacements
+		$title = $template_page->post_title;
+		if (in_array('title', $replace_options)) {
+			$title = $this->multi_replace($title, $placeholders, $value_set);
+		}
+
+		$slug = $template_page->post_name;
+		if (in_array('slug', $replace_options)) {
+			$new_slug = $this->multi_replace($slug, $placeholders, $value_set);
+
+			// Also try replacing the slugified placeholders (for multi-word placeholders in slugs)
+			foreach ($placeholders as $index => $placeholder) {
+				$value = is_array($value_set) ? ($value_set[$index] ?? '') : $value_set;
+				$placeholder_slug = sanitize_title($placeholder);
+				if ($placeholder_slug !== strtolower($placeholder)) {
+					$value_slug = sanitize_title($value);
+					$new_slug = str_replace($placeholder_slug, $value_slug, $new_slug);
+				}
+			}
+
+			$slug = sanitize_title($new_slug);
+		}
+
+		// Create content
+		$content = $template_page->post_content;
+		$excerpt = $template_page->post_excerpt;
+		if (in_array('content', $replace_options)) {
+			$content = $this->multi_replace($content, $placeholders, $value_set);
+			$excerpt = $this->multi_replace($excerpt, $placeholders, $value_set);
+		}
+
+		return [
+			'title'   => $title,
+			'slug'    => $slug,
+			'content' => $content,
+			'excerpt' => $excerpt,
+		];
+	}
+
+	/**
+	 * Create one item from a template, skipping it if its slug already exists.
+	 *
+	 * @param array  $context      Context from prepare_generation_context().
+	 * @param array  $value_set    Replacement values.
+	 * @param string $operation_id Operation ID.
+	 * @param array  $extra_meta   Additional meta to store on the new item.
+	 * @return array Result with value, status (success|skipped|error) and message.
+	 */
+	public function create_item($context, $value_set, $operation_id, $extra_meta = []) {
+		$template_page = $context['template'];
+		$template_id = $context['template_id'];
+		$post_type = $context['post_type'];
+		$post_parent = $context['post_parent'];
+		$placeholders = $context['placeholders'];
+		$replace_options = $context['replace_options'];
+
+		// For display purposes, use first value or joined values
+		$display_value = is_array($value_set) ? implode(', ', $value_set) : $value_set;
+
+		$fields = $this->render_item_fields($template_page, $placeholders, $value_set, $replace_options);
+		$title = $fields['title'];
+		$slug = $fields['slug'];
+
+		// Check if this slug already exists under the requested parent.
+		$existing_post = $this->get_post_by_slug($slug, $post_type, $post_parent);
+		if ($existing_post) {
+			return [
+				'value' => $display_value,
+				'status' => 'skipped',
+				// translators: %s: The slug that already exists.
+				'message' => sprintf(__('Item with slug "%s" already exists', 'bulk-page-duplicator'), $slug),
+				'existing_id' => $existing_post->ID,
+			];
+		}
+
+		// Create the duplicated post
+		$new_post_id = wp_insert_post(wp_slash([
+			'post_title'     => $title,
+			'post_name'      => $slug,
+			'post_content'   => $fields['content'],
+			'post_excerpt'   => $fields['excerpt'],
+			'post_status'    => $context['status'],
+			'post_type'      => $post_type,
+			'post_parent'    => $post_parent,
+			'menu_order'     => $template_page->menu_order,
+			'post_author'    => $template_page->post_author,
+			'comment_status' => $template_page->comment_status,
+			'ping_status'    => $template_page->ping_status,
+		]), true);
+
+		if (is_wp_error($new_post_id)) {
+			return [
+				'value' => $display_value,
+				'status' => 'error',
+				'message' => $new_post_id->get_error_message()
+			];
+		}
+
+		$inserted_slug = get_post_field('post_name', $new_post_id);
+
+		$this->save_generation_meta($new_post_id, $template_id, $operation_id, $placeholders, $value_set);
+		foreach ($extra_meta as $meta_key => $meta_value) {
+			update_post_meta($new_post_id, $meta_key, wp_slash($meta_value));
+		}
+
+		$post_warnings = $this->apply_template_data($context, $new_post_id, $value_set, $fields['content']);
+
+		/* translators: %s: title of the newly created item. */
+		$success_message = sprintf(__('Created: "%s"', 'bulk-page-duplicator'), $title);
+		if ($inserted_slug !== $slug) {
+			/* translators: %s: actual unique slug assigned by WordPress. */
+			$post_warnings[] = sprintf(__('WordPress assigned the unique slug "%s".', 'bulk-page-duplicator'), $inserted_slug);
+		}
+		if (!empty($post_warnings)) {
+			/* translators: %1$s: creation message, %2$s: warning details. */
+			$success_message = sprintf(__('%1$s Warning: %2$s', 'bulk-page-duplicator'), $success_message, implode(' ', $post_warnings));
+		}
+
+		return [
+			'value' => $display_value,
+			'status' => 'success',
+			'message' => $success_message,
+			'id' => $new_post_id,
+			'slug' => $inserted_slug,
+			'edit_url' => esc_url_raw(get_edit_post_link($new_post_id, ''))
+		];
+	}
+
+	/**
+	 * Re-render an existing generated item from its template with new values.
+	 *
+	 * Title, slug (when slug replacement is enabled), content, excerpt, parent,
+	 * metadata, builder data, featured image and terms are rewritten. The
+	 * item's status, author and date are left untouched.
+	 *
+	 * @param array  $context      Context from prepare_generation_context().
+	 * @param int    $post_id      Item to update.
+	 * @param array  $value_set    Replacement values.
+	 * @param string $operation_id Operation ID.
+	 * @return array Result with value, status (updated|error) and message.
+	 */
+	public function update_item($context, $post_id, $value_set, $operation_id) {
+		$display_value = is_array($value_set) ? implode(', ', $value_set) : $value_set;
+		$post = get_post($post_id);
+
+		if (!$post || $post->post_type !== $context['post_type']) {
+			return [
+				'value' => $display_value,
+				'status' => 'error',
+				'message' => __('The item to update was not found.', 'bulk-page-duplicator'),
+			];
+		}
+
+		if (!current_user_can('edit_post', $post->ID)) {
+			return [
+				'value' => $display_value,
+				'status' => 'error',
+				'message' => __('You do not have permission to edit this item.', 'bulk-page-duplicator'),
+			];
+		}
+
+		$fields = $this->render_item_fields($context['template'], $context['placeholders'], $value_set, $context['replace_options']);
+
+		$postarr = [
+			'ID'           => $post->ID,
+			'post_title'   => $fields['title'],
+			'post_content' => $fields['content'],
+			'post_excerpt' => $fields['excerpt'],
+			'post_parent'  => $context['post_parent'],
+		];
+		if (in_array('slug', $context['replace_options'], true)) {
+			$postarr['post_name'] = $fields['slug'];
+		}
+
+		$updated = wp_update_post(wp_slash($postarr), true);
+		if (is_wp_error($updated)) {
+			return [
+				'value' => $display_value,
+				'status' => 'error',
+				'message' => $updated->get_error_message(),
+			];
+		}
+
+		$this->save_generation_meta($post->ID, $context['template_id'], $operation_id, $context['placeholders'], $value_set, true);
+		$post_warnings = $this->apply_template_data($context, $post->ID, $value_set, $fields['content']);
+
+		/* translators: %s: title of the updated item. */
+		$message = sprintf(__('Updated: "%s"', 'bulk-page-duplicator'), $fields['title']);
+		if (!empty($post_warnings)) {
+			/* translators: %1$s: update message, %2$s: warning details. */
+			$message = sprintf(__('%1$s Warning: %2$s', 'bulk-page-duplicator'), $message, implode(' ', $post_warnings));
+		}
+
+		return [
+			'value' => $display_value,
+			'status' => 'updated',
+			'message' => $message,
+			'id' => $post->ID,
+			'slug' => get_post_field('post_name', $post->ID),
+			'edit_url' => esc_url_raw(get_edit_post_link($post->ID, '')),
+		];
+	}
+
+	/**
+	 * Copy metadata, featured image, terms and builder data from the template.
+	 *
+	 * @param array  $context   Context from prepare_generation_context().
+	 * @param int    $post_id   Target item ID.
+	 * @param array  $value_set Replacement values.
+	 * @param string $content   Rendered post content.
+	 * @return string[] Warning messages.
+	 */
+	private function apply_template_data($context, $post_id, $value_set, $content) {
+		$template_id = $context['template_id'];
+		$post_type = $context['post_type'];
+		$placeholders = $context['placeholders'];
+		$replace_options = $context['replace_options'];
+		$post_warnings = [];
+
+		// Copy post meta
+		$this->copy_post_meta_multi($template_id, $post_id, $placeholders, $value_set, $replace_options);
+
+		// Copy featured image if option selected
+		if (in_array('featured_image', $replace_options)) {
+			$thumbnail_id = get_post_thumbnail_id($template_id);
+			if ($thumbnail_id) {
+				set_post_thumbnail($post_id, $thumbnail_id);
+			}
+		}
+
+		// Assign the template's terms (if selected) plus any terms chosen in the form.
+		$terms_to_assign = in_array('template_terms', $replace_options, true) ? $this->get_post_term_ids($template_id, $post_type) : [];
+		foreach ($context['taxonomy_terms'] as $taxonomy => $term_ids) {
+			$existing_ids = isset($terms_to_assign[$taxonomy]) ? $terms_to_assign[$taxonomy] : [];
+			$terms_to_assign[$taxonomy] = array_values(array_unique(array_merge($existing_ids, $term_ids)));
+		}
+		foreach ($terms_to_assign as $taxonomy => $term_ids) {
+			if (!empty($term_ids)) {
+				$term_result = wp_set_object_terms($post_id, $term_ids, $taxonomy);
+				if (is_wp_error($term_result)) {
+					$post_warnings[] = $term_result->get_error_message();
+				}
+			}
+		}
+
+		// Apply Elementor data if exists and option selected
+		if (in_array('elementor', $replace_options)) {
+			$this->process_elementor_data($template_id, $post_id, $placeholders, $value_set, $content);
+		}
+
+		// Apply Beaver Builder data if exists and option selected
+		if (in_array('beaver', $replace_options)) {
+			$this->process_beaver_builder_data($template_id, $post_id, $placeholders, $value_set);
+		}
+
+		// Apply Bricks Builder data if exists and option selected
+		if (in_array('bricks', $replace_options)) {
+			$this->process_bricks_builder_data($template_id, $post_id, $placeholders, $value_set);
+		}
+
+		return $post_warnings;
+	}
+
+	/**
+	 * Clear builder caches deferred while processing a batch.
+	 */
+	public function flush_builder_caches() {
+		if ($this->elementor_cache_needs_clear && class_exists('\\Elementor\\Plugin')) {
+			\Elementor\Plugin::$instance->files_manager->clear_cache();
+		}
+		$this->elementor_cache_needs_clear = false;
 	}
 
 	/**
@@ -372,7 +575,7 @@ class Bulk_Page_Duplicator_Core {
 	 * @param string $operation_id       Unique client-generated operation ID.
 	 * @param bool   $operation_complete Whether the operation sent its final batch.
 	 */
-	private function save_batch_history($template_id, $post_type, $post_ids, $batch_index, $operation_id = '', $operation_complete = false) {
+	public function save_batch_history($template_id, $post_type, $post_ids, $batch_index, $operation_id = '', $operation_complete = false) {
 		$history = get_option('bpd_batch_history', []);
 		$user_id = get_current_user_id();
 
@@ -676,15 +879,26 @@ class Bulk_Page_Duplicator_Core {
 	 * @param string $operation_id Operation ID.
 	 * @param array  $placeholders Placeholders used.
 	 * @param array  $value_set    Replacement values used.
+	 * @param bool   $is_update    Whether an existing item was re-rendered.
 	 */
-	private function save_generation_meta($post_id, $template_id, $operation_id, $placeholders, $value_set) {
-		update_post_meta($post_id, '_bpd_template_id', absint($template_id));
-		update_post_meta($post_id, '_bpd_generation', wp_slash([
+	private function save_generation_meta($post_id, $template_id, $operation_id, $placeholders, $value_set, $is_update = false) {
+		$generation = [
 			'operation_id' => $operation_id,
 			'placeholders' => array_values($placeholders),
 			'values'       => array_values((array) $value_set),
 			'created'      => time(),
-		]));
+		];
+
+		if ($is_update) {
+			$previous = get_post_meta($post_id, '_bpd_generation', true);
+			if (is_array($previous) && !empty($previous['created'])) {
+				$generation['created'] = absint($previous['created']);
+			}
+			$generation['updated'] = time();
+		}
+
+		update_post_meta($post_id, '_bpd_template_id', absint($template_id));
+		update_post_meta($post_id, '_bpd_generation', wp_slash($generation));
 	}
 
 	/**
