@@ -142,8 +142,10 @@ class Bulk_Page_Duplicator_Core {
 
 				// Create content
 				$content = $template_page->post_content;
+				$excerpt = $template_page->post_excerpt;
 				if (in_array('content', $replace_options)) {
 					$content = $this->multi_replace($content, $placeholders, $value_set);
+					$excerpt = $this->multi_replace($excerpt, $placeholders, $value_set);
 				}
 
 				// Check if this slug already exists under the requested parent.
@@ -163,9 +165,11 @@ class Bulk_Page_Duplicator_Core {
 					'post_title'     => $title,
 					'post_name'      => $slug,
 					'post_content'   => $content,
+					'post_excerpt'   => $excerpt,
 					'post_status'    => $page_status,
 					'post_type'      => $post_type,
 					'post_parent'    => $post_parent,
+					'menu_order'     => $template_page->menu_order,
 					'post_author'    => $template_page->post_author,
 					'comment_status' => $template_page->comment_status,
 					'ping_status'    => $template_page->ping_status,
@@ -193,18 +197,23 @@ class Bulk_Page_Duplicator_Core {
 					}
 				}
 
-				// Assign taxonomy terms
+				// Assign the template's terms (if selected) plus any terms chosen in the form.
 				$post_warnings = [];
-				if (!empty($taxonomy_terms)) {
-					foreach ($taxonomy_terms as $taxonomy => $term_ids) {
-						if (!empty($term_ids)) {
-							$term_result = wp_set_object_terms($new_post_id, $term_ids, $taxonomy);
-							if (is_wp_error($term_result)) {
-								$post_warnings[] = $term_result->get_error_message();
-							}
+				$terms_to_assign = in_array('template_terms', $replace_options, true) ? $this->get_post_term_ids($template_id, $post_type) : [];
+				foreach ($taxonomy_terms as $taxonomy => $term_ids) {
+					$existing_ids = isset($terms_to_assign[$taxonomy]) ? $terms_to_assign[$taxonomy] : [];
+					$terms_to_assign[$taxonomy] = array_values(array_unique(array_merge($existing_ids, $term_ids)));
+				}
+				foreach ($terms_to_assign as $taxonomy => $term_ids) {
+					if (!empty($term_ids)) {
+						$term_result = wp_set_object_terms($new_post_id, $term_ids, $taxonomy);
+						if (is_wp_error($term_result)) {
+							$post_warnings[] = $term_result->get_error_message();
 						}
 					}
 				}
+
+				$this->save_generation_meta($new_post_id, $template_id, $operation_id, $placeholders, $value_set);
 
 				// Apply Elementor data if exists and option selected
 				if (in_array('elementor', $replace_options)) {
@@ -524,6 +533,161 @@ class Bulk_Page_Duplicator_Core {
 	}
 
 	/**
+	 * Create a draft copy of a single item, including its metadata, terms and featured image.
+	 *
+	 * @param int $source_id ID of the item to copy.
+	 * @return int|WP_Error New post ID, or an error.
+	 */
+	public function duplicate_single_post($source_id) {
+		$source = get_post($source_id);
+		if (!$source || 'trash' === $source->post_status || 'auto-draft' === $source->post_status) {
+			return new WP_Error('bpd_invalid_source', __('The item to duplicate was not found.', 'bulk-page-duplicator'));
+		}
+
+		if (!$this->can_duplicate_post($source)) {
+			return new WP_Error('bpd_permission', __('You do not have permission to duplicate this item.', 'bulk-page-duplicator'));
+		}
+
+		/* translators: %s: title of the item being duplicated. */
+		$title = '' !== $source->post_title ? sprintf(__('%s (Copy)', 'bulk-page-duplicator'), $source->post_title) : '';
+
+		/**
+		 * Filter the title given to a quick duplicate.
+		 *
+		 * @param string  $title  Title for the copy.
+		 * @param WP_Post $source Item being duplicated.
+		 */
+		$title = apply_filters('bpd_duplicate_post_title', $title, $source);
+
+		$new_post_id = wp_insert_post(wp_slash([
+			'post_title'     => $title,
+			'post_content'   => $source->post_content,
+			'post_excerpt'   => $source->post_excerpt,
+			'post_status'    => 'draft',
+			'post_type'      => $source->post_type,
+			'post_parent'    => $source->post_parent,
+			'menu_order'     => $source->menu_order,
+			'post_password'  => $source->post_password,
+			'post_author'    => get_current_user_id(),
+			'comment_status' => $source->comment_status,
+			'ping_status'    => $source->ping_status,
+		]), true);
+
+		if (is_wp_error($new_post_id)) {
+			return $new_post_id;
+		}
+
+		$this->copy_post_meta_multi($source->ID, $new_post_id, [], [], []);
+
+		$thumbnail_id = get_post_thumbnail_id($source->ID);
+		if ($thumbnail_id) {
+			set_post_thumbnail($new_post_id, $thumbnail_id);
+		}
+
+		foreach ($this->get_post_term_ids($source->ID, $source->post_type) as $taxonomy => $term_ids) {
+			wp_set_object_terms($new_post_id, $term_ids, $taxonomy);
+		}
+
+		// Builders regenerate their CSS for the new ID.
+		delete_post_meta($new_post_id, '_elementor_css');
+		delete_post_meta($new_post_id, '_bricks_page_assets_css');
+		delete_post_meta($new_post_id, '_bricks_page_assets_js');
+		if (class_exists('FLBuilderModel')) {
+			FLBuilderModel::delete_asset_cache($new_post_id);
+		}
+
+		update_post_meta($new_post_id, '_bpd_duplicated_from', $source->ID);
+
+		/**
+		 * Fires after an item has been quick-duplicated.
+		 *
+		 * @param int     $new_post_id ID of the new draft.
+		 * @param WP_Post $source      Item that was duplicated.
+		 */
+		do_action('bpd_after_duplicate_post', $new_post_id, $source);
+
+		return $new_post_id;
+	}
+
+	/**
+	 * Whether the current user may quick-duplicate an item.
+	 *
+	 * @param WP_Post|int $post Item to check.
+	 * @return bool
+	 */
+	public function can_duplicate_post($post) {
+		$post = get_post($post);
+		if (!$post || !in_array($post->post_type, $this->get_duplicable_post_types(), true)) {
+			return false;
+		}
+
+		$post_type_obj = get_post_type_object($post->post_type);
+		$create_posts_cap = isset($post_type_obj->cap->create_posts) ? $post_type_obj->cap->create_posts : $post_type_obj->cap->edit_posts;
+
+		return current_user_can('edit_post', $post->ID) && current_user_can($create_posts_cap);
+	}
+
+	/**
+	 * Post types that offer quick duplication.
+	 *
+	 * @return string[]
+	 */
+	public function get_duplicable_post_types() {
+		$post_types = array_values(array_diff(get_post_types(['public' => true]), ['attachment']));
+
+		/**
+		 * Filter the post types that show Duplicate links.
+		 *
+		 * @param string[] $post_types Post type names.
+		 */
+		return (array) apply_filters('bpd_duplicable_post_types', $post_types);
+	}
+
+	/**
+	 * Get an item's term IDs for every taxonomy registered to its post type.
+	 *
+	 * @param int    $post_id   Post ID.
+	 * @param string $post_type Post type.
+	 * @return array Term IDs keyed by taxonomy.
+	 */
+	private function get_post_term_ids($post_id, $post_type) {
+		$terms = [];
+
+		foreach (get_object_taxonomies($post_type) as $taxonomy) {
+			// Translation plugins manage language assignments themselves.
+			if (in_array($taxonomy, ['language', 'post_translations', 'term_language', 'term_translations'], true)) {
+				continue;
+			}
+
+			$term_ids = wp_get_object_terms($post_id, $taxonomy, ['fields' => 'ids']);
+			if (!is_wp_error($term_ids) && !empty($term_ids)) {
+				$terms[$taxonomy] = array_map('absint', $term_ids);
+			}
+		}
+
+		return $terms;
+	}
+
+	/**
+	 * Record which template and values produced a generated item.
+	 *
+	 * @param int    $post_id      Generated post ID.
+	 * @param int    $template_id  Template post ID.
+	 * @param string $operation_id Operation ID.
+	 * @param array  $placeholders Placeholders used.
+	 * @param array  $value_set    Replacement values used.
+	 */
+	private function save_generation_meta($post_id, $template_id, $operation_id, $placeholders, $value_set) {
+		update_post_meta($post_id, '_bpd_template_id', absint($template_id));
+		update_post_meta($post_id, '_bpd_generation', wp_slash([
+			'operation_id' => $operation_id,
+			'placeholders' => array_values($placeholders),
+			'values'       => array_values((array) $value_set),
+			'created'      => time(),
+		]));
+	}
+
+	/**
 	 * Public wrapper for multi_replace (used by admin class for dry run)
 	 *
 	 * @param string $text The text to process
@@ -839,7 +1003,12 @@ class Bulk_Page_Duplicator_Core {
 
 		foreach ($post_meta as $key => $meta_values) {
 			// Skip temporary editor data and handle the featured image separately.
-			if (in_array($key, ['_edit_lock', '_edit_last', '_thumbnail_id'], true)) {
+			if (in_array($key, ['_edit_lock', '_edit_last', '_thumbnail_id', '_wp_old_slug', '_wp_old_date'], true)) {
+				continue;
+			}
+
+			// Never inherit this plugin's own tracking data from the source item.
+			if (0 === strpos($key, '_bpd_')) {
 				continue;
 			}
 

@@ -148,6 +148,8 @@ $bulk_page_duplicator_page_builders = $bulk_page_duplicator_core->detect_page_bu
 			<div class="bulk-page-dup-checkbox-group">
 				<label><input type="checkbox" id="copy-featured-image" checked> <?php esc_html_e('Copy Featured Image', 'bulk-page-duplicator'); ?></label>
 				<p class="description" style="margin-left: 24px;"><?php esc_html_e('Copy the template\'s featured image to all duplicated items.', 'bulk-page-duplicator'); ?></p>
+				<label><input type="checkbox" id="copy-template-terms" checked> <?php esc_html_e('Copy Template Terms', 'bulk-page-duplicator'); ?></label>
+				<p class="description" style="margin-left: 24px;"><?php esc_html_e('Copy the template\'s categories, tags and other terms. Terms selected above are added to them.', 'bulk-page-duplicator'); ?></p>
 			</div>
 			<div class="bulk-page-dup-progress-container" style="display: none;">
 				<h3><?php esc_html_e('Progress', 'bulk-page-duplicator'); ?></h3>
