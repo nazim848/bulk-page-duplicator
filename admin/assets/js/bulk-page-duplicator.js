@@ -189,6 +189,28 @@ jQuery(document).ready(function ($) {
 	loadUserPreferences();
 	bindPreferenceSaving();
 
+	// Mirror of replace_pairs(): replace all placeholders in one pass, longest first,
+	// so text inserted for one placeholder is never matched by another.
+	function replacePairs(text, pairs, slugPairs) {
+		if (!text) return text;
+		const entries = {};
+		pairs.forEach(p => { const k = p[0].toLowerCase(); if (k && !entries[k]) entries[k] = { search: p[0], replace: p[1], matchCase: true }; });
+		slugPairs.forEach(p => { const k = p[0].toLowerCase(); if (k && !entries[k]) entries[k] = { search: p[0], replace: p[1], matchCase: false }; });
+		const searches = Object.keys(entries).map(k => entries[k].search).sort((a, b) => b.length - a.length);
+		if (searches.length === 0) return text;
+		const pattern = new RegExp(searches.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "gi");
+		return text.replace(pattern, function (match) {
+			const entry = entries[match.toLowerCase()];
+			if (!entry) return match;
+			if (!entry.matchCase) return entry.replace;
+			// Same rules as match_case(): as typed, UPPER, Title (each word), lower.
+			if (match === entry.search) return entry.replace;
+			if (match === entry.search.toUpperCase()) return entry.replace.toUpperCase();
+			if (match === entry.search.charAt(0).toUpperCase() + entry.search.slice(1).toLowerCase()) return entry.replace.replace(/(^|[\s-])(\S)/g, (m, p1, p2) => p1 + p2.toUpperCase());
+			return entry.replace.toLowerCase();
+		});
+	}
+
 	// Helper function to simulate smart_replace (case-preserving)
 	function smartReplace(text, search, replace) {
 		if (!text || !search || !replace) return text;
@@ -263,17 +285,21 @@ jQuery(document).ready(function ($) {
 		let previewSlug = templateData.slug;
 
 		if (placeholders.length > 0 && firstValues.length > 0) {
+			const pairs = [];
+			const slugPairs = [];
 			placeholders.forEach((placeholder, index) => {
 				const value = firstValues[index] || '';
 				if (placeholder && value) {
-					previewTitle = smartReplace(previewTitle, placeholder, value);
-					previewSlug = smartReplace(previewSlug, placeholder, value);
-					// Also replace slugified placeholder
+					pairs.push([placeholder, value]);
+					// Also replace the slugified placeholder (for multi-word placeholders)
 					const placeholderSlug = toSlug(placeholder);
-					const valueSlug = toSlug(value);
-					previewSlug = previewSlug.split(placeholderSlug).join(valueSlug);
+					if (placeholderSlug && placeholderSlug !== placeholder.toLowerCase()) {
+						slugPairs.push([placeholderSlug, toSlug(value)]);
+					}
 				}
 			});
+			previewTitle = replacePairs(previewTitle, pairs, []);
+			previewSlug = replacePairs(previewSlug, pairs, slugPairs);
 		}
 
 		// Update preview panel

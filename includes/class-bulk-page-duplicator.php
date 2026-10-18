@@ -473,17 +473,23 @@ class Bulk_Page_Duplicator_Core {
 	public function render_slug($slug, $placeholders, $values) {
 		$placeholders = array_values((array) $placeholders);
 		$values = array_values((array) $values);
-		$new_slug = $this->multi_replace($slug, $placeholders, $values);
 
+		// Replace placeholders as typed and their slug forms (e.g. "new-york") in one pass.
+		$pairs = [];
+		$slug_pairs = [];
 		foreach ($placeholders as $index => $placeholder) {
-			$value = isset($values[$index]) ? $values[$index] : '';
+			$value = isset($values[$index]) ? (string) $values[$index] : '';
+			if (empty($placeholder) || empty($value)) {
+				continue;
+			}
+			$pairs[] = [(string) $placeholder, $value];
 			$placeholder_slug = sanitize_title($placeholder);
-			if ($placeholder_slug !== strtolower($placeholder)) {
-				$new_slug = str_replace($placeholder_slug, sanitize_title($value), $new_slug);
+			if ('' !== $placeholder_slug && $placeholder_slug !== strtolower($placeholder)) {
+				$slug_pairs[] = [$placeholder_slug, sanitize_title($value)];
 			}
 		}
 
-		return sanitize_title($new_slug);
+		return sanitize_title($this->replace_pairs($slug, $pairs, $slug_pairs));
 	}
 
 	/**
@@ -1732,15 +1738,104 @@ class Bulk_Page_Duplicator_Core {
 			$values = [$values];
 		}
 
-		// Apply each placeholder replacement
-		foreach ($placeholders as $index => $placeholder) {
+		$pairs = [];
+		foreach (array_values((array) $placeholders) as $index => $placeholder) {
 			$value = isset($values[$index]) ? $values[$index] : '';
 			if (!empty($placeholder) && !empty($value)) {
-				$text = $this->smart_replace($text, $placeholder, $value);
+				$pairs[] = [(string) $placeholder, (string) $value];
 			}
 		}
 
-		return $text;
+		return $this->replace_pairs($text, $pairs);
+	}
+
+	/**
+	 * Replace several placeholders in one pass.
+	 *
+	 * All placeholders are matched together (longest first), so text inserted
+	 * for one placeholder is never matched again by another, e.g. the "uk" in
+	 * "Dukeville" is not replaced when "UK" is also a placeholder.
+	 *
+	 * @param string $text       Text to process.
+	 * @param array  $pairs      List of [placeholder, value] replaced with case matching.
+	 * @param array  $slug_pairs List of [search, value] replaced as-is (case-insensitive match).
+	 * @return string
+	 */
+	private function replace_pairs($text, $pairs, $slug_pairs = []) {
+		if ('' === (string) $text) {
+			return $text;
+		}
+
+		$entries = [];
+		foreach ([[$pairs, true], [$slug_pairs, false]] as $group) {
+			foreach ($group[0] as $pair) {
+				$key = $this->lower_case((string) $pair[0]);
+				if ('' !== $key && !isset($entries[$key])) {
+					$entries[$key] = ['search' => (string) $pair[0], 'replace' => (string) $pair[1], 'match_case' => $group[1]];
+				}
+			}
+		}
+
+		if (empty($entries)) {
+			return $text;
+		}
+
+		$searches = wp_list_pluck($entries, 'search');
+		usort($searches, function ($a, $b) {
+			return strlen($b) - strlen($a);
+		});
+		$quoted = array_map(function ($search) {
+			return preg_quote($search, '/');
+		}, $searches);
+		$flags = preg_match('//u', $text) && preg_match('//u', implode('', $searches)) ? 'iu' : 'i';
+
+		$result = preg_replace_callback('/' . implode('|', $quoted) . '/' . $flags, function ($match) use ($entries) {
+			$key = $this->lower_case($match[0]);
+			if (!isset($entries[$key])) {
+				return $match[0];
+			}
+			$entry = $entries[$key];
+			return $entry['match_case'] ? $this->match_case($match[0], $entry['search'], $entry['replace']) : $entry['replace'];
+		}, $text);
+
+		return null === $result ? $text : $result;
+	}
+
+	/**
+	 * Give a replacement the case of the matched text: as typed, UPPER, Title, or lower.
+	 *
+	 * @param string $match   Matched text.
+	 * @param string $search  Placeholder as typed.
+	 * @param string $replace Replacement value.
+	 * @return string
+	 */
+	private function match_case($match, $search, $replace) {
+		// The placeholder exactly as typed gets the value exactly as typed.
+		if ($match === $search) {
+			return $replace;
+		}
+		if ($match === $this->to_upper($search)) {
+			return $this->to_upper($replace);
+		}
+		$first = function_exists('mb_substr') ? mb_substr($search, 0, 1, 'UTF-8') : substr($search, 0, 1);
+		if ($match === $this->to_upper($first) . $this->to_lower(substr($search, strlen($first)))) {
+			// Title case: capitalise the first letter of each word, keep the rest (iPhone stays iPhone).
+			$titled = preg_replace_callback('/(^|[\s-])(\S)/u', function ($m) {
+				return $m[1] . $this->to_upper($m[2]);
+			}, $replace);
+			return null === $titled ? $replace : $titled;
+		}
+		return $this->to_lower($replace);
+	}
+
+	/**
+	 * Multibyte-safe lower case, used to look up matched placeholders.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	private function lower_case($text) {
+		return $this->to_lower($text);
 	}
 
 	/**
@@ -1856,31 +1951,7 @@ class Bulk_Page_Duplicator_Core {
 			return $text;
 		}
 
-		$upper = $this->to_upper($search);
-		$first = function_exists('mb_substr') ? mb_substr($search, 0, 1, 'UTF-8') : substr($search, 0, 1);
-		$title = $this->to_upper($first) . $this->to_lower(substr($search, strlen($first)));
-		$flags = preg_match('//u', $text) && preg_match('//u', $search) ? 'iu' : 'i';
-
-		$result = preg_replace_callback(
-			'/' . preg_quote($search, '/') . '/' . $flags,
-			function ($match) use ($search, $replace, $upper, $title) {
-				if ($match[0] === $search) {
-					return $replace;
-				}
-				if ($match[0] === $upper) {
-					return $this->to_upper($replace);
-				}
-				if ($match[0] === $title) {
-					return preg_replace_callback('/(^|[\s-])(\S)/u', function ($m) {
-						return $m[1] . $this->to_upper($m[2]);
-					}, $replace);
-				}
-				return $this->to_lower($replace);
-			},
-			$text
-		);
-
-		return null === $result ? $text : $result;
+		return $this->replace_pairs($text, [[(string) $search, (string) $replace]]);
 	}
 
 	/**
