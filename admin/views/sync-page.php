@@ -78,7 +78,7 @@ $bulk_page_duplicator_main_url = admin_url('tools.php?page=bulk-page-duplicator'
 			'featured_image' => __('Removed from items when the template has none.', 'bulk-page-duplicator'),
 			'terms'          => __('Replaces the terms of each taxonomy the template uses. Terms chosen in the form when the items were generated are kept.', 'bulk-page-duplicator'),
 			'title'          => __('Overwrites titles, including any you changed by hand.', 'bulk-page-duplicator'),
-			'slug'           => __('Changes URLs. Links to the old address may break, although WordPress redirects old slugs of published items.', 'bulk-page-duplicator'),
+			'slug'           => __('Changes URLs. WordPress redirects the old address of posts, but not of pages or other hierarchical types, so links to their old URLs will break.', 'bulk-page-duplicator'),
 		);
 		?>
 		<div class="bpd-sync-template-header">

@@ -449,7 +449,9 @@ jQuery(function ($) {
 						"bulk-page-duplicator"
 					),
 					plan.update.length
-				));
+				) + ($("input[name='options[replace_options][]'][value='slug']").is(":checked")
+					? "\n\n" + __("If a row's value appears in the slug, that item's URL changes too. Old page URLs are not redirected.", "bulk-page-duplicator")
+					: ""));
 			}
 
 			const keys = plan.create.concat(allowUpdates ? plan.update : []);

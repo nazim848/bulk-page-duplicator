@@ -237,6 +237,9 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 * Added a Bulk Page Duplicator box to the editor showing how many items a template generated, or which template an item came from.
 * Generated items now record their template and replacement values.
 * Fixed backslashes in template content and Beaver Builder settings being removed during duplication.
+* Fixed All in One SEO 4 titles, descriptions, social titles and focus keyphrases not being copied or replaced (AIOSEO stores them in its own table).
+* Fixed page builder and SEO options being saved as off while that plugin was inactive. If Elementor replacement was turned off this way, tick "Elementor Data" once to turn it back on.
+* Clarified that WordPress does not redirect the old URLs of pages when their slug changes.
 * Added an "Open" link on the Plugins screen.
 
 = 1.1.1 =
