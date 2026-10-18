@@ -27,6 +27,8 @@ Yes, it is fully internationalized and ready for translation. The plugin include
 ### 1.2.0
 
 - One-click and bulk "Duplicate" actions in post lists, the admin bar and both editors.
+- Page Generators: reusable templates with rows; re-run to create, update or trash items.
+- Template Sync: push template changes to generated pages, with preview, hand-edit protection and revisions.
 - Bulk duplication copies the template's excerpt, menu order and (optionally) terms.
 
 ### 1.1.1

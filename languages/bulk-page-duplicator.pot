@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-17T19:17:31+00:00\n"
+"POT-Creation-Date: 2026-10-18T03:45:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: bulk-page-duplicator\n"
@@ -18,6 +18,7 @@ msgstr ""
 #: bulk-page-duplicator.php
 #: admin/class-bulk-page-duplicator-admin.php:35
 #: admin/class-bulk-page-duplicator-admin.php:36
+#: admin/class-bulk-page-duplicator-sync-admin.php:196
 #: admin/views/admin-page.php:29
 #: admin/assets/js/bulk-page-duplicator.js:1386
 msgid "Bulk Page Duplicator"
@@ -46,10 +47,12 @@ msgstr ""
 #: admin/class-bulk-page-duplicator-admin.php:235
 #: admin/class-bulk-page-duplicator-admin.php:275
 #: admin/class-bulk-page-duplicator-admin.php:293
-#: admin/class-bulk-page-duplicator-admin.php:461
-#: admin/class-bulk-page-duplicator-admin.php:507
-#: admin/class-bulk-page-duplicator-admin.php:589
-#: admin/class-bulk-page-duplicator-admin.php:615
+#: admin/class-bulk-page-duplicator-admin.php:442
+#: admin/class-bulk-page-duplicator-admin.php:488
+#: admin/class-bulk-page-duplicator-admin.php:570
+#: admin/class-bulk-page-duplicator-admin.php:596
+#: admin/class-bulk-page-duplicator-generators-admin.php:325
+#: admin/class-bulk-page-duplicator-sync-admin.php:256
 #: includes/class-bulk-page-duplicator.php:26
 msgid "Security check failed"
 msgstr ""
@@ -58,25 +61,31 @@ msgstr ""
 #: admin/class-bulk-page-duplicator-admin.php:240
 #: admin/class-bulk-page-duplicator-admin.php:280
 #: admin/class-bulk-page-duplicator-admin.php:298
-#: admin/class-bulk-page-duplicator-admin.php:466
-#: admin/class-bulk-page-duplicator-admin.php:512
-#: admin/class-bulk-page-duplicator-admin.php:594
-#: admin/class-bulk-page-duplicator-admin.php:620
+#: admin/class-bulk-page-duplicator-admin.php:447
+#: admin/class-bulk-page-duplicator-admin.php:493
+#: admin/class-bulk-page-duplicator-admin.php:575
+#: admin/class-bulk-page-duplicator-admin.php:601
+#: admin/class-bulk-page-duplicator-generators-admin.php:211
+#: admin/class-bulk-page-duplicator-generators-admin.php:296
+#: admin/class-bulk-page-duplicator-generators-admin.php:329
+#: admin/class-bulk-page-duplicator-sync-admin.php:260
 #: includes/class-bulk-page-duplicator.php:31
 msgid "You do not have permission to perform this action."
 msgstr ""
 
 #: admin/class-bulk-page-duplicator-admin.php:130
 #: admin/class-bulk-page-duplicator-admin.php:332
-#: admin/class-bulk-page-duplicator-admin.php:522
-#: includes/class-bulk-page-duplicator.php:70
+#: admin/class-bulk-page-duplicator-admin.php:503
+#: admin/class-bulk-page-duplicator-generators-admin.php:166
+#: includes/class-bulk-page-duplicator-generators.php:200
+#: includes/class-bulk-page-duplicator.php:146
 msgid "Invalid post type"
 msgstr ""
 
 #: admin/class-bulk-page-duplicator-admin.php:135
 #: admin/class-bulk-page-duplicator-admin.php:337
-#: admin/class-bulk-page-duplicator-admin.php:527
-#: includes/class-bulk-page-duplicator.php:75
+#: admin/class-bulk-page-duplicator-admin.php:508
+#: includes/class-bulk-page-duplicator.php:151
 msgid "You do not have permission to create this type of content."
 msgstr ""
 
@@ -89,470 +98,1058 @@ msgid "Preferences saved"
 msgstr ""
 
 #: admin/class-bulk-page-duplicator-admin.php:322
-#: admin/class-bulk-page-duplicator-admin.php:477
-#: includes/class-bulk-page-duplicator.php:89
+#: admin/class-bulk-page-duplicator-admin.php:458
+#: includes/class-bulk-page-duplicator-sync.php:244
+#: includes/class-bulk-page-duplicator.php:165
 msgid "Template not found"
 msgstr ""
 
 #: admin/class-bulk-page-duplicator-admin.php:326
-#: admin/class-bulk-page-duplicator-admin.php:481
-#: includes/class-bulk-page-duplicator.php:93
+#: admin/class-bulk-page-duplicator-admin.php:462
+#: admin/class-bulk-page-duplicator-generators-admin.php:168
+#: includes/class-bulk-page-duplicator-generators.php:209
+#: includes/class-bulk-page-duplicator-sync.php:247
+#: includes/class-bulk-page-duplicator.php:169
 msgid "You do not have permission to use this template."
 msgstr ""
 
 #. translators: %s: page slug
-#: admin/class-bulk-page-duplicator-admin.php:408
+#: admin/class-bulk-page-duplicator-admin.php:389
 #, php-format
 msgid "Slug \"%s\" already exists"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:444
-#: includes/class-bulk-page-duplicator.php:294
+#: admin/class-bulk-page-duplicator-admin.php:425
+#: includes/class-bulk-page-duplicator.php:1016
 msgid "Invalid parent item."
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:448
-#: includes/class-bulk-page-duplicator.php:298
+#: admin/class-bulk-page-duplicator-admin.php:429
+#: includes/class-bulk-page-duplicator.php:1020
 msgid "You do not have permission to use the selected parent."
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:472
+#: admin/class-bulk-page-duplicator-admin.php:453
 msgid "No template selected"
 msgstr ""
 
-#: admin/class-bulk-page-duplicator-admin.php:626
+#: admin/class-bulk-page-duplicator-admin.php:607
 msgid "No operation specified"
 msgstr ""
 
-#: admin/views/admin-page.php:32
-msgid "Post Type"
+#: admin/class-bulk-page-duplicator-generators-admin.php:51
+#: admin/class-bulk-page-duplicator-generators-admin.php:52
+#: admin/views/generators-page.php:13
+#: admin/assets/js/save-generator.js:19
+msgid "Page Generators"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:125
+#: admin/class-bulk-page-duplicator-sync-admin.php:162
+msgid "You do not have permission to access this page."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:139
+#: admin/class-bulk-page-duplicator-generators-admin.php:171
+#: admin/class-bulk-page-duplicator-generators-admin.php:343
+msgid "Generator not found."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:167
+#: includes/class-bulk-page-duplicator-generators.php:205
+msgid "Please select a template of the chosen post type."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:169
+#: includes/class-bulk-page-duplicator-generators.php:213
+#: admin/assets/js/bulk-page-duplicator.js:928
+#: admin/assets/js/bulk-page-duplicator.js:1118
+#: admin/assets/js/generators.js:277
+#: admin/assets/js/save-generator.js:59
+msgid "Please enter at least one placeholder."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:170
+msgid "Removing rows moves their items to the trash. Please confirm the removal and save again."
+msgstr ""
+
+#. translators: %1$d: row number, %2$d: number of placeholders.
+#: admin/class-bulk-page-duplicator-generators-admin.php:174
+#: includes/class-bulk-page-duplicator-generators.php:300
+#, php-format
+msgid "Row %1$d must have %2$d comma-separated values (one for each placeholder)."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:182
+msgid "The generator could not be saved."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:187
+msgid "Generator saved."
+msgstr ""
+
+#. translators: %d: number of items moved to the trash.
+#: admin/class-bulk-page-duplicator-generators-admin.php:190
+#, php-format
+msgid "%d item of a removed row was moved to the trash."
+msgid_plural "%d items of removed rows were moved to the trash."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of items that could not be trashed.
+#: admin/class-bulk-page-duplicator-generators-admin.php:194
+#, php-format
+msgid "%d item could not be moved to the trash."
+msgid_plural "%d items could not be moved to the trash."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:200
+msgid "Generator deleted. Its generated items were kept."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:466
+#: admin/assets/js/generators.js:214
+msgid "Not generated yet"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:470
+#: admin/class-bulk-page-duplicator-sync-admin.php:234
+#: admin/views/sync-page.php:55
+#: admin/views/sync-page.php:76
+#: includes/class-bulk-page-duplicator-sync.php:350
+#: includes/class-bulk-page-duplicator-sync.php:355
+msgid "(no title)"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:478
+msgid "In trash"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:479
+msgid "Changed: updates on next run"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:488
+#: admin/views/generators-page.php:56
+#: admin/assets/js/bulk-page-duplicator.js:1311
+#: admin/assets/js/sync.js:385
+msgid "Edit"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:492
+msgid "View"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-generators-admin.php:492
+#: admin/views/admin-page.php:175
+#: admin/views/sync-page.php:163
+msgid "Preview"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:87
+#: admin/class-bulk-page-duplicator-sync-admin.php:88
+#: admin/views/sync-page.php:16
+msgid "Template Sync"
+msgstr ""
+
+#. translators: %s: number of generated items.
+#: admin/class-bulk-page-duplicator-sync-admin.php:222
+#: admin/views/sync-page.php:98
+#, php-format
+msgid "%s item was generated from this template."
+msgid_plural "%s items were generated from this template."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:226
+#: admin/views/sync-page.php:62
+#: admin/views/sync-page.php:155
+#: admin/assets/js/sync.js:121
+msgid "Sync changes"
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:227
+msgid "Save your changes to this template first. You can preview the sync before anything is changed."
+msgstr ""
+
+#. translators: %s: link to the template.
+#: admin/class-bulk-page-duplicator-sync-admin.php:237
+#, php-format
+msgid "Generated from the template %s."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:241
+msgid "Generated from a template."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:244
+msgid "If you edit this item by hand, template syncs skip it unless you choose to overwrite it."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:284
+#: admin/assets/js/sync.js:262
+msgid "Select at least one thing to sync."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:289
+msgid "Syncing titles or slugs needs to be confirmed."
+msgstr ""
+
+#: admin/class-bulk-page-duplicator-sync-admin.php:331
+msgid "Too many items in one request."
+msgstr ""
+
+#: admin/views/admin-page.php:30
+msgid "Changed a template? Sync the changes to the items generated from it."
 msgstr ""
 
 #: admin/views/admin-page.php:33
+#: admin/views/generator-edit.php:91
+#: admin/views/generators-page.php:29
+msgid "Post Type"
+msgstr ""
+
+#: admin/views/admin-page.php:34
 msgid "Select the type of content you want to duplicate:"
 msgstr ""
 
-#: admin/views/admin-page.php:41
+#: admin/views/admin-page.php:42
 msgid "Select Template"
 msgstr ""
 
-#: admin/views/admin-page.php:42
+#: admin/views/admin-page.php:43
 msgid "Choose the item you want to use as a template for duplication:"
 msgstr ""
 
-#: admin/views/admin-page.php:44
+#: admin/views/admin-page.php:45
 #: admin/assets/js/bulk-page-duplicator.js:659
 #: admin/assets/js/bulk-page-duplicator.js:775
 msgid "Type to search templates..."
 msgstr ""
 
-#: admin/views/admin-page.php:51
+#: admin/views/admin-page.php:52
 msgid "No image"
 msgstr ""
 
-#: admin/views/admin-page.php:64
+#: admin/views/admin-page.php:65
 #: admin/assets/js/bulk-page-duplicator.js:642
 #: admin/assets/js/bulk-page-duplicator.js:764
 msgid "Loading templates..."
 msgstr ""
 
-#: admin/views/admin-page.php:66
+#: admin/views/admin-page.php:67
+#: admin/views/generator-edit.php:119
 msgid "Placeholders"
 msgstr ""
 
-#: admin/views/admin-page.php:67
+#: admin/views/admin-page.php:68
 msgid "Enter placeholder text(s) to replace. Use comma to separate multiple placeholders:"
 msgstr ""
 
-#: admin/views/admin-page.php:70
+#: admin/views/admin-page.php:71
 msgid "Examples: \"London\" (single) or \"London, UK\" (multiple, comma-separated)"
 msgstr ""
 
-#: admin/views/admin-page.php:73
+#: admin/views/admin-page.php:74
 msgid "Replacement Values"
 msgstr ""
 
-#: admin/views/admin-page.php:74
+#: admin/views/admin-page.php:75
 msgid "Enter one value per line, or import from a CSV file:"
 msgstr ""
 
-#: admin/views/admin-page.php:76
+#: admin/views/admin-page.php:77
 msgid "For multiple placeholders, separate values with commas (e.g., \"New York, USA\")"
 msgstr ""
 
-#: admin/views/admin-page.php:81
+#: admin/views/admin-page.php:82
 msgid "Drag & drop a CSV file here, or"
 msgstr ""
 
-#: admin/views/admin-page.php:83
+#: admin/views/admin-page.php:84
 msgid "Browse Files"
 msgstr ""
 
-#: admin/views/admin-page.php:86
+#: admin/views/admin-page.php:87
 msgid "Supported: .csv and .txt files"
 msgstr ""
 
-#: admin/views/admin-page.php:92
+#: admin/views/admin-page.php:93
+#: admin/views/generator-edit.php:224
+#: admin/assets/js/generators.js:217
+#: admin/assets/js/generators.js:236
 msgid "Remove"
 msgstr ""
 
-#: admin/views/admin-page.php:104
+#: admin/views/admin-page.php:105
 msgid "Parent Page"
 msgstr ""
 
-#: admin/views/admin-page.php:105
+#: admin/views/admin-page.php:106
 msgid "Optionally assign a parent for all created items:"
 msgstr ""
 
-#: admin/views/admin-page.php:107
+#: admin/views/admin-page.php:108
+#: admin/views/generator-edit.php:139
 #: admin/assets/js/bulk-page-duplicator.js:672
 msgid "No parent (top level)"
 msgstr ""
 
-#: admin/views/admin-page.php:108
+#: admin/views/admin-page.php:109
+#: admin/views/generator-edit.php:140
 #: admin/assets/js/bulk-page-duplicator.js:673
 msgid "Same as template"
 msgstr ""
 
-#: admin/views/admin-page.php:116
-#: admin/views/admin-page.php:304
+#: admin/views/admin-page.php:117
+#: admin/views/admin-page.php:305
 #: admin/assets/js/bulk-page-duplicator.js:1451
 msgid "Status"
 msgstr ""
 
-#: admin/views/admin-page.php:117
+#: admin/views/admin-page.php:118
 msgid "Select status for the created items:"
 msgstr ""
 
-#: admin/views/admin-page.php:119
+#: admin/views/admin-page.php:120
+#: admin/views/generator-edit.php:130
 msgid "Published"
 msgstr ""
 
-#: admin/views/admin-page.php:120
+#: admin/views/admin-page.php:121
+#: admin/views/generator-edit.php:129
 msgid "Draft"
 msgstr ""
 
-#: admin/views/admin-page.php:123
+#: admin/views/admin-page.php:124
 msgid "Categories & Tags"
 msgstr ""
 
-#: admin/views/admin-page.php:124
+#: admin/views/admin-page.php:125
 msgid "Assign taxonomy terms to all created items:"
 msgstr ""
 
-#: admin/views/admin-page.php:127
+#: admin/views/admin-page.php:128
+#: admin/views/generator-edit.php:180
 msgid "Loading taxonomies..."
 msgstr ""
 
-#: admin/views/admin-page.php:131
+#: admin/views/admin-page.php:132
 msgid "Select terms to assign to all duplicated items."
 msgstr ""
 
-#: admin/views/admin-page.php:134
+#: admin/views/admin-page.php:135
 msgid "Where to Replace Text"
 msgstr ""
 
-#: admin/views/admin-page.php:135
+#: admin/views/admin-page.php:136
 msgid "Select where the text should be replaced:"
 msgstr ""
 
-#: admin/views/admin-page.php:137
+#: admin/views/admin-page.php:138
 msgid "Page Title"
 msgstr ""
 
-#: admin/views/admin-page.php:138
+#: admin/views/admin-page.php:139
 msgid "Page Slug"
 msgstr ""
 
-#: admin/views/admin-page.php:139
+#: admin/views/admin-page.php:140
 msgid "Page Content"
 msgstr ""
 
-#: admin/views/admin-page.php:141
+#: admin/views/admin-page.php:142
 msgid "Data (if exists)"
 msgstr ""
 
-#: admin/views/admin-page.php:144
+#: admin/views/admin-page.php:145
 msgid "SEO Meta Data"
 msgstr ""
 
-#: admin/views/admin-page.php:147
+#: admin/views/admin-page.php:148
 msgid "Additional Options"
 msgstr ""
 
-#: admin/views/admin-page.php:149
+#: admin/views/admin-page.php:150
 msgid "Copy Featured Image"
 msgstr ""
 
-#: admin/views/admin-page.php:150
+#: admin/views/admin-page.php:151
 msgid "Copy the template's featured image to all duplicated items."
 msgstr ""
 
-#: admin/views/admin-page.php:151
+#: admin/views/admin-page.php:152
 msgid "Copy Template Terms"
 msgstr ""
 
-#: admin/views/admin-page.php:152
+#: admin/views/admin-page.php:153
 msgid "Copy the template's categories, tags and other terms. Terms selected above are added to them."
 msgstr ""
 
-#: admin/views/admin-page.php:155
+#: admin/views/admin-page.php:156
+#: admin/views/sync-page.php:145
 msgid "Progress"
 msgstr ""
 
-#: admin/views/admin-page.php:167
+#: admin/views/admin-page.php:168
 msgid "Dry Run (Preview)"
 msgstr ""
 
-#: admin/views/admin-page.php:168
+#: admin/views/admin-page.php:169
 msgid "Start Duplication"
 msgstr ""
 
-#: admin/views/admin-page.php:169
+#: admin/views/admin-page.php:170
+#: admin/views/sync-page.php:156
 #: admin/assets/js/bulk-page-duplicator.js:1392
+#: admin/assets/js/sync.js:59
 msgid "Cancel"
 msgstr ""
 
-#: admin/views/admin-page.php:174
-msgid "Preview"
-msgstr ""
-
-#: admin/views/admin-page.php:175
+#: admin/views/admin-page.php:176
 msgid "Preview of the first item that will be created:"
 msgstr ""
 
-#: admin/views/admin-page.php:178
+#: admin/views/admin-page.php:179
 msgid "Title:"
 msgstr ""
 
-#: admin/views/admin-page.php:182
+#: admin/views/admin-page.php:183
 msgid "Slug:"
 msgstr ""
 
-#: admin/views/admin-page.php:186
+#: admin/views/admin-page.php:187
 msgid "Items to create:"
 msgstr ""
 
-#: admin/views/admin-page.php:191
+#: admin/views/admin-page.php:192
 msgid "How It Works"
 msgstr ""
 
-#: admin/views/admin-page.php:193
+#: admin/views/admin-page.php:194
 msgid "Create a template page with placeholder text (e.g., \"London\" for a city-based service page)."
 msgstr ""
 
-#: admin/views/admin-page.php:194
+#: admin/views/admin-page.php:195
 msgid "Select your template and enter the placeholder text to find and replace."
 msgstr ""
 
-#: admin/views/admin-page.php:195
+#: admin/views/admin-page.php:196
 msgid "Enter replacement values (one per line) - each creates a new page."
 msgstr ""
 
-#: admin/views/admin-page.php:196
+#: admin/views/admin-page.php:197
 msgid "Choose which areas to apply replacements (title, content, page builder data, etc.)."
 msgstr ""
 
-#: admin/views/admin-page.php:197
+#: admin/views/admin-page.php:198
 msgid "Click \"Start Duplication\" to create all pages automatically."
 msgstr ""
 
-#: admin/views/admin-page.php:200
+#: admin/views/admin-page.php:201
 msgid "Multiple Placeholders"
 msgstr ""
 
-#: admin/views/admin-page.php:201
+#: admin/views/admin-page.php:202
 msgid "You can use multiple placeholders separated by commas. For example:"
 msgstr ""
 
-#: admin/views/admin-page.php:203
+#: admin/views/admin-page.php:204
 msgid "Placeholders: \"London, UK\" (two placeholders)"
 msgstr ""
 
-#: admin/views/admin-page.php:204
+#: admin/views/admin-page.php:205
 msgid "Values: \"New York, USA\" and \"Paris, France\" (one per line)"
 msgstr ""
 
-#: admin/views/admin-page.php:205
+#: admin/views/admin-page.php:206
 msgid "Result: \"London\" → \"New York\" and \"UK\" → \"USA\" in the first page"
 msgstr ""
 
-#: admin/views/admin-page.php:208
+#: admin/views/admin-page.php:209
 msgid "Page Builder Support"
 msgstr ""
 
-#: admin/views/admin-page.php:209
+#: admin/views/admin-page.php:210
 msgid "This plugin supports placeholder replacement in:"
 msgstr ""
 
-#: admin/views/admin-page.php:211
+#: admin/views/admin-page.php:212
 msgid "Elementor"
 msgstr ""
 
-#: admin/views/admin-page.php:211
+#: admin/views/admin-page.php:212
 msgid "All text widgets, headings, and content areas"
 msgstr ""
 
-#: admin/views/admin-page.php:212
+#: admin/views/admin-page.php:213
 msgid "Beaver Builder"
 msgstr ""
 
-#: admin/views/admin-page.php:212
+#: admin/views/admin-page.php:213
 msgid "Module settings and text content"
 msgstr ""
 
-#: admin/views/admin-page.php:213
+#: admin/views/admin-page.php:214
 msgid "Bricks Builder"
 msgstr ""
 
-#: admin/views/admin-page.php:213
+#: admin/views/admin-page.php:214
 msgid "Element settings and nested content"
 msgstr ""
 
-#: admin/views/admin-page.php:215
+#: admin/views/admin-page.php:216
 msgid "Keep the page builder options checked even if you're unsure - the plugin will only process data if it exists."
 msgstr ""
 
-#: admin/views/admin-page.php:217
+#: admin/views/admin-page.php:218
 msgid "Tips for Best Results"
 msgstr ""
 
-#: admin/views/admin-page.php:219
+#: admin/views/admin-page.php:220
 msgid "Use unique placeholder text that won't accidentally match other content (e.g., \"CITYNAME\" instead of common words)."
 msgstr ""
 
-#: admin/views/admin-page.php:220
+#: admin/views/admin-page.php:221
 msgid "The replacement is case-preserving: \"London\" → \"Paris\", \"LONDON\" → \"PARIS\", \"london\" → \"paris\"."
 msgstr ""
 
-#: admin/views/admin-page.php:221
+#: admin/views/admin-page.php:222
 msgid "Pages with duplicate slugs will be skipped - check the results log for details."
 msgstr ""
 
-#: admin/views/admin-page.php:222
+#: admin/views/admin-page.php:223
 msgid "Use \"Draft\" status first to review pages before publishing."
 msgstr ""
 
-#: admin/views/admin-page.php:223
+#: admin/views/admin-page.php:224
 msgid "Large batches are processed automatically - don't close the browser tab during processing."
 msgstr ""
 
-#: admin/views/admin-page.php:226
+#: admin/views/admin-page.php:227
 msgid "Common Use Cases"
 msgstr ""
 
-#: admin/views/admin-page.php:228
+#: admin/views/admin-page.php:229
 msgid "Location-based service pages (e.g., \"Plumber in London\" → multiple cities)"
 msgstr ""
 
-#: admin/views/admin-page.php:229
+#: admin/views/admin-page.php:230
 msgid "Product variations (e.g., \"Blue Widget\" → multiple colors)"
 msgstr ""
 
-#: admin/views/admin-page.php:230
+#: admin/views/admin-page.php:231
 msgid "Team member profiles with consistent layouts"
 msgstr ""
 
-#: admin/views/admin-page.php:231
+#: admin/views/admin-page.php:232
 msgid "Landing pages for different campaigns or audiences"
 msgstr ""
 
-#: admin/views/admin-page.php:234
+#: admin/views/admin-page.php:235
+#: admin/views/sync-page.php:211
 msgid "Results Log"
 msgstr ""
 
-#: admin/views/admin-page.php:236
+#: admin/views/admin-page.php:237
 msgid "created"
 msgstr ""
 
-#: admin/views/admin-page.php:237
+#: admin/views/admin-page.php:238
+#: admin/views/sync-page.php:214
 msgid "skipped"
 msgstr ""
 
-#: admin/views/admin-page.php:238
+#: admin/views/admin-page.php:239
+#: admin/views/sync-page.php:216
 msgid "errors"
 msgstr ""
 
-#: admin/views/admin-page.php:242
+#: admin/views/admin-page.php:243
+#: admin/views/sync-page.php:190
 msgid "All"
 msgstr ""
 
-#: admin/views/admin-page.php:243
+#: admin/views/admin-page.php:244
 msgid "Success"
 msgstr ""
 
-#: admin/views/admin-page.php:244
+#: admin/views/admin-page.php:245
 msgid "Skipped"
 msgstr ""
 
-#: admin/views/admin-page.php:245
+#: admin/views/admin-page.php:246
 msgid "Errors"
 msgstr ""
 
-#: admin/views/admin-page.php:248
+#: admin/views/admin-page.php:249
 msgid "Export CSV"
 msgstr ""
 
-#: admin/views/admin-page.php:254
+#: admin/views/admin-page.php:255
 msgid "Recent Operations"
 msgstr ""
 
-#: admin/views/admin-page.php:255
+#: admin/views/admin-page.php:256
 msgid "You can rollback (delete) pages created by recent operations."
 msgstr ""
 
-#: admin/views/admin-page.php:258
+#: admin/views/admin-page.php:259
 msgid "Loading history..."
 msgstr ""
 
-#: admin/views/admin-page.php:262
+#: admin/views/admin-page.php:263
 msgid "No recent operations found."
 msgstr ""
 
-#: admin/views/admin-page.php:266
+#: admin/views/admin-page.php:267
 msgid "Refresh History"
 msgstr ""
 
-#: admin/views/admin-page.php:277
+#: admin/views/admin-page.php:278
 msgid "Dry Run Preview"
 msgstr ""
 
-#: admin/views/admin-page.php:278
-#: admin/views/admin-page.php:317
+#: admin/views/admin-page.php:279
+#: admin/views/admin-page.php:318
 msgid "Close"
 msgstr ""
 
-#: admin/views/admin-page.php:283
+#: admin/views/admin-page.php:284
 msgid "Generating preview..."
 msgstr ""
 
-#: admin/views/admin-page.php:289
+#: admin/views/admin-page.php:290
 msgid "Total"
 msgstr ""
 
-#: admin/views/admin-page.php:293
+#: admin/views/admin-page.php:294
 msgid "Will Create"
 msgstr ""
 
-#: admin/views/admin-page.php:297
+#: admin/views/admin-page.php:298
 msgid "Will Skip"
 msgstr ""
 
-#: admin/views/admin-page.php:305
+#: admin/views/admin-page.php:306
 #: admin/assets/js/bulk-page-duplicator.js:1450
 msgid "Value"
 msgstr ""
 
-#: admin/views/admin-page.php:306
+#: admin/views/admin-page.php:307
+#: admin/views/generator-edit.php:31
+#: includes/class-bulk-page-duplicator-sync.php:76
 msgid "Title"
 msgstr ""
 
-#: admin/views/admin-page.php:307
+#: admin/views/admin-page.php:308
+#: admin/views/generator-edit.php:32
+#: includes/class-bulk-page-duplicator-sync.php:77
 msgid "Slug"
 msgstr ""
 
-#: admin/views/admin-page.php:318
+#: admin/views/admin-page.php:319
 msgid "Proceed with Duplication"
+msgstr ""
+
+#: admin/views/generator-edit.php:33
+msgid "Content and excerpt"
+msgstr ""
+
+#. translators: %s: page builder name.
+#: admin/views/generator-edit.php:37
+#, php-format
+msgid "%s data (if exists)"
+msgstr ""
+
+#: admin/views/generator-edit.php:40
+msgid "SEO meta data"
+msgstr ""
+
+#: admin/views/generator-edit.php:43
+msgid "Copy featured image"
+msgstr ""
+
+#: admin/views/generator-edit.php:44
+msgid "Copy template terms"
+msgstr ""
+
+#: admin/views/generator-edit.php:66
+msgid "Edit Generator"
+msgstr ""
+
+#: admin/views/generator-edit.php:66
+msgid "New Generator"
+msgstr ""
+
+#: admin/views/generator-edit.php:68
+msgid "All Generators"
+msgstr ""
+
+#: admin/views/generator-edit.php:84
+msgid "Settings"
+msgstr ""
+
+#: admin/views/generator-edit.php:87
+#: admin/views/generators-page.php:27
+msgid "Name"
+msgstr ""
+
+#: admin/views/generator-edit.php:101
+#: admin/views/generators-page.php:28
+#: admin/views/sync-page.php:44
+msgid "Template"
+msgstr ""
+
+#: admin/views/generator-edit.php:103
+msgid "Search templates..."
+msgstr ""
+
+#: admin/views/generator-edit.php:106
+msgid "Select a template"
+msgstr ""
+
+#. translators: %1$s: template title, %2$d: template ID.
+#: admin/views/generator-edit.php:111
+#, php-format
+msgid "%1$s (ID: %2$d)"
+msgstr ""
+
+#: admin/views/generator-edit.php:122
+msgid "Text to replace. Separate multiple placeholders with commas, e.g. \"London, UK\"."
+msgstr ""
+
+#: admin/views/generator-edit.php:126
+msgid "Status for new items"
+msgstr ""
+
+#: admin/views/generator-edit.php:132
+msgid "Updating an existing item keeps its current status."
+msgstr ""
+
+#: admin/views/generator-edit.php:136
+msgid "Parent"
+msgstr ""
+
+#: admin/views/generator-edit.php:148
+msgid "Replace text in"
+msgstr ""
+
+#: admin/views/generator-edit.php:161
+msgid "Additional options"
+msgstr ""
+
+#: admin/views/generator-edit.php:171
+msgid "Assign terms"
+msgstr ""
+
+#: admin/views/generator-edit.php:187
+msgid "Rows and Generated Items"
+msgstr ""
+
+#: admin/views/generator-edit.php:189
+msgid "Each row creates one item. With multiple placeholders, separate the values in a row with commas. Editing a row re-renders its item on the next run; removing a row moves its item to the trash when you save."
+msgstr ""
+
+#. translators: %d: number of items no longer matching a row.
+#: admin/views/generator-edit.php:195
+#, php-format
+msgid "%d item linked to this generator no longer matches a row and is left untouched."
+msgid_plural "%d items linked to this generator no longer match a row and are left untouched."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/views/generator-edit.php:204
+msgid "Values"
+msgstr ""
+
+#: admin/views/generator-edit.php:205
+msgid "Generated Item"
+msgstr ""
+
+#: admin/views/generator-edit.php:206
+#: admin/views/sync-page.php:48
+msgid "Actions"
+msgstr ""
+
+#: admin/views/generator-edit.php:220
+#: admin/assets/js/generators.js:210
+msgid "Row values"
+msgstr ""
+
+#: admin/views/generator-edit.php:230
+msgid "No rows yet. Add rows below."
+msgstr ""
+
+#: admin/views/generator-edit.php:231
+msgid "Add Row"
+msgstr ""
+
+#: admin/views/generator-edit.php:233
+msgid "Add Many Rows"
+msgstr ""
+
+#: admin/views/generator-edit.php:234
+msgid "Paste one row per line, or load a CSV or TXT file. These rows are added when you save."
+msgstr ""
+
+#: admin/views/generator-edit.php:238
+msgid "Load File"
+msgstr ""
+
+#: admin/views/generator-edit.php:244
+msgid "Run Progress"
+msgstr ""
+
+#: admin/views/generator-edit.php:251
+msgid "Save Generator"
+msgstr ""
+
+#: admin/views/generator-edit.php:252
+msgid "Save and Run"
+msgstr ""
+
+#. translators: %s: date and time of the last run.
+#: admin/views/generator-edit.php:258
+#, php-format
+msgid "Last run: %s"
+msgstr ""
+
+#: admin/views/generator-edit.php:260
+msgid "Not run yet."
+msgstr ""
+
+#: admin/views/generators-page.php:14
+msgid "Add New Generator"
+msgstr ""
+
+#: admin/views/generators-page.php:15
+msgid "One-off Bulk Duplication"
+msgstr ""
+
+#: admin/views/generators-page.php:22
+msgid "A generator remembers a template, its placeholders and a list of rows. Run it again at any time: missing items are created, edited rows are re-rendered and removed rows are moved to the trash."
+msgstr ""
+
+#: admin/views/generators-page.php:30
+msgid "Generated"
+msgstr ""
+
+#: admin/views/generators-page.php:31
+msgid "Last Run"
+msgstr ""
+
+#: admin/views/generators-page.php:37
+msgid "No generators yet. Create one, or use \"Save as Generator\" on the bulk duplication screen."
+msgstr ""
+
+#: admin/views/generators-page.php:57
+msgid "Delete this generator? Its generated items will be kept."
+msgstr ""
+
+#: admin/views/generators-page.php:57
+msgid "Delete"
+msgstr ""
+
+#: admin/views/generators-page.php:69
+msgid "Template missing"
+msgstr ""
+
+#. translators: %1$d: number of generated items, %2$d: number of rows.
+#: admin/views/generators-page.php:76
+#, php-format
+msgid "%1$d of %2$d rows"
+msgstr ""
+
+#: admin/views/generators-page.php:83
+msgid "Never"
+msgstr ""
+
+#: admin/views/sync-page.php:17
+msgid "Back to Bulk Page Duplicator"
+msgstr ""
+
+#: admin/views/sync-page.php:22
+#: admin/views/sync-page.php:102
+msgid "Choose another template"
+msgstr ""
+
+#: admin/views/sync-page.php:37
+msgid "Push changes you made to a template to the items generated from it. Choose a template:"
+msgstr ""
+
+#: admin/views/sync-page.php:39
+msgid "No templates with generated items were found. Only items generated by recent versions of Bulk Page Duplicator remember their template."
+msgstr ""
+
+#: admin/views/sync-page.php:45
+msgid "Type"
+msgstr ""
+
+#: admin/views/sync-page.php:46
+msgid "Generated items"
+msgstr ""
+
+#: admin/views/sync-page.php:47
+msgid "Last modified"
+msgstr ""
+
+#: admin/views/sync-page.php:78
+msgid "Removed from items when the template has none."
+msgstr ""
+
+#: admin/views/sync-page.php:79
+msgid "Replaces the terms of each taxonomy the template uses. Terms chosen in the form when the items were generated are kept."
+msgstr ""
+
+#: admin/views/sync-page.php:80
+msgid "Overwrites titles, including any you changed by hand."
+msgstr ""
+
+#: admin/views/sync-page.php:81
+msgid "Changes URLs. Links to the old address may break, although WordPress redirects old slugs of published items."
+msgstr ""
+
+#. translators: %s: template title.
+#: admin/views/sync-page.php:89
+#: admin/assets/js/bulk-page-duplicator.js:1511
+#, php-format,js-format
+msgid "Template: %s"
+msgstr ""
+
+#: admin/views/sync-page.php:107
+msgid "There is nothing to sync for this template."
+msgstr ""
+
+#: admin/views/sync-page.php:110
+msgid "Revisions are disabled for this content type, so a sync cannot be undone from the Revisions screen. Consider taking a backup first."
+msgstr ""
+
+#: admin/views/sync-page.php:115
+#: admin/views/sync-page.php:119
+msgid "What to sync"
+msgstr ""
+
+#: admin/views/sync-page.php:116
+msgid "Each item is re-rendered from the current template using the values it was generated with. Only the parts you select are written."
+msgstr ""
+
+#: admin/views/sync-page.php:117
+msgid "Items managed by a page generator use the current values of their generator row. To change those values, edit the row in the generator."
+msgstr ""
+
+#: admin/views/sync-page.php:132
+#: admin/views/sync-page.php:134
+msgid "Use with care"
+msgstr ""
+
+#: admin/views/sync-page.php:154
+msgid "Preview changes"
+msgstr ""
+
+#: admin/views/sync-page.php:158
+msgid "A revision of each item is saved before it is changed, so you can undo a sync from the item's Revisions screen."
+msgstr ""
+
+#: admin/views/sync-page.php:167
+#: admin/views/sync-page.php:191
+msgid "Will update"
+msgstr ""
+
+#: admin/views/sync-page.php:171
+msgid "Up to date"
+msgstr ""
+
+#: admin/views/sync-page.php:175
+#: admin/views/sync-page.php:192
+#: admin/assets/js/sync.js:85
+msgid "Edited by hand"
+msgstr ""
+
+#: admin/views/sync-page.php:179
+#: admin/views/sync-page.php:193
+#: admin/assets/js/sync.js:89
+msgid "Cannot sync"
+msgstr ""
+
+#: admin/views/sync-page.php:185
+msgid "Also overwrite all items edited by hand"
+msgstr ""
+
+#: admin/views/sync-page.php:188
+msgid "Items edited by hand since they were generated (or last synced) are skipped unless you tick \"Overwrite\" for them. \"Possibly edited\" means the item was generated before edit tracking existed and has been modified since."
+msgstr ""
+
+#: admin/views/sync-page.php:199
+msgid "Item"
+msgstr ""
+
+#: admin/views/sync-page.php:200
+msgid "State"
+msgstr ""
+
+#: admin/views/sync-page.php:201
+msgid "Changes"
+msgstr ""
+
+#: admin/views/sync-page.php:202
+msgid "Overwrite"
+msgstr ""
+
+#: admin/views/sync-page.php:213
+msgid "updated"
+msgstr ""
+
+#: admin/views/sync-page.php:215
+msgid "up to date"
+msgstr ""
+
+#: admin/views/sync-page.php:222
+msgid "Recent Syncs"
+msgstr ""
+
+#: admin/views/sync-page.php:224
+msgid "This template has not been synced yet."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-generators.php:89
+msgid "Generators"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-generators.php:90
+msgid "Generator"
+msgstr ""
+
+#. translators: %s: template title.
+#: includes/class-bulk-page-duplicator-generators.php:218
+#, php-format
+msgid "Generator for \"%s\""
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-generators.php:627
+msgid "The item for this row is in the trash. Restore it or remove the row."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-generators.php:633
+#: includes/class-bulk-page-duplicator-sync.php:476
+msgid "Already up to date."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-generators.php:640
+msgid "Changed row left as is."
+msgstr ""
+
+#. translators: %s: result message.
+#: includes/class-bulk-page-duplicator-generators.php:723
+#, php-format
+msgid "Linked existing item. %s"
+msgstr ""
+
+#. translators: %s: title of the existing item.
+#: includes/class-bulk-page-duplicator-generators.php:732
+#, php-format
+msgid "Linked existing item \"%s\"."
 msgstr ""
 
 #. translators: %s: item title.
@@ -606,84 +1203,174 @@ msgstr[1] ""
 msgid "Duplicate as new draft"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:79
+#: includes/class-bulk-page-duplicator-sync.php:67
+msgid "Content"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:68
+msgid "Excerpt"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:69
+msgid "Elementor data"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:70
+msgid "Beaver Builder data"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:71
+msgid "Bricks Builder data"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:72
+msgid "SEO meta"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:73
+msgid "Featured image"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:74
+msgid "Page template"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:75
+msgid "Terms"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:315
+msgid "Item not found."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:318
+msgid "This item was not generated from the selected template."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:321
+#: includes/class-bulk-page-duplicator.php:353
+msgid "You do not have permission to edit this item."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:326
+msgid "This item has no stored placeholder values."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:455
+msgid "Skipped: edited by hand since it was generated."
+msgstr ""
+
+#. translators: %s: comma-separated list of updated fields.
+#: includes/class-bulk-page-duplicator-sync.php:500
+#, php-format
+msgid "Updated: %s."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:502
+msgid "No revision was saved for this item."
+msgstr ""
+
+#. translators: %s: warning details.
+#: includes/class-bulk-page-duplicator-sync.php:506
+#, php-format
+msgid "Warning: %s"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator-sync.php:677
+#: includes/class-bulk-page-duplicator.php:1115
+msgid "Unknown"
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:155
 msgid "Invalid post status."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:83
+#: includes/class-bulk-page-duplicator.php:159
 msgid "You do not have permission to publish this type of content."
 msgstr ""
 
 #. translators: %s: The slug that already exists.
-#: includes/class-bulk-page-duplicator.php:158
+#: includes/class-bulk-page-duplicator.php:262
 #, php-format
 msgid "Item with slug \"%s\" already exists"
 msgstr ""
 
 #. translators: %s: title of the newly created item.
-#: includes/class-bulk-page-duplicator.php:234
+#: includes/class-bulk-page-duplicator.php:303
 #, php-format
 msgid "Created: \"%s\""
 msgstr ""
 
 #. translators: %s: actual unique slug assigned by WordPress.
-#: includes/class-bulk-page-duplicator.php:237
+#: includes/class-bulk-page-duplicator.php:306
 #, php-format
 msgid "WordPress assigned the unique slug \"%s\"."
 msgstr ""
 
 #. translators: %1$s: creation message, %2$s: warning details.
-#: includes/class-bulk-page-duplicator.php:241
+#. translators: %1$s: update message, %2$s: warning details.
+#: includes/class-bulk-page-duplicator.php:310
+#: includes/class-bulk-page-duplicator.php:382
 #, php-format
 msgid "%1$s Warning: %2$s"
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:317
+#: includes/class-bulk-page-duplicator.php:345
+msgid "The item to update was not found."
+msgstr ""
+
+#. translators: %s: title of the updated item.
+#: includes/class-bulk-page-duplicator.php:379
+#, php-format
+msgid "Updated: \"%s\""
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:543
+msgid "The template or item no longer exists."
+msgstr ""
+
+#: includes/class-bulk-page-duplicator.php:1039
 msgid "Invalid taxonomy selection."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:321
+#: includes/class-bulk-page-duplicator.php:1043
 msgid "You do not have permission to assign the selected terms."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:327
+#: includes/class-bulk-page-duplicator.php:1049
 msgid "One or more selected terms no longer exist."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:393
-msgid "Unknown"
-msgstr ""
-
-#: includes/class-bulk-page-duplicator.php:477
+#: includes/class-bulk-page-duplicator.php:1199
 msgid "Operation not found in history."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:485
+#: includes/class-bulk-page-duplicator.php:1207
 msgid "You do not have permission to rollback this operation."
 msgstr ""
 
 #. translators: %1$d: number of deleted posts, %2$d: number of failed deletions
-#: includes/class-bulk-page-duplicator.php:524
+#: includes/class-bulk-page-duplicator.php:1246
 #, php-format
 msgid "Deleted %1$d items. %2$d items could not be deleted."
 msgstr ""
 
 #. translators: %d: number of deleted posts
-#: includes/class-bulk-page-duplicator.php:531
+#: includes/class-bulk-page-duplicator.php:1253
 #, php-format
 msgid "Successfully deleted %d items."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:544
+#: includes/class-bulk-page-duplicator.php:1266
 msgid "The item to duplicate was not found."
 msgstr ""
 
-#: includes/class-bulk-page-duplicator.php:548
+#: includes/class-bulk-page-duplicator.php:1270
 msgid "You do not have permission to duplicate this item."
 msgstr ""
 
 #. translators: %s: title of the item being duplicated.
-#: includes/class-bulk-page-duplicator.php:552
+#: includes/class-bulk-page-duplicator.php:1274
 #, php-format
 msgid "%s (Copy)"
 msgstr ""
@@ -790,12 +1477,9 @@ msgstr[1] ""
 
 #: admin/assets/js/bulk-page-duplicator.js:923
 #: admin/assets/js/bulk-page-duplicator.js:1113
+#: admin/assets/js/generators.js:272
+#: admin/assets/js/save-generator.js:55
 msgid "Please select a template."
-msgstr ""
-
-#: admin/assets/js/bulk-page-duplicator.js:928
-#: admin/assets/js/bulk-page-duplicator.js:1118
-msgid "Please enter at least one placeholder."
 msgstr ""
 
 #: admin/assets/js/bulk-page-duplicator.js:933
@@ -806,6 +1490,10 @@ msgstr ""
 #: admin/assets/js/bulk-page-duplicator.js:987
 #: admin/assets/js/bulk-page-duplicator.js:1354
 #: admin/assets/js/bulk-page-duplicator.js:1575
+#: admin/assets/js/generators.js:375
+#: admin/assets/js/generators.js:432
+#: admin/assets/js/save-generator.js:109
+#: admin/assets/js/sync.js:198
 #, js-format
 msgid "Error: %s"
 msgstr ""
@@ -837,6 +1525,7 @@ msgid "Proceed with Duplication (%d items)"
 msgstr ""
 
 #: admin/assets/js/bulk-page-duplicator.js:1143
+#: admin/assets/js/save-generator.js:66
 #, js-format
 msgid ""
 "Each line must have %1$d comma-separated values (one for each placeholder).\n"
@@ -850,6 +1539,7 @@ msgid "You are about to create %d pages. Continue?"
 msgstr ""
 
 #: admin/assets/js/bulk-page-duplicator.js:1215
+#: admin/assets/js/sync.js:249
 msgid "Cancelling..."
 msgstr ""
 
@@ -880,16 +1570,13 @@ msgstr ""
 msgid "All pages have been processed successfully!"
 msgstr ""
 
-#: admin/assets/js/bulk-page-duplicator.js:1311
-msgid "Edit"
-msgstr ""
-
 #: admin/assets/js/bulk-page-duplicator.js:1356
 #: admin/assets/js/bulk-page-duplicator.js:1364
 msgid "An error occurred during processing."
 msgstr ""
 
 #: admin/assets/js/bulk-page-duplicator.js:1362
+#: admin/assets/js/generators.js:406
 #, js-format
 msgid "AJAX Error: %s"
 msgstr ""
@@ -928,11 +1615,6 @@ msgstr[1] ""
 msgid "%1$d of %2$d remain"
 msgstr ""
 
-#: admin/assets/js/bulk-page-duplicator.js:1511
-#, js-format
-msgid "Template: %s"
-msgstr ""
-
 #: admin/assets/js/bulk-page-duplicator.js:1526
 #: admin/assets/js/bulk-page-duplicator.js:1574
 #: admin/assets/js/bulk-page-duplicator.js:1579
@@ -940,6 +1622,7 @@ msgid "Rollback (Delete All)"
 msgstr ""
 
 #: admin/assets/js/bulk-page-duplicator.js:1537
+#: admin/assets/js/sync.js:519
 msgid "Error loading history."
 msgstr ""
 
@@ -953,5 +1636,179 @@ msgid "Deleting..."
 msgstr ""
 
 #: admin/assets/js/bulk-page-duplicator.js:1580
+#: admin/assets/js/generators.js:463
+#: admin/assets/js/save-generator.js:112
 msgid "An error occurred. Please try again."
+msgstr ""
+
+#: admin/assets/js/generators.js:236
+msgid "Undo"
+msgstr ""
+
+#: admin/assets/js/generators.js:300
+#, js-format
+msgid ""
+"Each row must have %1$d comma-separated values (one for each placeholder).\n"
+"\n"
+"Placeholders: %2$s"
+msgstr ""
+
+#: admin/assets/js/generators.js:311
+#, js-format
+msgid "%d removed row has a generated item. It will be moved to the trash. Continue?"
+msgid_plural "%d removed rows have generated items. They will be moved to the trash. Continue?"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: percent done, 2: items done, 3: total items.
+#: admin/assets/js/generators.js:356
+#: admin/assets/js/sync.js:47
+#, js-format
+msgid "%1$d%% (%2$d of %3$d)"
+msgstr ""
+
+#: admin/assets/js/generators.js:398
+#, js-format
+msgid "Done: %1$d created, %2$d updated, %3$d linked, %4$d skipped, %5$d errors."
+msgstr ""
+
+#: admin/assets/js/generators.js:424
+msgid "Checking rows..."
+msgstr ""
+
+#: admin/assets/js/generators.js:440
+#, js-format
+msgid "%d existing item will be re-rendered from the template with its new values, overwriting manual edits to it. Press OK to update it, or Cancel to only create missing items."
+msgid_plural "%d existing items will be re-rendered from the template with their new values, overwriting manual edits to them. Press OK to update them, or Cancel to only create missing items."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/generators.js:452
+msgid "Nothing to do: every row is up to date."
+msgstr ""
+
+#: admin/assets/js/generators.js:454
+#, js-format
+msgid "%d row's item is in the trash."
+msgid_plural "%d rows' items are in the trash."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/generators.js:469
+msgid "Generation is still running."
+msgstr ""
+
+#: admin/assets/js/save-generator.js:25
+#: admin/assets/js/save-generator.js:110
+#: admin/assets/js/save-generator.js:113
+msgid "Save as Generator"
+msgstr ""
+
+#: admin/assets/js/save-generator.js:74
+msgid "Name this generator:"
+msgstr ""
+
+#: admin/assets/js/save-generator.js:86
+msgid "Saving..."
+msgstr ""
+
+#: admin/assets/js/sync.js:83
+msgid "Not edited"
+msgstr ""
+
+#: admin/assets/js/sync.js:87
+msgid "Possibly edited"
+msgstr ""
+
+#: admin/assets/js/sync.js:120
+#, js-format
+msgid "Sync %d item"
+msgid_plural "Sync %d items"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: generator name.
+#: admin/assets/js/sync.js:152
+#, js-format
+msgid "Generator: %s"
+msgstr ""
+
+#: admin/assets/js/sync.js:169
+msgid "No changes"
+msgstr ""
+
+#: admin/assets/js/sync.js:180
+#, js-format
+msgid "Overwrite %s"
+msgstr ""
+
+#: admin/assets/js/sync.js:207
+msgid "Syncing slugs changes the URLs of the generated items. Links to the old addresses may break. Continue?"
+msgstr ""
+
+#: admin/assets/js/sync.js:208
+msgid "Syncing titles overwrites the titles of the generated items, including any you changed by hand. Continue?"
+msgstr ""
+
+#: admin/assets/js/sync.js:254
+msgid "A sync is in progress."
+msgstr ""
+
+#: admin/assets/js/sync.js:270
+#: admin/assets/js/sync.js:308
+msgid "Building preview..."
+msgstr ""
+
+#: admin/assets/js/sync.js:278
+msgid "Preview cancelled."
+msgstr ""
+
+#. translators: 1: items that will be updated, 2: items edited by hand.
+#: admin/assets/js/sync.js:320
+#, js-format
+msgid "Preview ready: %1$d will be updated, %2$d edited by hand."
+msgstr ""
+
+#: admin/assets/js/sync.js:348
+#, js-format
+msgid "Sync %d item from the template? A revision is saved first."
+msgid_plural "Sync %d items from the template? A revision of each is saved first."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/sync.js:353
+#, js-format
+msgid "%d of them was edited by hand and its changes will be overwritten."
+msgid_plural "%d of them were edited by hand and their changes will be overwritten."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/assets/js/sync.js:366
+#: admin/assets/js/sync.js:438
+msgid "Syncing items..."
+msgstr ""
+
+#: admin/assets/js/sync.js:458
+#, js-format
+msgid "%1$d updated, %2$d skipped, %3$d up to date, %4$d errors."
+msgstr ""
+
+#: admin/assets/js/sync.js:467
+#, js-format
+msgid "Sync cancelled after %1$d of %2$d items. %3$s"
+msgstr ""
+
+#: admin/assets/js/sync.js:468
+#, js-format
+msgid "Sync finished. %s Preview again to check the result."
+msgstr ""
+
+#: admin/assets/js/sync.js:497
+#, js-format
+msgid "Synced: %s"
+msgstr ""
+
+#: admin/assets/js/sync.js:507
+#, js-format
+msgid "%1$d updated, %2$d skipped, %3$d up to date, %4$d errors"
 msgstr ""
