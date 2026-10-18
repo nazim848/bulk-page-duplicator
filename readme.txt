@@ -4,7 +4,7 @@ Donate link: https://buymeacoffee.com/nazim848
 Tags: bulk duplicate, duplicate pages, page duplicator, clone, duplicate
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -33,6 +33,10 @@ Bulk Page Duplicator helps you publish template-based content faster without man
 * Export duplication results as CSV for reporting.
 * Save a template, its placeholders and rows as a reusable Page Generator, and run it again whenever rows change.
 * Push template changes to every page generated from it with Template Sync.
+* Use named placeholders such as `{{city}}` mapped from CSV column headers.
+* Replace placeholders in custom fields (ACF, Meta Box, Pods and other plugins).
+* List generated pages on any page with the "Generated Pages List" block or `[bpd_generated_pages]` shortcode.
+* Run generators and template syncs from WP-CLI.
 
 = Why it is safer and faster =
 * Dry Run preview shows what will be created before writing content.
@@ -63,9 +67,10 @@ Bulk Page Duplicator helps you publish template-based content faster without man
 * Automatic skip when a generated slug already exists.
 
 = Smart replacement behavior =
-* Multiple placeholders supported in one run.
-* Case-aware replacement behavior for more natural output.
+* Multiple placeholders supported in one run, including named tokens such as `{{city}}`.
+* Case-aware replacement: the placeholder as you typed it gets the value exactly as entered; UPPER, Title and lower case variants get matching case.
 * Slug-safe handling for multi-word placeholders and replacement values.
+* Custom fields (ACF, Meta Box, Pods, etc.) can be replaced too, including nested field data.
 
 = Builder and SEO integrations =
 * Page builder support:
@@ -103,6 +108,18 @@ Edit a template, then click `Sync changes` in its `Bulk Page Duplicator` editor 
 * Preview first: see which items will change, and which were edited by hand since they were generated. Hand-edited items are skipped unless you choose to overwrite them.
 * A revision is saved before each item changes, including builder data, so any item can be restored from its Revisions screen.
 
+= Generated Pages List =
+Show links to generated pages anywhere, for example on an "Areas we serve" hub page.
+* Block: add "Generated Pages List" in the block editor and choose the template or generator, order, columns and excerpts.
+* Shortcode: `[bpd_generated_pages template="123" columns="3" orderby="title" show_excerpt="yes"]`. Use `generator="45"` to list a generator's pages instead.
+* Without a template or generator, a generated page lists its sibling pages and a template lists its generated pages.
+* Only published pages are listed.
+
+= WP-CLI =
+* `wp bulk-page-duplicator generator list --user=admin`
+* `wp bulk-page-duplicator generator run <id> [--dry-run] [--no-update] --user=admin`
+* `wp bulk-page-duplicator sync <template_id> --fields=content,excerpt [--overwrite-edited] [--dry-run] --user=admin`
+
 == CSV/TXT Format Guide ==
 
 = Single placeholder =
@@ -118,6 +135,13 @@ If placeholders are `London, UK`, each line must provide matching comma-separate
 `New York, USA`
 `Paris, France`
 `Toronto, Canada`
+
+Wrap a value that contains a comma in double quotes:
+
+`"Paris, France", EU`
+
+= Column headers and named placeholders =
+If the first row of your CSV holds column names, the plugin offers to use them as placeholders. A file starting with `City,Phone Number` sets the placeholders to `{{city}}, {{phone_number}}`; write those tokens in your template where each value should appear.
 
 = Validation rules =
 * For multi-placeholder mode, each line should contain the same number of values as placeholders.
@@ -175,10 +199,28 @@ Yes. It supports Elementor, Beaver Builder, and Bricks data replacement when pre
 = Does this work with SEO plugins? =
 Yes. It supports metadata replacement for Yoast SEO, Rank Math, All in One SEO, and SEOPress.
 
+= How do I show a list of all my generated location pages? =
+Add the "Generated Pages List" block, or the `[bpd_generated_pages template="123"]` shortcode, to any page. It lists the published pages generated from that template.
+
+= Does it replace text in ACF fields? =
+Yes. Keep "Custom Fields" selected when duplicating, or choose "Custom fields" in Template Sync. Placeholders are replaced in public custom fields, including repeater and group data stored by ACF, Meta Box and similar plugins.
+
+= Is the plugin free? =
+Yes. Every feature is included in the free plugin.
+
 = Is the plugin translation ready? =
 Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT file in `languages/`.
 
 == Changelog ==
+
+= 1.3.0 =
+* Added named placeholders: a CSV header row such as `City,Phone Number` can become `{{city}}, {{phone_number}}` placeholders.
+* Added proper CSV parsing: values wrapped in double quotes may contain commas, in the bulk form and in generators.
+* Added custom field replacement (ACF, Meta Box, Pods, etc.) for bulk duplication, generators and Template Sync.
+* Added the "Generated Pages List" block and `[bpd_generated_pages]` shortcode to list generated pages, for example on a hub page.
+* Added WP-CLI commands to list and run generators and to sync templates.
+* Changed: where the placeholder appears exactly as typed, the value is now inserted exactly as entered (for example "iPhone" is no longer changed to "Iphone"). Other case variants still get matching case.
+* Fixed values containing "$", backslashes or the placeholder itself being altered during replacement.
 
 = 1.2.0 =
 * Added one-click "Duplicate" links to post and page lists, the admin bar, the classic editor and the block editor.
@@ -227,6 +269,9 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+Adds {{named}} placeholders from CSV headers, custom field (ACF) replacement, a Generated Pages List block and shortcode, and WP-CLI commands.
 
 = 1.2.0 =
 Adds one-click Duplicate, reusable Page Generators and Template Sync to push template changes to generated pages.

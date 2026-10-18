@@ -24,6 +24,14 @@ Yes, it is fully internationalized and ready for translation. The plugin include
 
 ## Changelog
 
+### 1.3.0
+
+- Named `{{placeholders}}` from CSV header rows, and quoted CSV values that may contain commas.
+- Custom field (ACF, Meta Box, Pods) replacement in duplication, generators and sync.
+- "Generated Pages List" block and `[bpd_generated_pages]` shortcode.
+- WP-CLI: `wp bulk-page-duplicator generator list|run` and `wp bulk-page-duplicator sync`.
+- Exact-case placeholders keep the value as entered; `$`, backslashes and self-containing values are preserved.
+
 ### 1.2.0
 
 - One-click and bulk "Duplicate" actions in post lists, the admin bar and both editors.
