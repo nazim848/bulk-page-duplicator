@@ -567,6 +567,7 @@ class Bulk_Page_Duplicator_Core {
 			'terms'         => null,
 			'clear_caches'  => [],
 			'update_hash'   => (bool) $args['update_hash'],
+			'aioseo'        => null,
 		];
 
 		$replace = null === $args['replace'] ? $fields : (array) $args['replace'];
@@ -608,6 +609,14 @@ class Bulk_Page_Duplicator_Core {
 		if (in_array('page_template', $fields, true)) {
 			$page_template = get_post_meta($template->ID, '_wp_page_template', true);
 			$plan['meta']['_wp_page_template'] = ['field' => 'page_template', 'values' => '' !== $page_template ? [$page_template] : []];
+		}
+
+		// All in One SEO 4 keeps its data in its own table, not in post meta.
+		if (in_array('seo', $fields, true) || $plan['copy_all_meta']) {
+			$aioseo_row = $this->get_aioseo_row($template->ID);
+			if ($aioseo_row) {
+				$plan['aioseo'] = in_array('seo', $fields, true) ? $this->render_aioseo_row($aioseo_row, $placeholders, $values) : $this->get_aioseo_copy_columns($aioseo_row);
+			}
 		}
 
 		if (in_array('featured_image', $fields, true)) {
@@ -663,6 +672,16 @@ class Bulk_Page_Duplicator_Core {
 
 		if (null !== $plan['thumbnail'] && (int) get_post_thumbnail_id($post_id) !== (int) $plan['thumbnail']) {
 			$changed[] = 'featured_image';
+		}
+
+		if (null !== $plan['aioseo']) {
+			$current = $this->get_aioseo_row($post_id);
+			foreach ($plan['aioseo'] as $column => $value) {
+				if (!$current || (string) $current[$column] !== (string) $value) {
+					$changed[] = 'seo';
+					break;
+				}
+			}
 		}
 
 		if (null !== $plan['terms']) {
@@ -721,6 +740,10 @@ class Bulk_Page_Duplicator_Core {
 			} else {
 				delete_post_thumbnail($post_id);
 			}
+		}
+
+		if (null !== $plan['aioseo']) {
+			$this->write_aioseo_row($post_id, $plan['aioseo']);
 		}
 
 		if (null !== $plan['terms']) {
@@ -860,6 +883,109 @@ class Bulk_Page_Duplicator_Core {
 		}
 
 		return $this->multi_replace($raw_value, $placeholders, $values);
+	}
+
+	/**
+	 * Name of All in One SEO's per-post table, or '' when AIOSEO 4 is not active.
+	 *
+	 * @return string
+	 */
+	private function get_aioseo_table() {
+		global $wpdb;
+		static $table = null;
+
+		if (null === $table) {
+			$table = '';
+			if (function_exists('aioseo') || defined('AIOSEO_VERSION')) {
+				$name = $wpdb->prefix . 'aioseo_posts';
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Checking for a third-party table.
+				if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($name))) === $name) {
+					$table = $name;
+				}
+			}
+		}
+
+		return $table;
+	}
+
+	/**
+	 * Get a post's All in One SEO row.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array|null
+	 */
+	private function get_aioseo_row($post_id) {
+		global $wpdb;
+		$table = $this->get_aioseo_table();
+		if (!$table) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Third-party table; name built from $wpdb->prefix.
+		$row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE post_id = %d", absint($post_id)), ARRAY_A);
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Columns of an All in One SEO row that are copied to another post.
+	 *
+	 * Row identity, timestamps and data AIOSEO computes per post (analysis,
+	 * scores, scanned images and videos) are left out.
+	 *
+	 * @param array $row AIOSEO row.
+	 * @return array
+	 */
+	private function get_aioseo_copy_columns($row) {
+		$skip = ['id', 'post_id', 'created', 'updated', 'page_analysis', 'seo_score', 'images', 'image_scan_date', 'videos', 'video_scan_date', 'video_thumbnail', 'ai'];
+		return array_diff_key($row, array_flip($skip));
+	}
+
+	/**
+	 * Copy an All in One SEO row with placeholders replaced in its text columns.
+	 *
+	 * @param array    $row          AIOSEO row of the template.
+	 * @param string[] $placeholders Placeholders.
+	 * @param array    $values       Replacement values.
+	 * @return array Columns to write.
+	 */
+	private function render_aioseo_row($row, $placeholders, $values) {
+		$columns = $this->get_aioseo_copy_columns($row);
+		$text_columns = ['title', 'description', 'keywords', 'keyphrases', 'og_title', 'og_description', 'og_article_section', 'og_article_tags', 'twitter_title', 'twitter_description', 'schema', 'schema_type_options', 'local_seo', 'breadcrumb_settings'];
+
+		foreach ($text_columns as $column) {
+			if (isset($columns[$column]) && is_string($columns[$column]) && '' !== $columns[$column]) {
+				$rendered = $this->render_meta_value($columns[$column], $placeholders, $values);
+				$columns[$column] = is_string($rendered) ? $rendered : maybe_serialize($rendered);
+			}
+		}
+
+		return $columns;
+	}
+
+	/**
+	 * Create or update a post's All in One SEO row.
+	 *
+	 * @param int   $post_id Post ID.
+	 * @param array $columns Columns to write.
+	 */
+	private function write_aioseo_row($post_id, $columns) {
+		global $wpdb;
+		$table = $this->get_aioseo_table();
+		if (!$table || empty($columns)) {
+			return;
+		}
+
+		$columns['updated'] = current_time('mysql', true);
+		$existing = $this->get_aioseo_row($post_id);
+		if ($existing) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Third-party table.
+			$wpdb->update($table, $columns, ['post_id' => absint($post_id)]);
+		} else {
+			$columns['post_id'] = absint($post_id);
+			$columns['created'] = $columns['updated'];
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Third-party table.
+			$wpdb->insert($table, $columns);
+		}
 	}
 
 	/**
@@ -1300,6 +1426,11 @@ class Bulk_Page_Duplicator_Core {
 		}
 
 		$this->copy_post_meta_multi($source->ID, $new_post_id, [], [], []);
+
+		$aioseo_row = $this->get_aioseo_row($source->ID);
+		if ($aioseo_row) {
+			$this->write_aioseo_row($new_post_id, $this->get_aioseo_copy_columns($aioseo_row));
+		}
 
 		$thumbnail_id = get_post_thumbnail_id($source->ID);
 		if ($thumbnail_id) {
