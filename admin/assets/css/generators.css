@@ -1,0 +1,143 @@
+.bpd-gen-panel {
+	background: #fff;
+	padding: 10px 20px 20px;
+	margin-top: 20px;
+	border-radius: 5px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bpd-gen-wide-select {
+	max-width: 100%;
+	min-width: 25em;
+	margin-top: 6px;
+}
+
+.bpd-gen-taxonomy {
+	margin-bottom: 12px;
+}
+
+.bpd-gen-taxonomy legend {
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.bpd-gen-taxonomy label {
+	display: inline-block;
+	margin: 0 14px 6px 0;
+}
+
+.bpd-gen-rows-table {
+	margin-top: 12px;
+}
+
+.bpd-gen-rows-table .bpd-gen-col-index {
+	width: 3em;
+	color: #646970;
+}
+
+.bpd-gen-rows-table .bpd-gen-col-actions {
+	width: 6em;
+	text-align: right;
+}
+
+.bpd-gen-rows-table td {
+	vertical-align: middle;
+}
+
+.bpd-gen-row-removed td {
+	opacity: 0.55;
+}
+
+.bpd-gen-row-removed .bpd-gen-row-values,
+.bpd-gen-row-removed .bpd-gen-item-cell {
+	text-decoration: line-through;
+}
+
+.bpd-gen-item-links {
+	margin-top: 2px;
+	font-size: 12px;
+}
+
+.bpd-gen-post-status {
+	color: #646970;
+	font-size: 12px;
+}
+
+.bpd-gen-state {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 10px;
+	font-size: 12px;
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+.bpd-gen-state-changed {
+	background: #fcf9e8;
+	color: #8a6d00;
+}
+
+.bpd-gen-state-trash {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+.bpd-gen-run {
+	margin-top: 20px;
+}
+
+.bpd-gen-progress {
+	height: 20px;
+	background-color: #f1f1f1;
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.bpd-gen-progress-inner {
+	height: 100%;
+	width: 0;
+	background-color: #0073aa;
+	transition: width 0.3s;
+}
+
+.bpd-gen-log {
+	background: #f9f9f9;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+	padding: 10px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.bpd-gen-log:empty {
+	display: none;
+}
+
+.bpd-gen-log-entry {
+	padding: 4px 6px;
+	margin-bottom: 4px;
+	border-left: 3px solid #c3c4c7;
+}
+
+.bpd-gen-log-success,
+.bpd-gen-log-linked {
+	border-left-color: #00a32a;
+}
+
+.bpd-gen-log-updated {
+	border-left-color: #2271b1;
+}
+
+.bpd-gen-log-skipped,
+.bpd-gen-log-unchanged {
+	border-left-color: #dba617;
+}
+
+.bpd-gen-log-error {
+	border-left-color: #d63638;
+}
+
+.bpd-gen-last-run {
+	margin-left: 10px;
+	color: #646970;
+}

@@ -47,6 +47,7 @@ jQuery(document).ready(function ($) {
 		$("#replace-elementor").prop("checked", prefs.replace_elementor !== false);
 		$("#replace-seo").prop("checked", prefs.replace_seo !== false);
 		$("#copy-featured-image").prop("checked", prefs.copy_featured_image !== false);
+		$("#copy-template-terms").prop("checked", prefs.copy_template_terms !== false);
 
 		// Set template and parent after templates are loaded (delayed)
 		if (prefs.template_id || prefs.parent_page) {
@@ -86,7 +87,8 @@ jQuery(document).ready(function ($) {
 					replace_content: $("#replace-content").is(":checked").toString(),
 					replace_elementor: $("#replace-elementor").is(":checked").toString(),
 					replace_seo: $("#replace-seo").is(":checked").toString(),
-					copy_featured_image: $("#copy-featured-image").is(":checked").toString()
+					copy_featured_image: $("#copy-featured-image").is(":checked").toString(),
+					copy_template_terms: $("#copy-template-terms").is(":checked").toString()
 				}
 			});
 		}, 1000); // Save after 1 second of inactivity
@@ -100,7 +102,7 @@ jQuery(document).ready(function ($) {
 		});
 
 		// Save on checkbox changes
-		$("#replace-title, #replace-slug, #replace-content, #replace-elementor, #replace-seo, #copy-featured-image").on("change", function() {
+		$("#replace-title, #replace-slug, #replace-content, #replace-elementor, #replace-seo, #copy-featured-image, #copy-template-terms").on("change", function() {
 			saveUserPreferences();
 		});
 	}
@@ -200,6 +202,7 @@ jQuery(document).ready(function ($) {
 		if ($("#replace-slug").is(":checked")) replaceOptions.push("slug");
 		if ($("#replace-content").is(":checked")) replaceOptions.push("content");
 		if ($("#copy-featured-image").is(":checked")) replaceOptions.push("featured_image");
+		if ($("#copy-template-terms").is(":checked")) replaceOptions.push("template_terms");
 		// Dynamically get page builder options
 		$("input[id^='replace-']:checked").each(function () {
 			const id = $(this).attr("id").replace("replace-", "");
