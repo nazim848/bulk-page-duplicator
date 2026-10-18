@@ -54,6 +54,11 @@ $bulk_page_duplicator_generators->init();
 require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-sync.php';
 $bulk_page_duplicator_sync = new Bulk_Page_Duplicator_Sync();
 $bulk_page_duplicator_sync->init();
+// WP-CLI commands.
+if (defined('WP_CLI') && WP_CLI) {
+	require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-cli.php';
+	WP_CLI::add_command('bulk-page-duplicator', 'Bulk_Page_Duplicator_CLI');
+}
 // Load admin class if in admin
 if (is_admin()) {
 	require_once BULK_PAGE_DUPLICATOR_PATH . 'admin/class-bulk-page-duplicator-admin.php';
