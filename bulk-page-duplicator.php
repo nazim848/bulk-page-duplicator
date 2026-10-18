@@ -42,6 +42,10 @@ require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator.ph
 require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-quick-duplicate.php';
 $bulk_page_duplicator_quick_duplicate = new Bulk_Page_Duplicator_Quick_Duplicate();
 $bulk_page_duplicator_quick_duplicate->init();
+// Front-end list of generated pages (shortcode and block).
+require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-listing.php';
+$bulk_page_duplicator_listing = new Bulk_Page_Duplicator_Listing();
+$bulk_page_duplicator_listing->init();
 // Saved generators (private post type, registered on every request).
 require_once BULK_PAGE_DUPLICATOR_PATH . 'includes/class-bulk-page-duplicator-generators.php';
 $bulk_page_duplicator_generators = new Bulk_Page_Duplicator_Generators();
