@@ -72,6 +72,7 @@ class Bulk_Page_Duplicator_Listing {
 		wp_set_script_translations('bulk-page-duplicator-block', 'bulk-page-duplicator', BULK_PAGE_DUPLICATOR_PATH . 'languages');
 
 		register_block_type('bulk-page-duplicator/generated-pages', array(
+			'api_version'     => 3,
 			'editor_script'   => 'bulk-page-duplicator-block',
 			'render_callback' => array($this, 'render_block'),
 			'attributes'      => array(

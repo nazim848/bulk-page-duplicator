@@ -8,8 +8,11 @@
 	const components = wp.components;
 	const editor = wp.blockEditor || wp.editor;
 	const ServerSideRender = wp.serverSideRender || components.ServerSideRender;
+	// Block API v3 (iframe editor) needs useBlockProps, available since WordPress 5.6.
+	const useBlockProps = editor && editor.useBlockProps;
 
 	wp.blocks.registerBlockType("bulk-page-duplicator/generated-pages", {
+		apiVersion: useBlockProps ? 3 : 1,
 		title: __("Generated Pages List", "bulk-page-duplicator"),
 		description: __("Lists the published pages generated from a template or page generator, for example an \"Areas we serve\" hub.", "bulk-page-duplicator"),
 		icon: "list-view",
@@ -27,8 +30,8 @@
 			};
 
 			return el(
-				wp.element.Fragment,
-				null,
+				"div",
+				useBlockProps ? useBlockProps() : {},
 				el(
 					editor.InspectorControls,
 					null,
