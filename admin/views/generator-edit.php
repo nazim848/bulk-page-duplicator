@@ -39,6 +39,7 @@ foreach ($bpd_page_builders as $bpd_builder) {
 if (!empty($bpd_seo_plugins)) {
 	$bpd_replace_choices['seo'] = __('SEO meta data', 'bulk-page-duplicator');
 }
+$bpd_replace_choices['custom_fields'] = __('Custom fields (ACF, Meta Box, etc.)', 'bulk-page-duplicator');
 $bpd_copy_choices = array(
 	'featured_image' => __('Copy featured image', 'bulk-page-duplicator'),
 	'template_terms' => __('Copy template terms', 'bulk-page-duplicator'),

@@ -144,6 +144,7 @@ $bulk_page_duplicator_page_builders = $bulk_page_duplicator_core->detect_page_bu
 				<?php if (!empty($bulk_page_duplicator_seo_plugins)) : ?>
 					<label><input type="checkbox" id="replace-seo" checked> <?php esc_html_e('SEO Meta Data', 'bulk-page-duplicator'); ?></label>
 				<?php endif; ?>
+				<label><input type="checkbox" id="replace-custom_fields" checked> <?php esc_html_e('Custom Fields (ACF, Meta Box, etc.)', 'bulk-page-duplicator'); ?></label>
 			</div>
 			<h2><?php esc_html_e('Additional Options', 'bulk-page-duplicator'); ?></h2>
 			<div class="bulk-page-dup-checkbox-group">

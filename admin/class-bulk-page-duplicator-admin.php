@@ -214,6 +214,7 @@ class Bulk_Page_Duplicator_Admin {
 			'replace_content' => true,
 			'replace_elementor' => true,
 			'replace_seo' => true,
+			'replace_custom_fields' => true,
 			'copy_featured_image' => true,
 			'copy_template_terms' => true,
 		);
@@ -257,6 +258,7 @@ class Bulk_Page_Duplicator_Admin {
 			'replace_content' => isset($_POST['replace_content']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_content'])),
 			'replace_elementor' => isset($_POST['replace_elementor']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_elementor'])),
 			'replace_seo' => isset($_POST['replace_seo']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_seo'])),
+			'replace_custom_fields' => isset($_POST['replace_custom_fields']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_custom_fields'])),
 			'copy_featured_image' => isset($_POST['copy_featured_image']) && 'true' === sanitize_text_field(wp_unslash($_POST['copy_featured_image'])),
 			'copy_template_terms' => isset($_POST['copy_template_terms']) && 'true' === sanitize_text_field(wp_unslash($_POST['copy_template_terms'])),
 		);

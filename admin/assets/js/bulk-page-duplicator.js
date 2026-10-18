@@ -46,6 +46,7 @@ jQuery(document).ready(function ($) {
 		$("#replace-content").prop("checked", prefs.replace_content !== false);
 		$("#replace-elementor").prop("checked", prefs.replace_elementor !== false);
 		$("#replace-seo").prop("checked", prefs.replace_seo !== false);
+		$("#replace-custom_fields").prop("checked", prefs.replace_custom_fields !== false);
 		$("#copy-featured-image").prop("checked", prefs.copy_featured_image !== false);
 		$("#copy-template-terms").prop("checked", prefs.copy_template_terms !== false);
 
@@ -87,6 +88,7 @@ jQuery(document).ready(function ($) {
 					replace_content: $("#replace-content").is(":checked").toString(),
 					replace_elementor: $("#replace-elementor").is(":checked").toString(),
 					replace_seo: $("#replace-seo").is(":checked").toString(),
+					replace_custom_fields: $("#replace-custom_fields").is(":checked").toString(),
 					copy_featured_image: $("#copy-featured-image").is(":checked").toString(),
 					copy_template_terms: $("#copy-template-terms").is(":checked").toString()
 				}
@@ -102,7 +104,7 @@ jQuery(document).ready(function ($) {
 		});
 
 		// Save on checkbox changes
-		$("#replace-title, #replace-slug, #replace-content, #replace-elementor, #replace-seo, #copy-featured-image, #copy-template-terms").on("change", function() {
+		$("#replace-title, #replace-slug, #replace-content, #replace-elementor, #replace-seo, #replace-custom_fields, #copy-featured-image, #copy-template-terms").on("change", function() {
 			saveUserPreferences();
 		});
 	}

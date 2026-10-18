@@ -70,6 +70,7 @@ class Bulk_Page_Duplicator_Sync {
 			'beaver'         => __('Beaver Builder data', 'bulk-page-duplicator'),
 			'bricks'         => __('Bricks Builder data', 'bulk-page-duplicator'),
 			'seo'            => __('SEO meta', 'bulk-page-duplicator'),
+			'custom_fields'  => __('Custom fields', 'bulk-page-duplicator'),
 			'featured_image' => __('Featured image', 'bulk-page-duplicator'),
 			'page_template'  => __('Page template', 'bulk-page-duplicator'),
 			'terms'          => __('Terms', 'bulk-page-duplicator'),
@@ -100,7 +101,7 @@ class Bulk_Page_Duplicator_Sync {
 		if (!empty($this->core->detect_seo_plugins())) {
 			$fields[] = 'seo';
 		}
-		return array_merge($fields, array('featured_image', 'page_template', 'terms', 'title', 'slug'));
+		return array_merge($fields, array('custom_fields', 'featured_image', 'page_template', 'terms', 'title', 'slug'));
 	}
 
 	/**

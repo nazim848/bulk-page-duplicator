@@ -72,7 +72,7 @@ $bulk_page_duplicator_main_url = admin_url('tools.php?page=bulk-page-duplicator'
 		$bulk_page_duplicator_labels = $bulk_page_duplicator_sync->get_field_labels();
 		$bulk_page_duplicator_available = $bulk_page_duplicator_sync->get_available_fields();
 		$bulk_page_duplicator_risky = $bulk_page_duplicator_sync->get_risky_fields();
-		$bulk_page_duplicator_default_off = array_merge($bulk_page_duplicator_risky, array('terms', 'featured_image'));
+		$bulk_page_duplicator_default_off = array_merge($bulk_page_duplicator_risky, array('terms', 'featured_image', 'custom_fields'));
 		$bulk_page_duplicator_title = '' !== $bulk_page_duplicator_template->post_title ? $bulk_page_duplicator_template->post_title : __('(no title)', 'bulk-page-duplicator');
 		$bulk_page_duplicator_descriptions = array(
 			'featured_image' => __('Removed from items when the template has none.', 'bulk-page-duplicator'),

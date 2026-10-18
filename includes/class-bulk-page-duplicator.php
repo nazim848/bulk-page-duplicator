@@ -398,6 +398,7 @@ class Bulk_Page_Duplicator_Core {
 	 * - title, slug, content, excerpt: post fields, with placeholders replaced.
 	 * - meta: copy every template meta key (generation only; SEO keys are replaced when "seo" is also set).
 	 * - seo: the template's SEO plugin meta, with placeholders replaced.
+	 * - custom_fields: the template's public custom fields (ACF, Meta Box, etc.), with placeholders replaced.
 	 * - elementor, beaver, bricks: page builder data, with placeholders replaced.
 	 * - page_template: the template's _wp_page_template.
 	 * - featured_image: the template's featured image (removed when the template has none).
@@ -406,7 +407,7 @@ class Bulk_Page_Duplicator_Core {
 	 * @return string[]
 	 */
 	public function get_render_fields() {
-		return ['title', 'slug', 'content', 'excerpt', 'meta', 'seo', 'elementor', 'beaver', 'bricks', 'page_template', 'featured_image', 'terms'];
+		return ['title', 'slug', 'content', 'excerpt', 'meta', 'seo', 'custom_fields', 'elementor', 'beaver', 'bricks', 'page_template', 'featured_image', 'terms'];
 	}
 
 	/**
@@ -430,7 +431,7 @@ class Bulk_Page_Duplicator_Core {
 	 * @return string[]
 	 */
 	public function get_generation_render_fields($replace_options) {
-		$fields = array_merge(['meta'], array_intersect((array) $replace_options, ['seo', 'elementor', 'beaver', 'bricks', 'featured_image']));
+		$fields = array_merge(['meta'], array_intersect((array) $replace_options, ['seo', 'custom_fields', 'elementor', 'beaver', 'bricks', 'featured_image']));
 		if (in_array('template_terms', (array) $replace_options, true)) {
 			$fields[] = 'terms';
 		}
@@ -592,6 +593,20 @@ class Bulk_Page_Duplicator_Core {
 					$rendered[] = $this->render_meta_value($raw_value, $placeholders, $values);
 				}
 				$plan['meta'][$key] = ['field' => 'seo', 'values' => $rendered];
+			}
+		}
+
+		// Custom fields on their own; with "meta", copy_post_meta_multi() handles them.
+		if (in_array('custom_fields', $fields, true) && !$plan['copy_all_meta']) {
+			foreach (get_post_meta($template->ID) as $key => $raw_values) {
+				if (!$this->is_custom_field_key($key)) {
+					continue;
+				}
+				$rendered = [];
+				foreach ($raw_values as $raw_value) {
+					$rendered[] = $this->render_meta_value($raw_value, $placeholders, $values);
+				}
+				$plan['meta'][$key] = ['field' => 'custom_fields', 'values' => $rendered];
 			}
 		}
 
@@ -817,6 +832,27 @@ class Bulk_Page_Duplicator_Core {
 			return $copy;
 		}
 		return $value;
+	}
+
+	/**
+	 * Whether a meta key is a public custom field.
+	 *
+	 * @param string $key Meta key.
+	 * @return bool
+	 */
+	public function is_custom_field_key($key) {
+		$is_custom = '' !== (string) $key && '_' !== substr((string) $key, 0, 1);
+
+		/**
+		 * Filter whether a meta key is treated as a custom field for placeholder replacement.
+		 *
+		 * Public keys (not starting with "_") are custom fields by default; this is
+		 * where ACF, Meta Box and Pods store values. ACF's "_field" references are skipped.
+		 *
+		 * @param bool   $is_custom Whether the key is a custom field.
+		 * @param string $key       Meta key.
+		 */
+		return (bool) apply_filters('bpd_is_custom_field_key', $is_custom, (string) $key);
 	}
 
 	/**
@@ -1613,9 +1649,11 @@ class Bulk_Page_Duplicator_Core {
 				}
 			}
 
+			$replace_custom = in_array('custom_fields', $replace_options, true) && $this->is_custom_field_key($key);
+
 			foreach ($meta_values as $meta_value) {
-				// Replace placeholders in SEO fields (serialized, JSON or plain values).
-				if ($is_seo_field && in_array('seo', $replace_options, true)) {
+				// Replace placeholders in SEO fields and custom fields (serialized, JSON or plain values).
+				if (($is_seo_field && in_array('seo', $replace_options, true)) || $replace_custom) {
 					$meta_value = $this->render_meta_value($meta_value, $placeholders, $values);
 				} else {
 					$meta_value = maybe_unserialize($meta_value);
