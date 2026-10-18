@@ -245,20 +245,19 @@ class Bulk_Page_Duplicator_Admin {
 			wp_send_json_error(__('User not logged in', 'bulk-page-duplicator'));
 		}
 
-		// Sanitize and save preferences
-		$preferences = array(
-			'post_type' => isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'page',
-			'template_id' => isset($_POST['template_id']) ? intval(wp_unslash($_POST['template_id'])) : '',
-			'page_status' => isset($_POST['page_status']) && 'draft' === sanitize_key(wp_unslash($_POST['page_status'])) ? 'draft' : 'publish',
-			'parent_page' => isset($_POST['parent_page']) ? sanitize_text_field(wp_unslash($_POST['parent_page'])) : '0',
-			'replace_title' => isset($_POST['replace_title']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_title'])),
-			'replace_slug' => isset($_POST['replace_slug']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_slug'])),
-			'replace_content' => isset($_POST['replace_content']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_content'])),
-			'replace_elementor' => isset($_POST['replace_elementor']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_elementor'])),
-			'replace_seo' => isset($_POST['replace_seo']) && 'true' === sanitize_text_field(wp_unslash($_POST['replace_seo'])),
-			'copy_featured_image' => isset($_POST['copy_featured_image']) && 'true' === sanitize_text_field(wp_unslash($_POST['copy_featured_image'])),
-			'copy_template_terms' => isset($_POST['copy_template_terms']) && 'true' === sanitize_text_field(wp_unslash($_POST['copy_template_terms'])),
-		);
+		// Sanitize and save preferences. Options whose checkbox is not on the screen
+		// (for example a page builder that is not active) keep their saved value.
+		$preferences = $this->get_user_preferences();
+		$preferences['post_type'] = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : 'page';
+		$preferences['template_id'] = isset($_POST['template_id']) ? intval(wp_unslash($_POST['template_id'])) : '';
+		$preferences['page_status'] = isset($_POST['page_status']) && 'draft' === sanitize_key(wp_unslash($_POST['page_status'])) ? 'draft' : 'publish';
+		$preferences['parent_page'] = isset($_POST['parent_page']) ? sanitize_text_field(wp_unslash($_POST['parent_page'])) : '0';
+
+		foreach (array('replace_title', 'replace_slug', 'replace_content', 'replace_elementor', 'replace_seo', 'copy_featured_image', 'copy_template_terms') as $flag) {
+			if (isset($_POST[$flag])) {
+				$preferences[$flag] = 'true' === sanitize_text_field(wp_unslash($_POST[$flag]));
+			}
+		}
 
 		update_user_meta($user_id, 'bpd_preferences', $preferences);
 

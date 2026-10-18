@@ -72,10 +72,7 @@ jQuery(document).ready(function ($) {
 
 		// Debounce to avoid too many AJAX calls
 		savePreferencesTimeout = setTimeout(function() {
-			$.ajax({
-				url: bulk_page_dup_ajax.ajax_url,
-				type: "POST",
-				data: {
+			const data = {
 					action: "bpd_save_preferences",
 					nonce: bulk_page_dup_ajax.nonce,
 					post_type: $("#post-type").val(),
@@ -89,7 +86,20 @@ jQuery(document).ready(function ($) {
 					replace_seo: $("#replace-seo").is(":checked").toString(),
 					copy_featured_image: $("#copy-featured-image").is(":checked").toString(),
 					copy_template_terms: $("#copy-template-terms").is(":checked").toString()
+				};
+
+			// Only send options whose checkbox is on the screen, so an inactive page
+			// builder or SEO plugin does not overwrite the saved choice.
+			["replace-elementor", "replace-seo"].forEach(function (id) {
+				if (!document.getElementById(id)) {
+					delete data[id.replace("-", "_")];
 				}
+			});
+
+			$.ajax({
+				url: bulk_page_dup_ajax.ajax_url,
+				type: "POST",
+				data: data
 			});
 		}, 1000); // Save after 1 second of inactivity
 	}
