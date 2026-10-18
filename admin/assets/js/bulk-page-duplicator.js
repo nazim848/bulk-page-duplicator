@@ -181,16 +181,17 @@ jQuery(document).ready(function ($) {
 	function smartReplace(text, search, replace) {
 		if (!text || !search || !replace) return text;
 
-		// Replace uppercase version
-		text = text.split(search.toUpperCase()).join(replace.toUpperCase());
-		// Replace title case version
-		const titleSearch = search.charAt(0).toUpperCase() + search.slice(1).toLowerCase();
-		const titleReplace = replace.charAt(0).toUpperCase() + replace.slice(1).toLowerCase();
-		text = text.split(titleSearch).join(titleReplace);
-		// Replace exact match
-		text = text.split(search).join(replace);
-		// Replace lowercase version
-		text = text.split(search.toLowerCase()).join(replace.toLowerCase());
+		// Single pass, mirroring smart_replace(): the placeholder exactly as typed
+		// gets the value as typed; other occurrences get UPPER, Title or lower case.
+		const upper = search.toUpperCase();
+		const title = search.charAt(0).toUpperCase() + search.slice(1).toLowerCase();
+		const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+		text = text.replace(pattern, function (match) {
+			if (match === search) return replace;
+			if (match === upper) return replace.toUpperCase();
+			if (match === title) return replace.replace(/(^|[\s-])(\S)/g, (m, p1, p2) => p1 + p2.toUpperCase());
+			return replace.toLowerCase();
+		});
 
 		return text;
 	}
@@ -229,7 +230,7 @@ jQuery(document).ready(function ($) {
 	function updatePreview() {
 		const templateId = $("#template-page").val();
 		const placeholderInput = $("#placeholder-text").val();
-		const rawValues = $("#replacement-values").val().split("\n").filter(v => v.trim() !== "");
+		const rawValues = bpdCsv.getLines($("#replacement-values").val());
 
 		// Hide preview if no template selected
 		if (!templateId || !templateData) {
@@ -238,15 +239,11 @@ jQuery(document).ready(function ($) {
 		}
 
 		// Parse placeholders and first value
-		const placeholders = placeholderInput.split(",").map(p => p.trim()).filter(p => p !== "");
+		const placeholders = bpdCsv.parsePlaceholders(placeholderInput);
 		let firstValues = [];
 
 		if (rawValues.length > 0) {
-			if (placeholders.length > 1) {
-				firstValues = rawValues[0].split(",").map(v => v.trim());
-			} else {
-				firstValues = [rawValues[0].trim()];
-			}
+			firstValues = bpdCsv.parseLine(rawValues[0], placeholders.length);
 		}
 
 		// Generate preview title and slug
@@ -514,7 +511,7 @@ jQuery(document).ready(function ($) {
 			return; // Empty, no validation needed
 		}
 
-		const placeholders = value.split(",").map(p => p.trim()).filter(p => p !== "");
+		const placeholders = bpdCsv.parsePlaceholders(value);
 
 		if (!templateData || !templateData.searchable_content) {
 			// Template not loaded yet, can't validate
@@ -589,7 +586,7 @@ jQuery(document).ready(function ($) {
 
 		// Check for long slugs (>50 chars could cause issues)
 		const longValues = lines.filter(line => {
-			const slug = toSlug(line.split(',')[0].trim());
+			const slug = toSlug(bpdCsv.parseLine(line, bpdCsv.parsePlaceholders($("#placeholder-text").val()).length)[0]);
 			return slug.length > 50;
 		});
 
@@ -782,11 +779,7 @@ jQuery(document).ready(function ($) {
 
 	// Show/hide multi-placeholder help based on input
 	$("#placeholder-text").on("input", function () {
-		const placeholders = $(this)
-			.val()
-			.split(",")
-			.map(p => p.trim())
-			.filter(p => p !== "");
+		const placeholders = bpdCsv.parsePlaceholders($(this).val());
 
 		if (placeholders.length > 1) {
 			$("#replacement-multi-help").show();
@@ -811,9 +804,19 @@ jQuery(document).ready(function ($) {
 	const $csvRowCount = $("#csv-row-count");
 	const $csvClear = $("#csv-clear");
 
-	// Parse CSV content
+	// Parse CSV content, offering to use a header row as {{column}} placeholders
 	function parseCSV(content) {
-		const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
+		const lines = bpdCsv.getLines(content);
+		const tokens = lines.length > 1 ? bpdCsv.detectHeaderTokens(lines[0]) : null;
+
+		if (tokens && window.confirm(sprintf(
+			__("Use the first row as column names?\n\nPlaceholders will be set to: %s\n\nWrite these placeholders in your template where each value should appear.", "bulk-page-duplicator"),
+			tokens.join(", ")
+		))) {
+			$("#placeholder-text").val(tokens.join(", ")).trigger("input");
+			return lines.slice(1);
+		}
+
 		return lines;
 	}
 
@@ -909,15 +912,8 @@ jQuery(document).ready(function ($) {
 		// Validate inputs first
 		const templateId = $("#template-page").val();
 		const placeholderInput = $("#placeholder-text").val();
-		const placeholders = placeholderInput
-			.split(",")
-			.map(p => p.trim())
-			.filter(p => p !== "");
-
-		const rawValues = $("#replacement-values")
-			.val()
-			.split("\n")
-			.filter(val => val.trim() !== "");
+		const placeholders = bpdCsv.parsePlaceholders(placeholderInput);
+		const rawValues = bpdCsv.getLines($("#replacement-values").val());
 
 		if (!templateId) {
 			alert(__("Please select a template.", "bulk-page-duplicator"));
@@ -935,12 +931,7 @@ jQuery(document).ready(function ($) {
 		}
 
 		// Parse values
-		const values = rawValues.map(line => {
-			if (placeholders.length > 1) {
-				return line.split(",").map(p => p.trim());
-			}
-			return [line.trim()];
-		});
+		const values = rawValues.map(line => bpdCsv.parseLine(line, placeholders.length));
 
 		// Get replacement options
 		const replaceOptions = [];
@@ -1099,15 +1090,8 @@ jQuery(document).ready(function ($) {
 		// Validate inputs
 		const templateId = $("#template-page").val();
 		const placeholderInput = $("#placeholder-text").val();
-		const placeholders = placeholderInput
-			.split(",")
-			.map(p => p.trim())
-			.filter(p => p !== "");
-
-		const rawValues = $("#replacement-values")
-			.val()
-			.split("\n")
-			.filter(val => val.trim() !== "");
+		const placeholders = bpdCsv.parsePlaceholders(placeholderInput);
+		const rawValues = bpdCsv.getLines($("#replacement-values").val());
 
 		if (!templateId) {
 			alert(__("Please select a template.", "bulk-page-duplicator"));
@@ -1124,15 +1108,8 @@ jQuery(document).ready(function ($) {
 			return;
 		}
 
-		// Parse values - for multiple placeholders, split each line by comma
-		const values = rawValues.map(line => {
-			if (placeholders.length > 1) {
-				// Split by comma, but respect the number of placeholders
-				const parts = line.split(",").map(p => p.trim());
-				return parts;
-			}
-			return [line.trim()];
-		});
+		// Parse values - for multiple placeholders each line is a CSV record
+		const values = rawValues.map(line => bpdCsv.parseLine(line, placeholders.length));
 
 		// Validate that each line has the correct number of values
 		if (placeholders.length > 1) {
@@ -1140,7 +1117,7 @@ jQuery(document).ready(function ($) {
 			if (invalidLines.length > 0) {
 				alert(
 					sprintf(
-						__("Each line must have %1$d comma-separated values (one for each placeholder).\n\nPlaceholders: %2$s", "bulk-page-duplicator"),
+						__("Each line must have %1$d comma-separated values (one for each placeholder). Wrap a value that contains a comma in double quotes.\n\nPlaceholders: %2$s", "bulk-page-duplicator"),
 						placeholders.length,
 						placeholders.join(", ")
 					)

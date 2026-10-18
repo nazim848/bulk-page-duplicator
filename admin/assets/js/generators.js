@@ -31,10 +31,7 @@ jQuery(function ($) {
 	}
 
 	function getPlaceholders() {
-		return String($("#bpd-gen-placeholders").val() || "")
-			.split(",")
-			.map(p => p.trim())
-			.filter(p => p !== "");
+		return bpdCsv.parsePlaceholders($("#bpd-gen-placeholders").val());
 	}
 
 	// === Template, parent and taxonomy pickers (reuse the bulk form endpoints) ===
@@ -245,7 +242,15 @@ jQuery(function ($) {
 
 		const reader = new FileReader();
 		reader.onload = function (e) {
-			const lines = String(e.target.result || "").split(/\r?\n/).filter(line => line.trim() !== "");
+			let lines = bpdCsv.getLines(e.target.result);
+			const tokens = lines.length > 1 ? bpdCsv.detectHeaderTokens(lines[0]) : null;
+			if (tokens && window.confirm(sprintf(
+				__("Use the first row as column names?\n\nPlaceholders will be set to: %s\n\nWrite these placeholders in your template where each value should appear.", "bulk-page-duplicator"),
+				tokens.join(", ")
+			))) {
+				$("#bpd-gen-placeholders").val(tokens.join(", "));
+				lines = lines.slice(1);
+			}
 			const $bulk = $("#bpd-gen-bulk-rows");
 			const current = $bulk.val().trim();
 			$bulk.val((current ? current + "\n" : "") + lines.join("\n"));
@@ -285,19 +290,19 @@ jQuery(function ($) {
 			if (values.trim() === "") {
 				return;
 			}
-			if (placeholders.length > 1 && values.split(",").length !== placeholders.length && !invalidRow) {
+			if (placeholders.length > 1 && bpdCsv.parseLine(values, placeholders.length).length !== placeholders.length && !invalidRow) {
 				invalidRow = index + 1;
 			}
 			rows.push({ key: String($(this).find(".bpd-gen-row-key").val() || ""), values: values });
 		});
 
 		if (placeholders.length > 1) {
-			const badBulkLine = $("#bpd-gen-bulk-rows").val().split(/\r?\n/).filter(line => line.trim() !== "")
-				.some(line => line.split(",").length !== placeholders.length);
+			const badBulkLine = bpdCsv.getLines($("#bpd-gen-bulk-rows").val())
+				.some(line => bpdCsv.parseLine(line, placeholders.length).length !== placeholders.length);
 			if (invalidRow || badBulkLine) {
 				e.preventDefault();
 				alert(sprintf(
-					__("Each row must have %1$d comma-separated values (one for each placeholder).\n\nPlaceholders: %2$s", "bulk-page-duplicator"),
+					__("Each row must have %1$d comma-separated values (one for each placeholder). Wrap a value that contains a comma in double quotes.\n\nPlaceholders: %2$s", "bulk-page-duplicator"),
 					placeholders.length,
 					placeholders.join(", ")
 				));

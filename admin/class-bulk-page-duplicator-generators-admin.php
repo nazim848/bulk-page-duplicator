@@ -73,7 +73,8 @@ class Bulk_Page_Duplicator_Generators_Admin {
 	 */
 	public function enqueue_admin_scripts($hook) {
 		if ('tools_page_bulk-page-duplicator' === $hook) {
-			wp_enqueue_script('bpd-save-generator-js', BULK_PAGE_DUPLICATOR_URL . 'admin/assets/js/save-generator.js', array('jquery', 'wp-i18n'), BULK_PAGE_DUPLICATOR_VERSION, true);
+			wp_register_script('bulk-page-duplicator-csv', BULK_PAGE_DUPLICATOR_URL . 'admin/assets/js/csv.js', array(), BULK_PAGE_DUPLICATOR_VERSION, true);
+			wp_enqueue_script('bpd-save-generator-js', BULK_PAGE_DUPLICATOR_URL . 'admin/assets/js/save-generator.js', array('jquery', 'wp-i18n', 'bulk-page-duplicator-csv'), BULK_PAGE_DUPLICATOR_VERSION, true);
 			wp_set_script_translations('bpd-save-generator-js', 'bulk-page-duplicator', BULK_PAGE_DUPLICATOR_PATH . 'languages');
 			wp_localize_script('bpd-save-generator-js', 'bpd_save_generator', array(
 				'ajax_url' => admin_url('admin-ajax.php'),
@@ -103,7 +104,8 @@ class Bulk_Page_Duplicator_Generators_Admin {
 			'options'     => Bulk_Page_Duplicator_Generators::default_options(),
 		);
 
-		wp_enqueue_script('bpd-generators-js', BULK_PAGE_DUPLICATOR_URL . 'admin/assets/js/generators.js', array('jquery', 'wp-i18n'), BULK_PAGE_DUPLICATOR_VERSION, true);
+		wp_register_script('bulk-page-duplicator-csv', BULK_PAGE_DUPLICATOR_URL . 'admin/assets/js/csv.js', array(), BULK_PAGE_DUPLICATOR_VERSION, true);
+		wp_enqueue_script('bpd-generators-js', BULK_PAGE_DUPLICATOR_URL . 'admin/assets/js/generators.js', array('jquery', 'wp-i18n', 'bulk-page-duplicator-csv'), BULK_PAGE_DUPLICATOR_VERSION, true);
 		wp_set_script_translations('bpd-generators-js', 'bulk-page-duplicator', BULK_PAGE_DUPLICATOR_PATH . 'languages');
 		wp_localize_script('bpd-generators-js', 'bpd_generators', array(
 			'ajax_url'       => admin_url('admin-ajax.php'),

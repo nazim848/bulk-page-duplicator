@@ -48,8 +48,8 @@ jQuery(function ($) {
 		e.preventDefault();
 
 		const templateId = $("#template-page").val();
-		const placeholders = String($("#placeholder-text").val() || "").split(",").map(p => p.trim()).filter(p => p !== "");
-		const lines = String($("#replacement-values").val() || "").split("\n").filter(line => line.trim() !== "");
+		const placeholders = bpdCsv.parsePlaceholders($("#placeholder-text").val());
+		const lines = bpdCsv.getLines($("#replacement-values").val());
 
 		if (!templateId) {
 			alert(__("Please select a template.", "bulk-page-duplicator"));
@@ -60,7 +60,7 @@ jQuery(function ($) {
 			return;
 		}
 
-		const values = lines.map(line => placeholders.length > 1 ? line.split(",").map(v => v.trim()) : [line.trim()]);
+		const values = lines.map(line => bpdCsv.parseLine(line, placeholders.length));
 		if (placeholders.length > 1 && values.some(v => v.length !== placeholders.length)) {
 			alert(sprintf(
 				__("Each line must have %1$d comma-separated values (one for each placeholder).\n\nPlaceholders: %2$s", "bulk-page-duplicator"),

@@ -1669,7 +1669,12 @@ class Bulk_Page_Duplicator_Core {
 	}
 
 	/**
-	 * Replaces text while preserving the case format
+	 * Replace a placeholder, matching the case of each occurrence.
+	 *
+	 * The placeholder exactly as typed gets the value exactly as typed. Other
+	 * occurrences get a matching case: UPPER, Title (first letter of each
+	 * word) or lower. Matching is a single pass, so a value that contains the
+	 * placeholder is never replaced again, and "$" or "\" in values are kept.
 	 *
 	 * @param string $text The text to process
 	 * @param string $search The search string
@@ -1682,32 +1687,51 @@ class Bulk_Page_Duplicator_Core {
 			return $text;
 		}
 
-		// 1. Prepare patterns and replacements for each case
-		$patterns = [];
-		$replacements = [];
+		$upper = $this->to_upper($search);
+		$first = function_exists('mb_substr') ? mb_substr($search, 0, 1, 'UTF-8') : substr($search, 0, 1);
+		$title = $this->to_upper($first) . $this->to_lower(substr($search, strlen($first)));
+		$flags = preg_match('//u', $text) && preg_match('//u', $search) ? 'iu' : 'i';
 
-		// Case 1: All uppercase
-		$patterns[] = '/' . preg_quote(strtoupper($search), '/') . '/';
-		$replacements[] = strtoupper($replace);
+		$result = preg_replace_callback(
+			'/' . preg_quote($search, '/') . '/' . $flags,
+			function ($match) use ($search, $replace, $upper, $title) {
+				if ($match[0] === $search) {
+					return $replace;
+				}
+				if ($match[0] === $upper) {
+					return $this->to_upper($replace);
+				}
+				if ($match[0] === $title) {
+					return preg_replace_callback('/(^|[\s-])(\S)/u', function ($m) {
+						return $m[1] . $this->to_upper($m[2]);
+					}, $replace);
+				}
+				return $this->to_lower($replace);
+			},
+			$text
+		);
 
-		// Case 2: Title case (first letter uppercase)
-		$patterns[] = '/' . preg_quote(ucfirst(strtolower($search)), '/') . '/';
-		if (function_exists('mb_convert_case')) {
-			$replacements[] = mb_convert_case($replace, MB_CASE_TITLE, 'UTF-8');
-		} else {
-			$replacements[] = ucwords(strtolower($replace), " 	\r\n\f\v-");
-		}
+		return null === $result ? $text : $result;
+	}
 
-		// Case 3: Exact match (as provided)
-		$patterns[] = '/' . preg_quote($search, '/') . '/';
-		$replacements[] = $replace;
+	/**
+	 * Multibyte-safe upper case.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	private function to_upper($text) {
+		return function_exists('mb_strtoupper') ? mb_strtoupper($text, 'UTF-8') : strtoupper($text);
+	}
 
-		// Case 4: Lowercase match (must be last to avoid overriding other cases)
-		$patterns[] = '/' . preg_quote(strtolower($search), '/') . '/i';
-		$replacements[] = strtolower($replace);
-
-		// 2. Apply all replacements
-		return preg_replace($patterns, $replacements, $text);
+	/**
+	 * Multibyte-safe lower case.
+	 *
+	 * @param string $text Text.
+	 * @return string
+	 */
+	private function to_lower($text) {
+		return function_exists('mb_strtolower') ? mb_strtolower($text, 'UTF-8') : strtolower($text);
 	}
 
 	/**

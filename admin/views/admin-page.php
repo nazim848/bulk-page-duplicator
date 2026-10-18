@@ -74,7 +74,7 @@ $bulk_page_duplicator_page_builders = $bulk_page_duplicator_core->detect_page_bu
 			<h2><?php esc_html_e('Replacement Values', 'bulk-page-duplicator'); ?></h2>
 			<p id="replacement-help"><?php esc_html_e('Enter one value per line, or import from a CSV file:', 'bulk-page-duplicator'); ?></p>
 			<p class="description" id="replacement-multi-help" style="display: none;">
-				<?php esc_html_e('For multiple placeholders, separate values with commas (e.g., "New York, USA")', 'bulk-page-duplicator'); ?>
+				<?php esc_html_e('For multiple placeholders, separate values with commas (e.g., "New York, USA"). Wrap a value that contains a comma in double quotes.', 'bulk-page-duplicator'); ?>
 			</p>
 			<div class="csv-import-section">
 				<div class="csv-upload-area" id="csv-drop-zone">

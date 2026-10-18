@@ -217,7 +217,7 @@ $bpd_placeholder_count = max(1, count($bpd_gen['placeholders']));
 							<td class="bpd-gen-col-index"><?php echo esc_html($bpd_index + 1); ?></td>
 							<td>
 								<input type="hidden" name="rows[<?php echo esc_attr($bpd_index); ?>][key]" class="bpd-gen-row-key" value="<?php echo esc_attr($bpd_row['key']); ?>">
-								<input type="text" name="rows[<?php echo esc_attr($bpd_index); ?>][values]" class="widefat bpd-gen-row-values" value="<?php echo esc_attr(implode(', ', $bpd_row['values'])); ?>" aria-label="<?php esc_attr_e('Row values', 'bulk-page-duplicator'); ?>">
+								<input type="text" name="rows[<?php echo esc_attr($bpd_index); ?>][values]" class="widefat bpd-gen-row-values" value="<?php echo esc_attr(Bulk_Page_Duplicator_Generators::format_line($bpd_row['values'])); ?>" aria-label="<?php esc_attr_e('Row values', 'bulk-page-duplicator'); ?>">
 							</td>
 							<td class="bpd-gen-item-cell"><?php echo wp_kses_post(Bulk_Page_Duplicator_Generators_Admin::render_item_cell($bpd_item, $bpd_state)); ?></td>
 							<td class="bpd-gen-col-actions">

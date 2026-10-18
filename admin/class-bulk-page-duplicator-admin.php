@@ -63,7 +63,8 @@ class Bulk_Page_Duplicator_Admin {
 			return;
 		}
 		wp_enqueue_style('bulk-page-duplicator-css', plugin_dir_url(__FILE__) . 'assets/css/bulk-page-duplicator.css', array(), BULK_PAGE_DUPLICATOR_VERSION);
-		wp_enqueue_script('bulk-page-duplicator-js', plugin_dir_url(__FILE__) . 'assets/js/bulk-page-duplicator.js', array('jquery', 'wp-i18n'), BULK_PAGE_DUPLICATOR_VERSION, true);
+		wp_register_script('bulk-page-duplicator-csv', plugin_dir_url(__FILE__) . 'assets/js/csv.js', array(), BULK_PAGE_DUPLICATOR_VERSION, true);
+		wp_enqueue_script('bulk-page-duplicator-js', plugin_dir_url(__FILE__) . 'assets/js/bulk-page-duplicator.js', array('jquery', 'wp-i18n', 'bulk-page-duplicator-csv'), BULK_PAGE_DUPLICATOR_VERSION, true);
 		wp_set_script_translations('bulk-page-duplicator-js', 'bulk-page-duplicator', BULK_PAGE_DUPLICATOR_PATH . 'languages');
 		
 		// Get saved user preferences

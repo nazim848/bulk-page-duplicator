@@ -297,7 +297,7 @@ class Bulk_Page_Duplicator_Generators {
 			if ($placeholder_count > 1 && count($values) !== $placeholder_count) {
 				return new WP_Error('bpd_row_value_count', sprintf(
 					/* translators: %1$d: row number, %2$d: number of placeholders. */
-					__('Row %1$d must have %2$d comma-separated values (one for each placeholder).', 'bulk-page-duplicator'),
+					__('Row %1$d must have %2$d comma-separated values (one for each placeholder). Wrap a value that contains a comma in double quotes.', 'bulk-page-duplicator'),
 					$line,
 					$placeholder_count
 				));
@@ -325,11 +325,29 @@ class Bulk_Page_Duplicator_Generators {
 	 * @return string[]
 	 */
 	public static function split_line($line, $placeholder_count) {
-		if ($placeholder_count > 1) {
-			return array_map('trim', explode(',', $line));
+		$line = trim($line);
+		$is_quoted = strlen($line) > 1 && '"' === $line[0] && '"' === substr($line, -1);
+
+		if ($placeholder_count > 1 || $is_quoted) {
+			// An empty escape character (plain RFC 4180 quoting) needs PHP 7.4.
+			$values = array_map('trim', str_getcsv($line, ',', '"', PHP_VERSION_ID >= 70400 ? '' : '\\'));
+			return $placeholder_count > 1 ? $values : array($values[0]);
 		}
 
-		return array(trim($line));
+		return array($line);
+	}
+
+	/**
+	 * Join values into one editable line, quoting values that contain commas or quotes.
+	 *
+	 * @param string[] $values Row values.
+	 * @return string
+	 */
+	public static function format_line($values) {
+		return implode(', ', array_map(function ($value) {
+			$value = (string) $value;
+			return preg_match('/[",]/', $value) ? '"' . str_replace('"', '""', $value) . '"' : $value;
+		}, (array) $values));
 	}
 
 	/**
