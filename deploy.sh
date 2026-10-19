@@ -197,6 +197,7 @@ rsync -a --delete "${BUILD_DIR}/" "${SVN_TRUNK}/" \
 	--exclude='.gitignore' \
 	--exclude='.gitattributes' \
 	--exclude='.github' \
+	--exclude='.wordpress-org' \
 	--exclude='.claude' \
 	--exclude='AGENTS.md' \
 	--exclude='CLAUDE.md' \

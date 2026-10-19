@@ -140,10 +140,23 @@ Yes. Every feature is included.
 = Is the plugin translation ready? =
 Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT file in `languages/`.
 
+== Screenshots ==
+
+1. How it works: one template, a list of values, and a page for each value that you can keep in sync.
+2. Bulk duplication: pick a template, enter the text to replace, add one value per line and check the live preview.
+3. Page Generators: every value with its generated page, status and edit/view links. New values are created on the next run.
+4. Template Sync: preview which pages will change. Pages edited by hand are skipped unless you choose to overwrite them.
+5. One-click "Duplicate" and "Bulk Duplicate" links in the Pages list. Copies are saved as drafts.
+6. Dry Run preview: see every title and slug before anything is created.
+7. Results log with filters and CSV export, and Recent Operations to roll back a whole run.
+8. All your Page Generators with their template, progress and last run.
+9. The editor box: "Duplicate as new draft", how many pages a template generated, and a shortcut to Template Sync.
+
 == Changelog ==
 
 = 1.2.0 =
-New
+**New**
+
 * One-click "Duplicate" links in the Pages and Posts lists, the admin bar, the classic editor and the block editor, plus a "Duplicate" bulk action.
 * "Bulk Duplicate" link on each page that opens the bulk tool with that page as the template.
 * Page Generators (Tools > Page Generators): save a template, its placeholders and values, and run it again at any time. New values create pages, edited values update their pages, and removed values move their pages to the trash after confirmation.
@@ -152,10 +165,12 @@ New
 * Editor box showing how many pages a template generated, or which template a page came from.
 * "Copy Template Terms" option, and an "Open" link on the Plugins screen.
 
-Improved
+**Improved**
+
 * Bulk duplication now copies the template's excerpt (with placeholder replacement) and menu order.
 
-Fixed
+**Fixed**
+
 * All in One SEO 4 titles, descriptions, social titles and focus keyphrases are now copied and replaced.
 * Multiple placeholders no longer interfere with each other (for example the "uk" in "Dukeville" when "UK" is also a placeholder).
 * Backslashes in content and Beaver Builder settings are kept.
