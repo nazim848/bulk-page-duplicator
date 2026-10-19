@@ -1,107 +1,65 @@
 === Bulk Page Duplicator ===
 Contributors: nazim848
 Donate link: https://buymeacoffee.com/nazim848
-Tags: bulk duplicate, duplicate pages, page duplicator, clone, duplicate
+Tags: duplicate page, bulk duplicate, page generator, clone, duplicate post
 Requires at least: 5.0
-Tested up to: 7.0
+Tested up to: 7.1
 Stable tag: 1.2.0
 Requires PHP: 7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Create pages and posts in bulk from one template with smart placeholder replacement, dry run preview, CSV import, and rollback history.
+Duplicate pages in one click, generate hundreds from a template, and keep them up to date with Page Generators and Template Sync.
 
 == Description ==
-Bulk Page Duplicator helps you publish template-based content faster without manual copy/paste. Select a template item, define placeholder text, add replacement values, and generate multiple items in one run.
+Bulk Page Duplicator turns one page into many. Duplicate any page or post in a single click, or build a template once (for example "Plumber in London") and generate a page for every city, service or product, with your text replaced on each one.
 
-= Who this is for =
-* Agencies building location or service pages at scale.
-* Site owners creating many similar pages, posts, or custom post types.
-* Teams using Elementor, Beaver Builder, or Bricks that need consistent template duplication.
-* SEO workflows that need metadata copied and replaced across many items.
+When the template changes, push the change to every generated page with Template Sync, and keep your list of cities in a reusable Page Generator so adding a new one is a single click.
 
-= What you can do =
-* Duplicate any single page, post or custom post type in one click from the list screen, admin bar or editor.
-* Duplicate several selected items at once with the "Duplicate" bulk action.
-* Duplicate any public post type (including custom post types).
-* Replace one or multiple placeholders across title, slug, and content.
-* Import replacement values from `.csv` or `.txt`, or paste values line by line.
-* Choose output status (Publish or Draft).
-* Set parent page behavior for hierarchical post types.
-* Copy featured image to all created items.
-* Assign taxonomy terms (such as categories and tags) to all generated items.
-* Export duplication results as CSV for reporting.
-* Save a template, its placeholders and rows as a reusable Page Generator, and run it again whenever rows change.
-* Push template changes to every page generated from it with Template Sync.
+Every feature is free.
 
-= Why it is safer and faster =
-* Dry Run preview shows what will be created before writing content.
-* Existing slugs are automatically skipped to prevent duplicates.
-* Real-time progress includes current item, percent complete, and ETA.
-* Cancel in-progress operation from the UI.
-* Recent operation history supports rollback (bulk delete created items).
-* Saved user preferences reduce repeated setup.
+= Who it is for =
+* Agencies and site owners building location, service or landing pages at scale.
+* SEO teams who need titles, descriptions and metadata replaced on every page.
+* Anyone who just wants a quick "Duplicate" link for pages, posts and custom post types.
+
+= One-click duplication =
+* "Duplicate" link in the Pages and Posts lists, the admin bar, the classic editor and the block editor.
+* "Duplicate" bulk action to copy several selected items at once.
+* Copies content, custom fields, featured image, categories, tags and page builder data. Copies are saved as drafts.
+
+= Bulk generation =
+* Pick a template, enter the text to replace (for example `London`, or `London, UK` for several placeholders) and add one line of values per page.
+* Paste values or import a `.csv` / `.txt` file.
+* Replaces text in titles, slugs, content, excerpts, page builder data and SEO fields, matching case (`London` → `Paris`, `LONDON` → `PARIS`).
+* Choose draft or published, a parent page, categories and tags, and whether to copy the featured image and the template's terms.
+* Dry Run preview, live progress with ETA, a results log with CSV export, and one-click rollback of a whole run.
+* Works with pages, posts and any public custom post type. Existing slugs are skipped, never overwritten.
+
+= Page Generators =
+* Save a template, its placeholders and its list of values as a generator (`Tools > Page Generators`, or `Save as Generator` on the bulk screen).
+* Run it again at any time: only missing pages are created.
+* Edit a value and its page is updated in place; remove a value and its page is moved to the trash (after confirmation).
+* See every value with its page, status and edit/view links. Pages you created earlier from the same template are linked, not duplicated.
+
+= Template Sync =
+* Edit the template, then click `Sync changes` in its `Bulk Page Duplicator` box in the editor.
+* Choose what to push: content, excerpt, page builder data, SEO meta, featured image, page template, terms, and (with confirmation) titles or slugs.
+* Preview which pages will change. Pages edited by hand since they were generated are skipped unless you choose to overwrite them.
+* A revision is saved before each page changes, including page builder data, so any sync can be undone from the Revisions screen.
+
+= Works with =
+* Page builders: Elementor, Beaver Builder, Bricks.
+* SEO plugins: Yoast SEO, Rank Math, All in One SEO, SEOPress.
 
 == How It Works ==
 1. Go to `Tools > Bulk Page Duplicator`.
-2. Choose a post type and select the template item.
-3. Enter placeholder text:
-   * Single placeholder example: `London`
-   * Multiple placeholder example: `London, UK`
-4. Add replacement values in the textarea or import CSV/TXT.
-5. Select where replacements should be applied (title, slug, content, builder data, SEO data).
-6. Optionally set status, parent page, taxonomy terms, and featured image behavior.
-7. Click `Dry Run (Preview)` to validate expected output.
-8. Click `Start Duplication` to generate items in batches.
-9. Review Results Log, filter statuses, export CSV, and use Recent Operations for rollback if needed.
-
-== Feature Highlights ==
-
-= Bulk generation core =
-* Batch duplication workflow for large value sets.
-* Supports pages, posts, and any public custom post type.
-* Automatic skip when a generated slug already exists.
-
-= Smart replacement behavior =
-* Multiple placeholders supported in one run.
-* Case-aware replacement behavior for more natural output.
-* Slug-safe handling for multi-word placeholders and replacement values.
-
-= Builder and SEO integrations =
-* Page builder support:
-  * Elementor
-  * Beaver Builder
-  * Bricks
-* SEO metadata replacement support:
-  * Yoast SEO
-  * Rank Math
-  * All in One SEO
-  * SEOPress
-
-= Workflow productivity =
-* Searchable template selector with status, thumbnail, and metadata.
-* Placeholder and values validation feedback.
-* Dry Run summary with create vs skip counts.
-* Browser completion notifications (when permission is granted).
-* Results summary, filtering, and CSV export.
-
-= Recovery and control =
-* Recent operation history with timestamp and counts.
-* Rollback action to delete items created by an operation.
-* User preferences persisted for faster repeat runs.
-
-= Page Generators =
-Go to `Tools > Page Generators` (or click `Save as Generator` on the bulk screen) to keep a template, its placeholders and a list of rows together.
-* Run a generator again at any time: only missing items are created.
-* Edit a row and its item is re-rendered in place; remove a row and its item is moved to the trash (after confirmation).
-* Each row shows its generated item with status and edit/view links.
-* Items you already created from the same template are linked instead of duplicated.
-
-= Template Sync =
-Edit a template, then click `Sync changes` in its `Bulk Page Duplicator` editor box.
-* Choose what to push: content, excerpt, page builder data, SEO meta, featured image, page template, terms, and (with confirmation) title or slug.
-* Preview first: see which items will change, and which were edited by hand since they were generated. Hand-edited items are skipped unless you choose to overwrite them.
-* A revision is saved before each item changes, including builder data, so any item can be restored from its Revisions screen.
+2. Choose a post type and select the template.
+3. Enter the placeholder text, for example `London` or `London, UK`.
+4. Add one line of replacement values per page, or import a CSV/TXT file.
+5. Choose where to replace text (title, slug, content, page builder data, SEO data) and the other options.
+6. Click `Dry Run (Preview)` to check the result, then `Start Duplication`.
+7. Review the Results Log. Use Recent Operations to roll back a run if needed, or `Save as Generator` to manage these pages later.
 
 == CSV/TXT Format Guide ==
 
@@ -125,11 +83,9 @@ If placeholders are `London, UK`, each line must provide matching comma-separate
 * Duplicate values are flagged in validation feedback.
 
 == Compatibility ==
-* WordPress: 5.0+
-* Tested up to: 7.0
-* PHP: 7.2+
-* Works with public post types (excluding attachments in selector).
-* Supports taxonomy assignment for the selected post type.
+* WordPress 5.0 or later, tested up to 7.1.
+* PHP 7.2 or later.
+* Pages, posts and any public custom post type.
 * Page builders: Elementor, Beaver Builder, Bricks.
 * SEO plugins: Yoast SEO, Rank Math, All in One SEO, SEOPress.
 
@@ -147,6 +103,9 @@ If placeholders are `London, UK`, each line must provide matching comma-separate
 * Use Recent Operations to rollback quickly if required.
 
 == Frequently Asked Questions ==
+
+= How do I duplicate a single page? =
+Hover over the page in `Pages > All Pages` and click `Duplicate`, or use `Duplicate` in the admin bar or the editor. The copy is saved as a draft with the same content, custom fields, featured image and terms.
 
 = Can I duplicate custom post types (CPTs)? =
 Yes. The plugin supports any public post type.
@@ -175,31 +134,32 @@ Yes. It supports Elementor, Beaver Builder, and Bricks data replacement when pre
 = Does this work with SEO plugins? =
 Yes. It supports metadata replacement for Yoast SEO, Rank Math, All in One SEO, and SEOPress.
 
+= Is the plugin free? =
+Yes. Every feature is included.
+
 = Is the plugin translation ready? =
 Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT file in `languages/`.
 
 == Changelog ==
 
 = 1.2.0 =
-* Added one-click "Duplicate" links to post and page lists, the admin bar, the classic editor and the block editor.
-* Added a "Duplicate" bulk action to post and page lists.
-* Added a "Bulk Duplicate" row action that opens the bulk tool with that item selected as the template.
+New
+* One-click "Duplicate" links in the Pages and Posts lists, the admin bar, the classic editor and the block editor, plus a "Duplicate" bulk action.
+* "Bulk Duplicate" link on each page that opens the bulk tool with that page as the template.
+* Page Generators (Tools > Page Generators): save a template, its placeholders and values, and run it again at any time. New values create pages, edited values update their pages, and removed values move their pages to the trash after confirmation.
+* "Save as Generator" button on the bulk duplication screen. Pages created earlier from the same template are linked instead of duplicated.
+* Template Sync: push template changes (content, excerpt, Elementor, Beaver Builder, Bricks, SEO meta, featured image, page template, terms, title, slug) to every generated page, with a preview, hand-edit protection and a revision saved before each change.
+* Editor box showing how many pages a template generated, or which template a page came from.
+* "Copy Template Terms" option, and an "Open" link on the Plugins screen.
+
+Improved
 * Bulk duplication now copies the template's excerpt (with placeholder replacement) and menu order.
-* Added a "Copy Template Terms" option to copy the template's categories, tags and other terms.
-* Added Page Generators (Tools > Page Generators): save a template, its placeholders and rows, then run it again at any time.
-* Generator runs create only missing items, re-render items whose row values or settings changed, and trash items of removed rows after confirmation.
-* Added "Save as Generator" to the bulk duplication screen; items made earlier from the same template are linked instead of duplicated.
-* Added Template Sync: push template changes (content, excerpt, Elementor, Beaver Builder, Bricks, SEO meta, featured image, page template, terms, title, slug) to every item generated from it, in batches with progress.
-* Sync preview shows which items will change and skips items edited by hand unless you choose to overwrite them.
-* A revision is saved before each item is synced, including builder data, so a sync can be undone from Revisions.
-* Added a Bulk Page Duplicator box to the editor showing how many items a template generated, or which template an item came from.
-* Generated items now record their template and replacement values.
-* Fixed backslashes in template content and Beaver Builder settings being removed during duplication.
-* Fixed All in One SEO 4 titles, descriptions, social titles and focus keyphrases not being copied or replaced (AIOSEO stores them in its own table).
-* Fixed page builder and SEO options being saved as off while that plugin was inactive. If Elementor replacement was turned off this way, tick "Elementor Data" once to turn it back on.
-* Clarified that WordPress does not redirect the old URLs of pages when their slug changes.
-* Fixed multiple placeholders interfering with each other: all placeholders are now replaced in one pass, so a value such as "Dukeville" is no longer changed by a placeholder "UK", and "iphone" in a slug is no longer changed by a "{{phone}}" slug.
-* Added an "Open" link on the Plugins screen.
+
+Fixed
+* All in One SEO 4 titles, descriptions, social titles and focus keyphrases are now copied and replaced.
+* Multiple placeholders no longer interfere with each other (for example the "uk" in "Dukeville" when "UK" is also a placeholder).
+* Backslashes in content and Beaver Builder settings are kept.
+* Page builder and SEO options are no longer saved as off while that plugin is inactive. If Elementor replacement was turned off this way, tick "Elementor Data" once to turn it back on.
 
 = 1.1.1 =
 * Hardened AJAX authorization and output handling.
@@ -233,7 +193,7 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 == Upgrade Notice ==
 
 = 1.2.0 =
-Adds one-click Duplicate, reusable Page Generators and Template Sync to push template changes to generated pages.
+Adds one-click Duplicate, reusable Page Generators and Template Sync to push template changes to generated pages, plus All in One SEO 4 and multi-placeholder fixes.
 
 = 1.1.1 =
 Security, data-integrity, rollback, compatibility, and large-site performance fixes.
