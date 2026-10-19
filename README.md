@@ -26,11 +26,13 @@ Yes, it is fully internationalized and ready for translation. The plugin include
 
 ### 1.3.0
 
+The WordPress.org [readme.txt](readme.txt) includes CSV examples, shortcode options, WP-CLI commands, and the full changelog. Every feature is free.
+
 - Named `{{placeholders}}` from CSV header rows, and quoted CSV values that may contain commas.
 - Custom field (ACF, Meta Box, Pods) replacement in duplication, generators and sync.
 - "Generated Pages List" block and `[bpd_generated_pages]` shortcode.
 - WP-CLI: `wp bulk-page-duplicator generator list|run` and `wp bulk-page-duplicator sync`.
-- Exact-case placeholders keep the value as entered; `$`, backslashes and self-containing values are preserved.
+- Exact-case placeholders preserve input capitalization, such as "iPhone Town"; preview existing templates with Dry Run before generating new pages.
 
 ### 1.2.0
 
