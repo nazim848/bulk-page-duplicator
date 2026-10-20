@@ -172,8 +172,8 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 
 == Screenshots ==
 
-1. How it works: one template, a list of values, and a page for each value that you can keep in sync.
-2. Bulk duplication: pick a template, enter the text to replace, add one value per line and check the live preview.
+1. How it works: turn a template and CSV location data into individual pages, then preview, sync and roll back runs.
+2. Bulk duplication with named CSV placeholders: import column headers as {{city}} and {{phone_number}}, including quoted values containing commas, and check the live preview.
 3. Page Generators: every value with its generated page, status and edit/view links. New values are created on the next run.
 4. Template Sync: preview which pages will change. Pages edited by hand are skipped unless you choose to overwrite them.
 5. One-click "Duplicate" and "Bulk Duplicate" links in the Pages list. Copies are saved as drafts.
@@ -181,6 +181,10 @@ Yes. The plugin uses the `bulk-page-duplicator` text domain and includes a POT f
 7. Results log with filters and CSV export, and Recent Operations to roll back a whole run.
 8. All your Page Generators with their template, progress and last run.
 9. The editor box: "Duplicate as new draft", how many pages a template generated, and a shortcut to Template Sync.
+10. Custom field replacement: choose where placeholders are replaced, including public custom fields and nested data used by ACF and Meta Box.
+11. Generated Pages List block: choose a template or generator, set sorting and columns, and preview published pages in the editor.
+12. An "Areas we serve" page using the generated pages listing with two columns and excerpts. Appearance follows your theme; the same listing is available through a shortcode.
+13. WP-CLI: list generators, preview a generator run and dry-run a template sync with protection for manually edited pages.
 
 == Changelog ==
 

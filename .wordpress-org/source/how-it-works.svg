@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 1920 1080">
+<defs><linearGradient id="bg" x2="1" y2="0.3"><stop stop-color="#151932"/><stop offset=".55" stop-color="#2c2b79"/><stop offset="1" stop-color="#5145e5"/></linearGradient><linearGradient id="paper" x2=".8" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#e8ecff"/></linearGradient></defs>
+<rect width="1920" height="1080" fill="url(#bg)"/>
+<g fill="#8377ff" opacity=".13"><circle cx="-90" cy="0" r="365"/><circle cx="1890" cy="50" r="335"/><circle cx="345" cy="1120" r="420"/><circle cx="1930" cy="1130" r="300"/></g>
+<g font-family="Arial,Helvetica,sans-serif">
+<text x="110" y="135" fill="white" font-size="72" font-weight="700">One template. <tspan fill="#ffca35">Every location.</tspan></text>
+<text x="114" y="201" fill="#c7ccff" font-size="32">Create in bulk. Keep every page in sync.</text>
+<g fill="#ffca35"><circle cx="139" cy="304" r="29"/><circle cx="734" cy="304" r="29"/><circle cx="1330" cy="304" r="29"/></g>
+<g fill="#151932" font-weight="700" font-size="26" text-anchor="middle"><text x="139" y="313">01</text><text x="734" y="313">02</text><text x="1330" y="313">03</text></g>
+<g fill="white" font-size="30" font-weight="700"><text x="184" y="314">Create a template</text><text x="779" y="314">Add your locations</text><text x="1375" y="314">Generate your pages</text></g>
+<g stroke="#a6a6ff" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M544 600H638m-17-17 17 17-17 17"/><path d="M1200 600h62m-17-17 17 17-17 17"/><path d="M1265 600h36V450h43m-43 150h43m-43 0v150h43"/></g>
+<path d="M145 380h310l79 79v327q0 33-33 33H145q-33 0-33-33V413q0-33 33-33Z" fill="url(#paper)" stroke="#fff" stroke-width="3"/>
+<path d="M455 380v79h79" fill="#d8dfff" stroke="#c5ceff" stroke-width="3"/>
+<rect x="154" y="425" width="114" height="22" rx="11" fill="#d1d1ff"/>
+<text x="154" y="517" font-size="39" fill="#151932" font-weight="700">Service in</text>
+<rect x="154" y="541" width="260" height="67" rx="13" fill="#ffca35"/>
+<text x="177" y="588" font-size="42" fill="#151932" font-weight="700">{{city}}</text>
+<path d="M154 639H491" stroke="#dce2fa"/>
+<text x="154" y="697" font-size="30" fill="#151932" font-weight="700">Call</text>
+<rect x="220" y="660" width="240" height="54" rx="10" fill="#ffca35"/>
+<text x="237" y="697" font-size="32" fill="#151932" font-weight="700">{{phone}}</text>
+<g fill="#ccd6ff"><rect x="154" y="746" width="310" height="16" rx="8"/><rect x="154" y="777" width="216" height="14" rx="7"/></g>
+<rect x="683" y="429" width="520" height="353" rx="28" fill="url(#paper)" stroke="white" stroke-width="3"/>
+<rect x="709" y="458" width="468" height="67" rx="12" fill="#dcdfff"/>
+<rect x="709" y="504" width="468" height="245" fill="white"/>
+<g stroke="#e1e6fb" stroke-width="2"><path d="M899 458v291M709 525h468M709 600h468M709 675h468"/></g>
+<g font-size="27" fill="#151932"><g font-weight="700"><text x="735" y="501">City</text><text x="923" y="501">Phone</text><text x="735" y="574">London</text><text x="735" y="649">Paris</text><text x="735" y="724">Toronto</text></g><text x="923" y="574">020 7946 0100</text><text x="923" y="649">01 42 68 53 00</text><text x="923" y="724">416 555 0100</text></g>
+<rect x="1080" y="383" width="94" height="63" rx="12" fill="white"/><text x="1127" y="425" text-anchor="middle" font-size="25" fill="#303365" font-weight="700">CSV</text>
+<g fill="white"><rect x="1340" y="389" width="466" height="123" rx="24"/><rect x="1340" y="539" width="466" height="123" rx="24"/><rect x="1340" y="689" width="466" height="123" rx="24"/></g>
+<g fill="#ffca35"><circle cx="1340" cy="450" r="11"/><circle cx="1340" cy="600" r="11"/><circle cx="1340" cy="750" r="11"/><circle cx="1382" cy="426" r="12"/><circle cx="1382" cy="576" r="12"/><circle cx="1382" cy="726" r="12"/></g>
+<g font-size="29" font-weight="700" fill="#151932"><text x="1409" y="436">Service in London</text><text x="1409" y="586">Service in Paris</text><text x="1409" y="736">Service in Toronto</text></g>
+<g fill="#ccd6ff"><rect x="1370" y="458" width="305" height="12" rx="6"/><rect x="1370" y="480" width="235" height="12" rx="6"/><rect x="1370" y="608" width="305" height="12" rx="6"/><rect x="1370" y="630" width="235" height="12" rx="6"/><rect x="1370" y="758" width="305" height="12" rx="6"/><rect x="1370" y="780" width="235" height="12" rx="6"/></g>
+<path d="M112 904H1807" stroke="#a8aaff" opacity=".25"/>
+<g fill="#ffca35"><circle cx="134" cy="971" r="22"/><circle cx="527" cy="971" r="22"/><circle cx="948" cy="971" r="22"/><circle cx="1461" cy="971" r="22"/></g>
+<g stroke="#242458" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m124 971 7 7 14-15m372 8 7 7 14-15m393 8 7 7 14-15m493 8 7 7 14-15"/></g>
+<g fill="white" font-size="28" font-weight="600"><text x="172" y="980">Preview first</text><text x="565" y="980">Generate pages</text><text x="986" y="980">Sync template changes</text><text x="1499" y="980">Roll back a run</text></g>
+</g></svg>
